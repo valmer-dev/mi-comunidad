@@ -4,6 +4,7 @@ import { requerirContexto } from "@/lib/auth";
 import { ETIQUETAS_ROL } from "@/lib/permisos";
 import { CabeceraPagina } from "@/components/ui/CabeceraPagina";
 import { CambiarContrasena } from "./CambiarContrasena";
+import { EditarComunidad } from "./EditarComunidad";
 
 export const metadata = { title: "Ajustes" };
 
@@ -56,9 +57,24 @@ export default async function PaginaAjustes() {
             </div>
           </dl>
           <p className="mt-4 rounded-xl bg-fondo px-3.5 py-2.5 text-xs leading-relaxed text-suave">
-            La edición de estos datos estará disponible en la siguiente fase. Mientras
-            tanto, cualquier cambio lo puede hacer el presidente desde la base de datos.
+            Estos datos aparecen en la cabecera y en los documentos de la comunidad.
           </p>
+          {miembro.rol === "presidente" && (
+            <EditarComunidad
+              datos={{
+                nombre: comunidad.nombre,
+                direccion: comunidad.direccion,
+                codigo_postal: comunidad.codigo_postal,
+                ciudad: comunidad.ciudad,
+                provincia: comunidad.provincia,
+                cif: comunidad.cif,
+                iban: comunidad.iban,
+                administrador_nombre: comunidad.administrador_nombre,
+                administrador_telefono: comunidad.administrador_telefono,
+                administrador_correo: comunidad.administrador_correo,
+              }}
+            />
+          )}
         </section>
 
         <section className="tarjeta">
