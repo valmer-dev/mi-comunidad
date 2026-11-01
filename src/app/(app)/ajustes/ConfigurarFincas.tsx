@@ -29,7 +29,7 @@ export function ConfigurarFincas({
       </h2>
       <p className="mt-2 text-sm leading-relaxed text-suave">
         Indica cuántas casas y pisos tiene la comunidad. Se crean automáticamente con
-        su número (Casa 1, Piso 1…) y el coeficiente se reparte a partes iguales.
+        su número (Casa 1, 1ºA, 1ºB…) y el coeficiente se reparte a partes iguales.
       </p>
 
       <dl className="mt-4 grid grid-cols-3 gap-3 text-center">

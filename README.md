@@ -127,8 +127,9 @@ permisivas. No se activa desde la interfaz: hay que hacerlo con la clave
 
 Cada comunidad guarda `numero_casas` y `numero_pisos`. La función SQL
 `configurar_fincas(comunidad, casas, pisos)` crea las fincas que faltan
-(`Casa 1`, `Piso 1`…), elimina las que ya no se piden **solo si no tienen
-titulares** y reparte el coeficiente a partes iguales hasta sumar 100 %.
+(`Casa 1`, `1ºA`, `1ºB`, `2ºA`…), elimina las que ya no se piden **solo si no
+tienen titulares** y reparte el coeficiente a partes iguales hasta sumar 100 %.
+Los pisos se numeran por planta y puerta: dos puertas (A y B) por planta.
 
 Al dar de alta un vecino se elige su casa o piso y, opcionalmente, un segundo
 titular: con correo se le crea su cuenta (o se reutiliza la que ya tenía); solo

@@ -22,9 +22,10 @@ export default async function PaginaVecinos() {
       .order("creado_en", { ascending: true }),
     supabase
       .from("fincas")
-      .select("id, codigo, tipo, coeficiente")
+      .select("id, codigo, tipo, numero, coeficiente")
       .eq("comunidad_id", comunidad.id)
-      .order("codigo"),
+      .order("tipo")
+      .order("numero"),
   ]);
 
   const idsFincas = (fincas ?? []).map((finca) => finca.id);
