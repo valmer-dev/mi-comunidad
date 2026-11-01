@@ -25,23 +25,25 @@ export async function proxy(peticion: NextRequest) {
     },
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // getClaims verifica el JWT en local (JWKS en cache) y refresca la sesion
+  // solo cuando hace falta. getUser() obligaba a una llamada de red en cada
+  // navegacion, lo que hacia lento el cambio entre modulos.
+  const { data } = await supabase.auth.getClaims();
+  const usuario = data?.claims ?? null;
 
   const ruta = peticion.nextUrl.pathname;
   const esPublica = RUTAS_PUBLICAS.some(
     (publica) => ruta === publica || ruta.startsWith(`${publica}/`),
   );
 
-  if (!user && !esPublica) {
+  if (!usuario && !esPublica) {
     const destino = peticion.nextUrl.clone();
     destino.pathname = "/entrar";
     if (ruta !== "/") destino.searchParams.set("destino", ruta);
     return NextResponse.redirect(destino);
   }
 
-  if (user && ruta === "/entrar") {
+  if (usuario && ruta === "/entrar") {
     const destino = peticion.nextUrl.clone();
     destino.pathname = "/panel";
     destino.search = "";

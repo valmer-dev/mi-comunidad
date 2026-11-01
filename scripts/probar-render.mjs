@@ -71,15 +71,19 @@ const rutas = [
 
 let fallos = 0;
 for (const ruta of rutas) {
+  const inicio = performance.now();
   const res = await fetch(base + ruta, { headers: { cookie }, redirect: "manual" });
   const html = await res.text();
+  const ms = Math.round(performance.now() - inicio);
   const roto =
     /Minified React error/i.test(html) ||
     /An error occurred in the Server Components render/i.test(html) ||
     /Application error/i.test(html);
   if (roto || res.status >= 400) fallos += 1;
   console.log(
-    `${ruta.padEnd(14)} ${res.status}  ${roto ? "FALLO DE RENDER" : res.status < 400 ? "ok" : "ERROR"}`,
+    `${ruta.padEnd(14)} ${String(res.status).padEnd(4)} ${String(ms).padStart(5)} ms  ${
+      roto ? "FALLO DE RENDER" : res.status < 400 ? "ok" : "ERROR"
+    }`,
   );
 }
 
