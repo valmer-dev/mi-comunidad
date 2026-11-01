@@ -1,0 +1,73 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-fondo: #f7f5f0;
+  --color-superficie: #ffffff;
+  --color-tinta: #172033;
+  --color-suave: #5c6575;
+  --color-borde: #e4dfd6;
+  --color-principal: #0f766e;
+  --color-principal-oscuro: #115e59;
+  --color-principal-claro: #ccfbf1;
+  --color-acento: #c2410c;
+  --color-acento-claro: #ffedd5;
+  --font-sans: var(--font-geist-sans);
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  background-color: var(--color-fondo);
+  color: var(--color-tinta);
+  font-family: var(--font-sans), system-ui, sans-serif;
+}
+
+*:focus-visible {
+  outline: 2px solid var(--color-principal);
+  outline-offset: 2px;
+}
+
+@layer components {
+  .tarjeta {
+    @apply rounded-2xl border border-borde bg-superficie p-5 shadow-sm;
+  }
+
+  .boton {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .boton-principal {
+    @apply bg-principal text-white hover:bg-principal-oscuro;
+  }
+
+  .boton-suave {
+    @apply bg-principal/10 text-principal hover:bg-principal/20;
+  }
+
+  .boton-borde {
+    @apply border border-borde bg-superficie text-tinta hover:bg-fondo;
+  }
+
+  .campo {
+    @apply w-full rounded-xl border border-borde bg-white px-3.5 py-2.5 text-base text-tinta outline-none transition-colors placeholder:text-suave/60 focus:border-principal;
+  }
+
+  .etiqueta {
+    @apply mb-1.5 block text-sm font-medium text-tinta;
+  }
+
+  .chip {
+    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold;
+  }
+}
+
+@media print {
+  .no-imprimir {
+    display: none !important;
+  }
+  body {
+    background: white;
+  }
+}

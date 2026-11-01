@@ -1,0 +1,24 @@
+name: Mantener Supabase despierto
+
+# El plan gratuito de Supabase pausa el proyecto tras una semana sin actividad.
+# Esta tarea hace una peticion ligera cada 3 dias.
+
+on:
+  schedule:
+    - cron: "0 6 */3 * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Consultar la API de Supabase
+        env:
+          URL_SUPABASE: ${{ secrets.SUPABASE_URL }}
+          CLAVE_ANONIMA: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          codigo=$(curl -s -o /dev/null -w "%{http_code}" \
+            "$URL_SUPABASE/rest/v1/" \
+            -H "apikey: $CLAVE_ANONIMA")
+          echo "Respuesta HTTP: $codigo"
+          test "$codigo" -lt 500
