@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, Megaphone, Settings, Users, Wrench } from "lucide-react";
+import { LayoutDashboard, Megaphone, Settings, ShieldCheck, Users, Wrench } from "lucide-react";
 import { cn } from "@/lib/utilidades";
 
 const ENLACES = [
@@ -13,8 +13,11 @@ const ENLACES = [
   { href: "/ajustes", etiqueta: "Ajustes", icono: Settings },
 ];
 
-export function NavegacionMovil() {
+const ENLACE_PLATAFORMA = { href: "/plataforma", etiqueta: "Plataforma", icono: ShieldCheck };
+
+export function NavegacionMovil({ esAdminPlataforma = false }: { esAdminPlataforma?: boolean }) {
   const ruta = usePathname();
+  const enlaces = esAdminPlataforma ? [...ENLACES, ENLACE_PLATAFORMA] : ENLACES;
 
   return (
     <nav
@@ -22,8 +25,13 @@ export function NavegacionMovil() {
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       aria-label="Navegación principal"
     >
-      <ul className="mx-auto grid max-w-md grid-cols-5">
-        {ENLACES.map(({ href, etiqueta, icono: Icono }) => {
+      <ul
+        className={cn(
+          "mx-auto grid max-w-md",
+          enlaces.length > 5 ? "grid-cols-6" : "grid-cols-5",
+        )}
+      >
+        {enlaces.map(({ href, etiqueta, icono: Icono }) => {
           const activo = ruta === href || ruta.startsWith(`${href}/`);
           return (
             <li key={href}>

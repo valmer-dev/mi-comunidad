@@ -9,6 +9,7 @@ import {
   LogOut,
   Megaphone,
   Settings,
+  ShieldCheck,
   Users,
   Wallet,
   Wrench,
@@ -23,6 +24,7 @@ type Props = {
   nombreUsuario: string;
   rol: RolMiembro;
   puedeVerFinanzas: boolean;
+  esAdminPlataforma: boolean;
 };
 
 export function BarraLateral({
@@ -30,6 +32,7 @@ export function BarraLateral({
   nombreUsuario,
   rol,
   puedeVerFinanzas,
+  esAdminPlataforma,
 }: Props) {
   const enlaces = [
     { href: "/panel", etiqueta: "Panel", icono: LayoutDashboard },
@@ -41,6 +44,9 @@ export function BarraLateral({
       : []),
     { href: "/juntas", etiqueta: "Juntas", icono: Gavel },
     { href: "/documentos", etiqueta: "Documentos", icono: FolderOpen },
+    ...(esAdminPlataforma
+      ? [{ href: "/plataforma", etiqueta: "Plataforma", icono: ShieldCheck }]
+      : []),
     { href: "/ajustes", etiqueta: "Ajustes", icono: Settings },
   ];
 

@@ -13,6 +13,7 @@ type Props = {
   rol: RolMiembro;
   esAdmin: boolean;
   puedeVerFinanzas: boolean;
+  esAdminPlataforma: boolean;
 };
 
 export function Estructura({
@@ -22,6 +23,7 @@ export function Estructura({
   rol,
   esAdmin,
   puedeVerFinanzas,
+  esAdminPlataforma,
 }: Props) {
   return (
     <div className="min-h-dvh lg:flex">
@@ -30,6 +32,7 @@ export function Estructura({
         nombreUsuario={nombreUsuario}
         rol={rol}
         puedeVerFinanzas={puedeVerFinanzas}
+        esAdminPlataforma={esAdminPlataforma}
       />
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -62,7 +65,7 @@ export function Estructura({
         </main>
       </div>
 
-      <NavegacionMovil />
+      <NavegacionMovil esAdminPlataforma={esAdminPlataforma} />
     </div>
   );
 }

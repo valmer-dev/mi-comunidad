@@ -3,8 +3,11 @@
 // esperado de cada pagina (no una redireccion al login).
 //
 // Uso: node --env-file=.env.local scripts/probar-render.mjs [url-base]
+//
+// Credenciales: variables COMUNIDAD_CORREO y COMUNIDAD_CONTRASENA, o el
+// fichero .secretos/credenciales-presidente.txt.
 import { createClient } from "@supabase/supabase-js";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 const MAX_CHUNK_SIZE = 3180;
 
@@ -35,9 +38,18 @@ function createChunks(key, value, chunkSize = MAX_CHUNK_SIZE) {
   return chunks.map((v, i) => ({ name: `${key}.${i}`, value: v }));
 }
 
-const texto = readFileSync(".secretos/credenciales-presidente.txt", "utf8");
-const correo = texto.match(/Correo:\s*(.+)/)?.[1]?.trim();
-const contrasena = texto.match(/Contraseña:\s*(.+)/)?.[1]?.trim();
+const rutaCredenciales = ".secretos/credenciales-presidente.txt";
+const texto = existsSync(rutaCredenciales) ? readFileSync(rutaCredenciales, "utf8") : "";
+const correo = process.env.COMUNIDAD_CORREO ?? texto.match(/Correo:\s*(.+)/)?.[1]?.trim();
+const contrasena =
+  process.env.COMUNIDAD_CONTRASENA ?? texto.match(/Contraseña:\s*(.+)/)?.[1]?.trim();
+
+if (!correo || !contrasena) {
+  console.error(
+    "Faltan credenciales: define COMUNIDAD_CORREO y COMUNIDAD_CONTRASENA.",
+  );
+  process.exit(1);
+}
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const anon = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -71,6 +83,7 @@ const rutas = [
   ["/finanzas", "Ejercicio"],
   ["/documentos", "Estatutos, actas, contratos y certificados"],
   ["/ajustes", "Datos de la comunidad y de tu cuenta"],
+  ["/plataforma", "Nueva comunidad"],
 ];
 
 let fallos = 0;

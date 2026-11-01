@@ -67,11 +67,3 @@ export function nombreMes(fecha: string | Date) {
   return new Intl.DateTimeFormat("es-ES", { month: "long", year: "numeric" }).format(valor);
 }
 
-export function generarContrasenaTemporal() {
-  const alfabeto = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
-  let resultado = "";
-  for (let i = 0; i < 10; i++) {
-    resultado += alfabeto[Math.floor(Math.random() * alfabeto.length)];
-  }
-  return resultado;
-}

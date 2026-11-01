@@ -2,14 +2,28 @@ import { Building2, LogOut, ShieldCheck, UserCircle } from "lucide-react";
 import { cerrarSesion } from "@/app/acciones/autenticacion";
 import { requerirContexto } from "@/lib/auth";
 import { ETIQUETAS_ROL } from "@/lib/permisos";
+import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { CabeceraPagina } from "@/components/ui/CabeceraPagina";
 import { CambiarContrasena } from "./CambiarContrasena";
+import { ConfigurarFincas } from "./ConfigurarFincas";
 import { EditarComunidad } from "./EditarComunidad";
 
 export const metadata = { title: "Ajustes" };
 
 export default async function PaginaAjustes() {
-  const { perfil, miembro, comunidad } = await requerirContexto();
+  const { perfil, miembro, comunidad, esAdminPlataforma } = await requerirContexto();
+  const supabase = await crearClienteServidor();
+
+  const { data: fincas } = await supabase
+    .from("fincas")
+    .select("id, coeficiente")
+    .eq("comunidad_id", comunidad.id);
+
+  const coeficienteTotal = (fincas ?? []).reduce(
+    (total, finca) => total + Number(finca.coeficiente ?? 0),
+    0,
+  );
+  const puedeConfigurar = esAdminPlataforma || miembro.rol === "presidente";
 
   return (
     <div>
@@ -50,6 +64,12 @@ export default async function PaginaAjustes() {
               </dd>
             </div>
             <div className="flex justify-between gap-4">
+              <dt className="text-suave">Casas y pisos</dt>
+              <dd className="text-right font-medium">
+                {comunidad.numero_casas} casas · {comunidad.numero_pisos} pisos
+              </dd>
+            </div>
+            <div className="flex justify-between gap-4">
               <dt className="text-suave">Administrador</dt>
               <dd className="text-right font-medium">
                 {comunidad.administrador_nombre ?? "Sin definir"}
@@ -59,7 +79,7 @@ export default async function PaginaAjustes() {
           <p className="mt-4 rounded-xl bg-fondo px-3.5 py-2.5 text-xs leading-relaxed text-suave">
             Estos datos aparecen en la cabecera y en los documentos de la comunidad.
           </p>
-          {miembro.rol === "presidente" && (
+          {puedeConfigurar && (
             <EditarComunidad
               datos={{
                 nombre: comunidad.nombre,
@@ -113,6 +133,17 @@ export default async function PaginaAjustes() {
           <CambiarContrasena />
         </section>
       </div>
+
+      {puedeConfigurar && (
+        <div className="mt-5">
+          <ConfigurarFincas
+            numeroCasas={comunidad.numero_casas}
+            numeroPisos={comunidad.numero_pisos}
+            totalFincas={fincas?.length ?? 0}
+            coeficienteTotal={coeficienteTotal}
+          />
+        </div>
+      )}
 
       <section className="tarjeta mt-5">
         <h2 className="flex items-center gap-2 text-base font-bold">

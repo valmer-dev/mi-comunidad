@@ -64,7 +64,7 @@ src/
     (auth)/entrar/          acceso
     (app)/                  zona privada
       panel/  vecinos/  tablon/  incidencias/
-      finanzas/  juntas/  documentos/  ajustes/
+      finanzas/  juntas/  documentos/  ajustes/  plataforma/
     acciones/               Server Actions (español)
   components/
     estructura/             barra lateral, navegación móvil
@@ -88,20 +88,52 @@ al servidor. Para que el cambio de módulo sea rápido:
 - **`getClaims()` en vez de `getUser()`**: la firma del JWT se verifica en local
   con las claves públicas del proyecto, sin llamar al servidor de Auth.
 - **Una sola consulta por navegación** para perfil, membresía y comunidad
-  (`select("*, comunidades(*), perfiles(*)")`).
+  (`select("*, comunidades(*), perfiles(*)")`). Si la persona pertenece a varias
+  comunidades, la cookie `comunidad_activa` elige cuál se muestra.
 - **`staleTimes.dynamic: 30`**: el contenido visitado se reutiliza 30 segundos.
   Las acciones de servidor llaman a `revalidatePath`, así que los cambios se ven
   al instante.
 - **`loading.tsx`** con un esqueleto: la pantalla responde al clic de inmediato.
 
 Para medir: `node --env-file=.env.local scripts/probar-render.mjs <url>`
-(necesita `.secretos/credenciales-presidente.txt`).
+(credenciales en `COMUNIDAD_CORREO`/`COMUNIDAD_CONTRASENA` o en
+`.secretos/credenciales-presidente.txt`).
 
 ## Roles
 
-`presidente`, `vicepresidente`, `secretario`, `vocal`, `propietario`, `inquilino`, `administrador_fincas`.
+Roles que se pueden asignar desde la aplicación:
 
-La autorización real vive en la base de datos (RLS), no solo en la interfaz. Un vecino nunca puede leer los recibos de otro.
+- `presidente`: administra la comunidad y sus datos.
+- `vicepresidente`: sustituye al presidente; también administra.
+- `vocal`: junta directiva, sin permisos de edición.
+- `vecino`: solo consulta sus datos.
+
+El enum conserva `secretario`, `propietario`, `inquilino` y `administrador_fincas`
+por compatibilidad con datos antiguos. Los antiguos `propietario` e `inquilino`
+se migraron a `vecino`.
+
+La autorización real vive en la base de datos (RLS), no solo en la interfaz. Un
+vecino nunca puede leer los recibos de otro.
+
+### Administrador de la plataforma
+
+`perfiles.es_admin_plataforma` da acceso total a todas las comunidades y a
+`/plataforma`, donde se crean comunidades nuevas y se cambia la comunidad activa.
+Se comprueba en la base de datos con `es_admin_plataforma()` y políticas RLS
+permisivas. No se activa desde la interfaz: hay que hacerlo con la clave
+`service_role`.
+
+## Casas, pisos y titulares
+
+Cada comunidad guarda `numero_casas` y `numero_pisos`. La función SQL
+`configurar_fincas(comunidad, casas, pisos)` crea las fincas que faltan
+(`Casa 1`, `Piso 1`…), elimina las que ya no se piden **solo si no tienen
+titulares** y reparte el coeficiente a partes iguales hasta sumar 100 %.
+
+Al dar de alta un vecino se elige su casa o piso y, opcionalmente, un segundo
+titular: con correo se le crea su cuenta (o se reutiliza la que ya tenía); solo
+con nombre queda registrado como titular sin acceso. Los dos titulares comparten
+la finca al 50 %.
 
 ## Despliegue
 

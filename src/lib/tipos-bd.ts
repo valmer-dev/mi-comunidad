@@ -275,6 +275,8 @@ export type Database = {
           iban: string | null
           id: string
           nombre: string
+          numero_casas: number
+          numero_pisos: number
           provincia: string | null
         }
         Insert: {
@@ -292,6 +294,8 @@ export type Database = {
           iban?: string | null
           id?: string
           nombre: string
+          numero_casas?: number
+          numero_pisos?: number
           provincia?: string | null
         }
         Update: {
@@ -309,6 +313,8 @@ export type Database = {
           iban?: string | null
           id?: string
           nombre?: string
+          numero_casas?: number
+          numero_pisos?: number
           provincia?: string | null
         }
         Relationships: []
@@ -383,6 +389,7 @@ export type Database = {
           id: string
           metros_cuadrados: number | null
           notas: string | null
+          numero: number | null
           planta: string | null
           puerta: string | null
           tipo: Database["public"]["Enums"]["tipo_finca"]
@@ -396,6 +403,7 @@ export type Database = {
           id?: string
           metros_cuadrados?: number | null
           notas?: string | null
+          numero?: number | null
           planta?: string | null
           puerta?: string | null
           tipo?: Database["public"]["Enums"]["tipo_finca"]
@@ -409,6 +417,7 @@ export type Database = {
           id?: string
           metros_cuadrados?: number | null
           notas?: string | null
+          numero?: number | null
           planta?: string | null
           puerta?: string | null
           tipo?: Database["public"]["Enums"]["tipo_finca"]
@@ -940,6 +949,7 @@ export type Database = {
           avatar_url: string | null
           correo: string | null
           creado_en: string
+          es_admin_plataforma: boolean
           id: string
           nombre: string
           telefono: string | null
@@ -950,6 +960,7 @@ export type Database = {
           avatar_url?: string | null
           correo?: string | null
           creado_en?: string
+          es_admin_plataforma?: boolean
           id: string
           nombre?: string
           telefono?: string | null
@@ -960,6 +971,7 @@ export type Database = {
           avatar_url?: string | null
           correo?: string | null
           creado_en?: string
+          es_admin_plataforma?: boolean
           id?: string
           nombre?: string
           telefono?: string | null
@@ -1284,9 +1296,10 @@ export type Database = {
           finca_id: string
           hasta: string | null
           id: string
+          nombre: string | null
           porcentaje: number
           tipo: Database["public"]["Enums"]["tipo_titular"]
-          usuario_id: string
+          usuario_id: string | null
         }
         Insert: {
           creado_en?: string
@@ -1294,9 +1307,10 @@ export type Database = {
           finca_id: string
           hasta?: string | null
           id?: string
+          nombre?: string | null
           porcentaje?: number
           tipo?: Database["public"]["Enums"]["tipo_titular"]
-          usuario_id: string
+          usuario_id?: string | null
         }
         Update: {
           creado_en?: string
@@ -1304,9 +1318,10 @@ export type Database = {
           finca_id?: string
           hasta?: string | null
           id?: string
+          nombre?: string | null
           porcentaje?: number
           tipo?: Database["public"]["Enums"]["tipo_titular"]
-          usuario_id?: string
+          usuario_id?: string | null
         }
         Relationships: [
           {
@@ -1427,6 +1442,11 @@ export type Database = {
     }
     Functions: {
       comparte_comunidad: { Args: { p_usuario_id: string }; Returns: boolean }
+      configurar_fincas: {
+        Args: { p_casas: number; p_comunidad_id: string; p_pisos: number }
+        Returns: Json
+      }
+      es_admin_plataforma: { Args: never; Returns: boolean }
       es_administrador: { Args: { p_comunidad_id: string }; Returns: boolean }
       es_miembro: { Args: { p_comunidad_id: string }; Returns: boolean }
       es_titular_de: { Args: { p_finca_id: string }; Returns: boolean }
@@ -1463,8 +1483,16 @@ export type Database = {
         | "propietario"
         | "inquilino"
         | "administrador_fincas"
+        | "vecino"
       sentido_voto: "favor" | "contra" | "abstencion"
-      tipo_finca: "vivienda" | "local" | "garaje" | "trastero" | "otro"
+      tipo_finca:
+        | "vivienda"
+        | "local"
+        | "garaje"
+        | "trastero"
+        | "otro"
+        | "casa"
+        | "piso"
       tipo_incidencia:
         | "fontaneria"
         | "electricidad"
@@ -1623,9 +1651,18 @@ export const Constants = {
         "propietario",
         "inquilino",
         "administrador_fincas",
+        "vecino",
       ],
       sentido_voto: ["favor", "contra", "abstencion"],
-      tipo_finca: ["vivienda", "local", "garaje", "trastero", "otro"],
+      tipo_finca: [
+        "vivienda",
+        "local",
+        "garaje",
+        "trastero",
+        "otro",
+        "casa",
+        "piso",
+      ],
       tipo_incidencia: [
         "fontaneria",
         "electricidad",

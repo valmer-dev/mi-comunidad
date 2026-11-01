@@ -10,9 +10,9 @@ import { NuevoVecino } from "./NuevoVecino";
 export const metadata = { title: "Vecinos" };
 
 export default async function PaginaVecinos() {
-  const { miembro, comunidad } = await requerirContexto();
+  const { miembro, comunidad, esAdminPlataforma } = await requerirContexto();
   const supabase = await crearClienteServidor();
-  const admin = esAdministrador(miembro.rol);
+  const admin = esAdminPlataforma || esAdministrador(miembro.rol);
 
   const [{ data: miembros }, { data: fincas }] = await Promise.all([
     supabase
@@ -27,26 +27,66 @@ export default async function PaginaVecinos() {
       .order("codigo"),
   ]);
 
-  const ids = (miembros ?? []).map((m) => m.usuario_id);
-  const { data: perfiles } = ids.length
+  const idsFincas = (fincas ?? []).map((finca) => finca.id);
+  const { data: titulares } = idsFincas.length
+    ? await supabase
+        .from("titulares")
+        .select("id, finca_id, usuario_id, nombre, tipo")
+        .in("finca_id", idsFincas)
+        .order("creado_en", { ascending: true })
+    : { data: [] };
+
+  const idsPerfiles = [
+    ...new Set([
+      ...(miembros ?? []).map((m) => m.usuario_id),
+      ...(titulares ?? []).map((t) => t.usuario_id).filter((id): id is string => Boolean(id)),
+    ]),
+  ];
+
+  const { data: perfiles } = idsPerfiles.length
     ? await supabase
         .from("perfiles")
         .select("id, nombre, apellidos, correo, telefono")
-        .in("id", ids)
+        .in("id", idsPerfiles)
     : { data: [] };
 
   const mapaPerfiles = new Map((perfiles ?? []).map((p) => [p.id, p]));
   const mapaFincas = new Map((fincas ?? []).map((f) => [f.id, f]));
+
+  function nombreTitular(titular: {
+    nombre: string | null;
+    usuario_id: string | null;
+  }) {
+    const perfil = titular.usuario_id ? mapaPerfiles.get(titular.usuario_id) : null;
+    return (
+      titular.nombre?.trim() ||
+      [perfil?.nombre, perfil?.apellidos].filter(Boolean).join(" ") ||
+      "Titular"
+    );
+  }
+
+  const titularesPorFinca = new Map<string, { nombre: string; tipo: string }[]>();
+  for (const titular of titulares ?? []) {
+    const lista = titularesPorFinca.get(titular.finca_id) ?? [];
+    lista.push({ nombre: nombreTitular(titular), tipo: titular.tipo });
+    titularesPorFinca.set(titular.finca_id, lista);
+  }
+
   const coeficienteTotal = (fincas ?? []).reduce(
     (total, finca) => total + Number(finca.coeficiente ?? 0),
     0,
   );
+  const sinTitular = (fincas ?? []).filter(
+    (finca) => (titularesPorFinca.get(finca.id) ?? []).length === 0,
+  ).length;
 
   return (
     <div>
       <CabeceraPagina
         titulo="Vecinos"
-        descripcion={`${miembros?.length ?? 0} personas en la comunidad`}
+        descripcion={`${miembros?.length ?? 0} personas en la comunidad · ${
+          fincas?.length ?? 0
+        } casas y pisos`}
         accion={
           admin ? (
             <NuevoVecino
@@ -63,11 +103,21 @@ export default async function PaginaVecinos() {
         </p>
       )}
 
+      {admin && sinTitular > 0 && (
+        <p className="mb-4 rounded-xl bg-fondo px-4 py-3 text-sm text-suave">
+          {sinTitular === 1
+            ? "Hay 1 casa o piso sin titular asignado."
+            : `Hay ${sinTitular} casas o pisos sin titular asignado.`}{" "}
+          Asígnalos al añadir o editar un vecino.
+        </p>
+      )}
+
       {miembros && miembros.length > 0 ? (
         <ul className="grid gap-3 sm:grid-cols-2">
           {miembros.map((m) => {
             const perfil = mapaPerfiles.get(m.usuario_id);
             const finca = m.finca_principal_id ? mapaFincas.get(m.finca_principal_id) : null;
+            const titularesFinca = finca ? titularesPorFinca.get(finca.id) ?? [] : [];
             return (
               <li key={m.id} className="tarjeta flex items-start gap-4 p-4">
                 <span className="grid size-11 shrink-0 place-items-center rounded-full bg-principal-claro text-sm font-bold text-principal-oscuro">
@@ -84,6 +134,11 @@ export default async function PaginaVecinos() {
                     {ETIQUETAS_ROL[m.rol]}
                     {finca ? ` · ${finca.codigo}` : ""}
                   </p>
+                  {titularesFinca.length > 1 && (
+                    <p className="mt-1 text-xs text-suave">
+                      Titulares: {titularesFinca.map((t) => t.nombre).join(" y ")}
+                    </p>
+                  )}
                   <div className="mt-2 flex flex-col gap-1 text-sm text-suave">
                     {perfil?.correo && (
                       <a
@@ -120,27 +175,34 @@ export default async function PaginaVecinos() {
         <section className="mt-8">
           <h2 className="mb-3 flex items-center gap-2 text-base font-bold">
             <Users className="size-4.5 text-principal" aria-hidden />
-            Fincas ({fincas?.length})
+            Casas y pisos ({fincas?.length})
           </h2>
-          <div className="overflow-hidden rounded-2xl border border-borde bg-superficie">
+          <div className="overflow-x-auto rounded-2xl border border-borde bg-superficie">
             <table className="w-full text-sm">
               <thead className="bg-fondo text-left text-xs uppercase tracking-wide text-suave">
                 <tr>
-                  <th className="px-4 py-2.5 font-semibold">Código</th>
-                  <th className="px-4 py-2.5 font-semibold">Tipo</th>
+                  <th className="px-4 py-2.5 font-semibold">Finca</th>
+                  <th className="px-4 py-2.5 font-semibold">Titulares</th>
                   <th className="px-4 py-2.5 text-right font-semibold">Coeficiente</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-borde">
-                {fincas?.map((finca) => (
-                  <tr key={finca.id}>
-                    <td className="px-4 py-2.5 font-medium">{finca.codigo}</td>
-                    <td className="px-4 py-2.5 capitalize text-suave">{finca.tipo}</td>
-                    <td className="px-4 py-2.5 text-right tabular-nums">
-                      {Number(finca.coeficiente).toFixed(2)} %
-                    </td>
-                  </tr>
-                ))}
+                {fincas?.map((finca) => {
+                  const titularesFinca = titularesPorFinca.get(finca.id) ?? [];
+                  return (
+                    <tr key={finca.id}>
+                      <td className="px-4 py-2.5 font-medium">{finca.codigo}</td>
+                      <td className="px-4 py-2.5 text-suave">
+                        {titularesFinca.length > 0
+                          ? titularesFinca.map((t) => t.nombre).join(" y ")
+                          : "Sin titular"}
+                      </td>
+                      <td className="px-4 py-2.5 text-right tabular-nums">
+                        {Number(finca.coeficiente).toFixed(2)} %
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>

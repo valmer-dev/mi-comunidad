@@ -1,14 +1,45 @@
-import { requerirContexto } from "@/lib/auth";
+import Link from "next/link";
+import { redirect } from "next/navigation";
+import { Building2 } from "lucide-react";
+import { obtenerContexto } from "@/lib/auth";
 import { esAdministrador, puedeVerFinanzas } from "@/lib/permisos";
 import { Estructura } from "@/components/estructura/Estructura";
+import { iniciales } from "@/lib/utilidades";
 
 export default async function LayoutApp({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { perfil, miembro, comunidad } = await requerirContexto();
+  const { perfil, miembro, comunidad, esAdminPlataforma } = await obtenerContexto();
   const nombre = perfil?.nombre?.trim() || "Vecino";
+
+  // Un administrador de plataforma puede no pertenecer a ninguna comunidad:
+  // aun asi entra a /plataforma para crear la primera.
+  if (!miembro || !comunidad) {
+    if (!esAdminPlataforma) redirect("/sin-acceso");
+
+    return (
+      <div className="min-h-dvh">
+        <header className="no-imprimir border-b border-borde bg-superficie px-4 py-3">
+          <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3">
+            <Link href="/plataforma" className="flex items-center gap-2.5">
+              <span className="grid size-9 place-items-center rounded-xl bg-principal text-white">
+                <Building2 className="size-4.5" aria-hidden />
+              </span>
+              <span className="text-sm font-bold">Mi Comunidad · Plataforma</span>
+            </Link>
+            <span className="grid size-9 place-items-center rounded-full bg-principal-claro text-xs font-bold text-principal-oscuro">
+              {iniciales(nombre)}
+            </span>
+          </div>
+        </header>
+        <main className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 lg:px-10">
+          {children}
+        </main>
+      </div>
+    );
+  }
 
   return (
     <Estructura
@@ -17,6 +48,7 @@ export default async function LayoutApp({
       rol={miembro.rol}
       esAdmin={esAdministrador(miembro.rol)}
       puedeVerFinanzas={puedeVerFinanzas(miembro.rol)}
+      esAdminPlataforma={esAdminPlataforma}
     >
       {children}
     </Estructura>

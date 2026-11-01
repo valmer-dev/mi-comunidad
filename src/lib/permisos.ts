@@ -24,7 +24,16 @@ export const ETIQUETAS_ROL: Record<RolMiembro, string> = {
   vicepresidente: "Vicepresidente",
   secretario: "Secretario",
   vocal: "Vocal",
+  vecino: "Vecino",
   propietario: "Propietario",
   inquilino: "Inquilino",
   administrador_fincas: "Administrador de fincas",
 };
+
+/** Roles que se pueden asignar desde la aplicación. */
+export const ROLES_ASIGNABLES: { valor: RolMiembro; etiqueta: string; ayuda: string }[] = [
+  { valor: "presidente", etiqueta: "Presidente", ayuda: "Administra la comunidad" },
+  { valor: "vicepresidente", etiqueta: "Vicepresidente", ayuda: "Sustituye al presidente" },
+  { valor: "vocal", etiqueta: "Vocal", ayuda: "Junta directiva, sin edición" },
+  { valor: "vecino", etiqueta: "Vecino", ayuda: "Solo consulta sus datos" },
+];

@@ -1,4 +1,5 @@
 import { cache } from "react";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 
@@ -32,14 +33,24 @@ export const obtenerContexto = cache(async () => {
   if (!usuario) redirect("/entrar");
 
   const supabase = await crearClienteServidor();
+  const almacen = await cookies();
+  const comunidadActiva = almacen.get("comunidad_activa")?.value;
 
-  const { data: miembro } = await supabase
+  // Un administrador de plataforma puede pertenecer a varias comunidades.
+  // La cookie guarda la que esta viendo; si no es valida, se usa la primera.
+  const { data: miembros } = await supabase
     .from("miembros")
     .select("*, comunidades(*), perfiles(*)")
     .eq("usuario_id", usuario.id)
     .eq("estado", "activo")
-    .limit(1)
-    .maybeSingle();
+    .order("creado_en", { ascending: true });
+
+  const miembro =
+    (comunidadActiva
+      ? miembros?.find((fila) => fila.comunidad_id === comunidadActiva)
+      : null) ??
+    miembros?.[0] ??
+    null;
 
   if (!miembro) {
     const { data: perfil } = await supabase
@@ -48,7 +59,13 @@ export const obtenerContexto = cache(async () => {
       .eq("id", usuario.id)
       .maybeSingle();
 
-    return { usuario, perfil: perfil ?? null, miembro: null, comunidad: null };
+    return {
+      usuario,
+      perfil: perfil ?? null,
+      miembro: null,
+      comunidad: null,
+      esAdminPlataforma: Boolean(perfil?.es_admin_plataforma),
+    };
   }
 
   const { comunidades, perfiles, ...datosMiembro } = miembro;
@@ -58,13 +75,16 @@ export const obtenerContexto = cache(async () => {
     perfil: perfiles ?? null,
     miembro: datosMiembro,
     comunidad: comunidades ?? null,
+    esAdminPlataforma: Boolean(perfiles?.es_admin_plataforma),
   };
 });
 
 /** Igual que obtenerContexto, pero exige pertenecer a una comunidad. */
 export const requerirContexto = cache(async () => {
   const contexto = await obtenerContexto();
-  if (!contexto.miembro || !contexto.comunidad) redirect("/sin-acceso");
+  if (!contexto.miembro || !contexto.comunidad) {
+    redirect(contexto.esAdminPlataforma ? "/plataforma" : "/sin-acceso");
+  }
   return {
     ...contexto,
     miembro: contexto.miembro,
