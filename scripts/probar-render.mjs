@@ -1,5 +1,8 @@
 // Comprobacion de render de las rutas privadas con una sesion real.
-// Uso: node --env-file=.env.local scripts/_probar-render.mjs
+// Verifica estado, tiempo de respuesta y que el HTML contiene el contenido
+// esperado de cada pagina (no una redireccion al login).
+//
+// Uso: node --env-file=.env.local scripts/probar-render.mjs [url-base]
 import { createClient } from "@supabase/supabase-js";
 import { readFileSync } from "node:fs";
 
@@ -58,31 +61,36 @@ const cookie = createChunks(key, value)
   .map((c) => `${c.name}=${c.value}`)
   .join("; ");
 
+// Marcador que solo aparece si la pagina se ha renderizado de verdad.
 const rutas = [
-  "/panel",
-  "/vecinos",
-  "/tablon",
-  "/incidencias",
-  "/juntas",
-  "/finanzas",
-  "/documentos",
-  "/ajustes",
+  ["/panel", "Hola,"],
+  ["/vecinos", "personas en la comunidad"],
+  ["/tablon", "Avisos y comunicados"],
+  ["/incidencias", "Averías y problemas del edificio"],
+  ["/juntas", "Convocatorias, puntos del día y acuerdos"],
+  ["/finanzas", "Ejercicio"],
+  ["/documentos", "Estatutos, actas, contratos y certificados"],
+  ["/ajustes", "Datos de la comunidad y de tu cuenta"],
 ];
 
 let fallos = 0;
-for (const ruta of rutas) {
+for (const [ruta, marcador] of rutas) {
   const inicio = performance.now();
   const res = await fetch(base + ruta, { headers: { cookie }, redirect: "manual" });
   const html = await res.text();
   const ms = Math.round(performance.now() - inicio);
+
   const roto =
     /Minified React error/i.test(html) ||
     /An error occurred in the Server Components render/i.test(html) ||
     /Application error/i.test(html);
-  if (roto || res.status >= 400) fallos += 1;
+  const contienePagina = html.includes(marcador);
+  const bien = res.status === 200 && contienePagina && !roto;
+  if (!bien) fallos += 1;
+
   console.log(
     `${ruta.padEnd(14)} ${String(res.status).padEnd(4)} ${String(ms).padStart(5)} ms  ${
-      roto ? "FALLO DE RENDER" : res.status < 400 ? "ok" : "ERROR"
+      bien ? "ok" : roto ? "FALLO DE RENDER" : !contienePagina ? "SIN CONTENIDO ESPERADO" : "ERROR"
     }`,
   );
 }

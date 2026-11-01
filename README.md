@@ -78,6 +78,25 @@ supabase/
   migrations/               esquema y datos iniciales
 ```
 
+## Rendimiento
+
+Todas las páginas son dinámicas (leen la sesión), así que cada navegación llega
+al servidor. Para que el cambio de módulo sea rápido:
+
+- **Funciones en `cdg1` (París)**, la misma región que Supabase (`eu-west-3`).
+  Se configura en `vercel.json`. Si no, cada consulta cruza el Atlántico.
+- **`getClaims()` en vez de `getUser()`**: la firma del JWT se verifica en local
+  con las claves públicas del proyecto, sin llamar al servidor de Auth.
+- **Una sola consulta por navegación** para perfil, membresía y comunidad
+  (`select("*, comunidades(*), perfiles(*)")`).
+- **`staleTimes.dynamic: 30`**: el contenido visitado se reutiliza 30 segundos.
+  Las acciones de servidor llaman a `revalidatePath`, así que los cambios se ven
+  al instante.
+- **`loading.tsx`** con un esqueleto: la pantalla responde al clic de inmediato.
+
+Para medir: `node --env-file=.env.local scripts/probar-render.mjs <url>`
+(necesita `.secretos/credenciales-presidente.txt`).
+
 ## Roles
 
 `presidente`, `vicepresidente`, `secretario`, `vocal`, `propietario`, `inquilino`, `administrador_fincas`.
