@@ -65,7 +65,10 @@ export function Estructura({
         </main>
       </div>
 
-      <NavegacionMovil esAdminPlataforma={esAdminPlataforma} />
+      <NavegacionMovil
+        esAdminPlataforma={esAdminPlataforma}
+        puedeVerFinanzas={puedeVerFinanzas}
+      />
     </div>
   );
 }
