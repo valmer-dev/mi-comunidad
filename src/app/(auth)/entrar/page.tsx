@@ -60,7 +60,7 @@ export default async function PaginaEntrar() {
         <div className="w-full max-w-sm">
           <h2 className="text-2xl font-bold tracking-tight">Accede a tu cuenta</h2>
           <p className="mt-1.5 text-sm text-suave">
-            Usa el correo y la contraseña que te dio la comunidad.
+            Usa tu teléfono o tu correo y la contraseña que te dio la comunidad.
           </p>
           <div className="mt-7">
             <FormularioEntrar />

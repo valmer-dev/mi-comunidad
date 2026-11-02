@@ -1,11 +1,25 @@
 "use client";
 
 import { useActionState, useState } from "react";
-import { Check, Copy, Loader2, UserPlus, X } from "lucide-react";
-import { crearVecino, type EstadoVecino } from "@/app/acciones/vecinos";
+import {
+  Check,
+  Copy,
+  Loader2,
+  MessageCircle,
+  UserPlus,
+  X,
+} from "lucide-react";
+import { crearVecino, type CuentaCreada, type EstadoVecino } from "@/app/acciones/vecinos";
 import { ROLES_ASIGNABLES } from "@/lib/permisos";
+import { formatearTelefono } from "@/lib/telefono";
 
 type Finca = { id: string; codigo: string; tipo: string };
+
+type Props = {
+  fincas: Finca[];
+  nombreComunidad: string;
+  urlApp: string;
+};
 
 const ESTADO_INICIAL: EstadoVecino = {};
 
@@ -13,20 +27,49 @@ function textoCredenciales(estado: EstadoVecino) {
   if (!("ok" in estado) || !estado.ok) return "";
   return [
     "Acceso a Mi Comunidad",
-    ...estado.cuentas.map(
-      (cuenta) =>
-        `\n${cuenta.nombre}\nCorreo: ${cuenta.correo}\nContraseña: ${cuenta.contrasena}`,
+    ...estado.cuentas.map((cuenta) =>
+      [
+        `\n${cuenta.nombre}`,
+        cuenta.telefono ? `Teléfono: ${formatearTelefono(cuenta.telefono)}` : "",
+        cuenta.correo ? `Correo: ${cuenta.correo}` : "",
+        `Contraseña: ${cuenta.contrasena}`,
+      ]
+        .filter(Boolean)
+        .join("\n"),
     ),
   ].join("\n");
 }
 
-export function NuevoVecino({ fincas }: { fincas: Finca[] }) {
+function mensajeWhatsApp(
+  cuenta: CuentaCreada,
+  estado: { nombreComunidad: string; urlApp: string; fincaCodigo: string | null },
+) {
+  const lineas = [
+    `Hola ${cuenta.nombre}, te he dado de alta en Mi Comunidad (${estado.nombreComunidad}).`,
+    "",
+    `Entra en ${estado.urlApp}/entrar`,
+    cuenta.telefono ? `Teléfono: ${formatearTelefono(cuenta.telefono)}` : "",
+    cuenta.correo ? `Correo: ${cuenta.correo}` : "",
+    `Contraseña temporal: ${cuenta.contrasena}`,
+    estado.fincaCodigo ? `Tu vivienda: ${estado.fincaCodigo}` : "",
+    "",
+    "Cuando entres, puedes cambiar la contraseña en Ajustes.",
+  ];
+  return lineas.filter((linea) => linea !== "").join("\n");
+}
+
+function enlaceWhatsApp(cuenta: CuentaCreada, mensaje: string) {
+  if (!cuenta.telefono) return null;
+  return `https://wa.me/34${cuenta.telefono}?text=${encodeURIComponent(mensaje)}`;
+}
+
+export function NuevoVecino({ fincas, nombreComunidad, urlApp }: Props) {
   const [abierto, setAbierto] = useState(false);
   const [rol, setRol] = useState("vecino");
   const [estado, accion, pendiente] = useActionState(crearVecino, ESTADO_INICIAL);
   const [copiado, setCopiado] = useState(false);
-  const ayudaRol = ROLES_ASIGNABLES.find((opcion) => opcion.valor === rol)?.ayuda;
 
+  const ayudaRol = ROLES_ASIGNABLES.find((opcion) => opcion.valor === rol)?.ayuda;
   const casas = fincas.filter((finca) => finca.tipo === "casa");
   const pisos = fincas.filter((finca) => finca.tipo === "piso");
   const otras = fincas.filter(
@@ -55,7 +98,7 @@ export function NuevoVecino({ fincas }: { fincas: Finca[] }) {
         <div>
           <h2 className="text-base font-bold">Nuevo vecino</h2>
           <p className="mt-0.5 text-sm text-suave">
-            Se crea la cuenta y se le entrega la contraseña temporal.
+            Se crea la cuenta con el teléfono y se genera la invitación para WhatsApp.
           </p>
         </div>
         <button
@@ -77,24 +120,32 @@ export function NuevoVecino({ fincas }: { fincas: Finca[] }) {
         </div>
 
         <div>
+          <label htmlFor="telefono" className="etiqueta">
+            Teléfono (para entrar)
+          </label>
+          <input
+            id="telefono"
+            name="telefono"
+            type="tel"
+            required
+            inputMode="tel"
+            autoComplete="off"
+            className="campo"
+            placeholder="600 000 000"
+          />
+        </div>
+
+        <div>
           <label htmlFor="correo" className="etiqueta">
-            Correo electrónico
+            Correo electrónico (opcional)
           </label>
           <input
             id="correo"
             name="correo"
             type="email"
-            required
             className="campo"
             placeholder="ana@correo.com"
           />
-        </div>
-
-        <div>
-          <label htmlFor="telefono" className="etiqueta">
-            Teléfono (opcional)
-          </label>
-          <input id="telefono" name="telefono" type="tel" className="campo" placeholder="600 000 000" />
         </div>
 
         <div>
@@ -161,13 +212,13 @@ export function NuevoVecino({ fincas }: { fincas: Finca[] }) {
         <fieldset className="rounded-xl border border-borde p-3 sm:col-span-2">
           <legend className="px-1 text-sm font-semibold">Segundo titular (opcional)</legend>
           <p className="text-xs text-suave">
-            Si la casa o el piso tiene dos propietarios, añade al segundo. Con correo
-            tendrá su propia cuenta; solo con nombre queda registrado sin acceso.
+            Si la casa o el piso tiene dos propietarios, añade al segundo. Con teléfono
+            o correo tendrá su propia cuenta; solo con nombre queda registrado sin acceso.
           </p>
-          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+          <div className="mt-3 grid gap-3 sm:grid-cols-3">
             <div>
               <label htmlFor="titular2Nombre" className="etiqueta">
-                Nombre del segundo titular
+                Nombre
               </label>
               <input
                 id="titular2Nombre"
@@ -177,8 +228,21 @@ export function NuevoVecino({ fincas }: { fincas: Finca[] }) {
               />
             </div>
             <div>
+              <label htmlFor="titular2Telefono" className="etiqueta">
+                Teléfono
+              </label>
+              <input
+                id="titular2Telefono"
+                name="titular2Telefono"
+                type="tel"
+                inputMode="tel"
+                className="campo"
+                placeholder="600 000 000"
+              />
+            </div>
+            <div>
               <label htmlFor="titular2Correo" className="etiqueta">
-                Correo del segundo titular
+                Correo
               </label>
               <input
                 id="titular2Correo"
@@ -200,44 +264,80 @@ export function NuevoVecino({ fincas }: { fincas: Finca[] }) {
         {"ok" in estado && estado.ok && (
           <div className="rounded-xl bg-emerald-50 p-4 sm:col-span-2">
             <p className="text-sm font-semibold text-emerald-900">
-              {estado.cuentas.length > 1
-                ? `Cuentas creadas para ${estado.nombre} y el segundo titular`
-                : `Cuenta creada para ${estado.nombre}`}
+              {estado.cuentas.length === 0
+                ? `${estado.nombre} añadido a la comunidad`
+                : estado.cuentas.length === 1
+                  ? `Cuenta creada para ${estado.cuentas[0].nombre}`
+                  : "Cuentas creadas para los dos titulares"}
             </p>
             <p className="mt-1 text-sm text-emerald-800">
-              Entrega estas credenciales. No se volverán a mostrar.
+              {estado.cuentas.length > 0
+                ? "Envía la invitación por WhatsApp o copia las credenciales. No se volverán a mostrar."
+                : "No hace falta contraseña nueva."}
             </p>
-            <div className="mt-3 space-y-2">
-              {estado.cuentas.map((cuenta) => (
-                <div
-                  key={cuenta.correo}
-                  className="rounded-lg bg-white p-3 font-mono text-sm text-tinta"
-                >
-                  <p className="font-sans text-xs font-semibold uppercase tracking-wide text-suave">
-                    {cuenta.nombre}
-                  </p>
-                  <p>Correo: {cuenta.correo}</p>
-                  <p>Contraseña: {cuenta.contrasena}</p>
-                </div>
-              ))}
+
+            <div className="mt-3 space-y-3">
+              {estado.cuentas.map((cuenta) => {
+                const mensaje = mensajeWhatsApp(cuenta, {
+                  nombreComunidad,
+                  urlApp,
+                  fincaCodigo: estado.fincaCodigo,
+                });
+                const enlace = enlaceWhatsApp(cuenta, mensaje);
+                return (
+                  <div key={cuenta.nombre + (cuenta.telefono ?? cuenta.correo)} className="rounded-lg bg-white p-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-suave">
+                      {cuenta.nombre}
+                    </p>
+                    <div className="mt-1 font-mono text-sm text-tinta">
+                      {cuenta.telefono && <p>Teléfono: {formatearTelefono(cuenta.telefono)}</p>}
+                      {cuenta.correo && <p>Correo: {cuenta.correo}</p>}
+                      <p>Contraseña: {cuenta.contrasena}</p>
+                    </div>
+                    {enlace && (
+                      <a
+                        href={enlace}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="boton boton-principal mt-2"
+                      >
+                        <MessageCircle className="size-4" aria-hidden />
+                        Enviar invitación por WhatsApp
+                      </a>
+                    )}
+                  </div>
+                );
+              })}
             </div>
+
             {estado.aviso && (
               <p className="mt-2 text-sm text-emerald-800">{estado.aviso}</p>
             )}
-            <button
-              type="button"
-              onClick={copiarCredenciales}
-              className="boton boton-borde mt-3"
-            >
-              {copiado ? <Check className="size-4" aria-hidden /> : <Copy className="size-4" aria-hidden />}
-              {copiado ? "Copiado" : "Copiar credenciales"}
-            </button>
+
+            {estado.cuentas.length > 0 && (
+              <button
+                type="button"
+                onClick={copiarCredenciales}
+                className="boton boton-borde mt-3"
+              >
+                {copiado ? (
+                  <Check className="size-4" aria-hidden />
+                ) : (
+                  <Copy className="size-4" aria-hidden />
+                )}
+                {copiado ? "Copiado" : "Copiar credenciales"}
+              </button>
+            )}
           </div>
         )}
 
         <div className="flex gap-2 sm:col-span-2">
           <button type="submit" disabled={pendiente} className="boton boton-principal">
-            {pendiente ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <UserPlus className="size-4" aria-hidden />}
+            {pendiente ? (
+              <Loader2 className="size-4 animate-spin" aria-hidden />
+            ) : (
+              <UserPlus className="size-4" aria-hidden />
+            )}
             {pendiente ? "Creando…" : "Crear cuenta"}
           </button>
         </div>

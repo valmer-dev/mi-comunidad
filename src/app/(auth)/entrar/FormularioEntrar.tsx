@@ -12,17 +12,16 @@ export function FormularioEntrar() {
   return (
     <form action={accion} className="space-y-4">
       <div>
-        <label htmlFor="correo" className="etiqueta">
-          Correo electrónico
+        <label htmlFor="identificador" className="etiqueta">
+          Teléfono o correo
         </label>
         <input
-          id="correo"
-          name="correo"
-          type="email"
-          autoComplete="email"
+          id="identificador"
+          name="identificador"
+          type="text"
+          autoComplete="username"
           required
-          inputMode="email"
-          placeholder="tu@correo.com"
+          placeholder="600 000 000"
           className="campo"
         />
       </div>

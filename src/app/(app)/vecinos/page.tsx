@@ -3,6 +3,7 @@ import { requerirContexto } from "@/lib/auth";
 import { esAdministrador, ETIQUETAS_ROL } from "@/lib/permisos";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { iniciales } from "@/lib/utilidades";
+import { esCorreoInterno, formatearTelefono } from "@/lib/telefono";
 import { CabeceraPagina, EstadoVacio } from "@/components/ui/CabeceraPagina";
 import { EtiquetaEstado } from "@/components/ui/EtiquetaEstado";
 import { NuevoVecino } from "./NuevoVecino";
@@ -92,6 +93,10 @@ export default async function PaginaVecinos() {
           admin ? (
             <NuevoVecino
               fincas={(fincas ?? []).map((f) => ({ id: f.id, codigo: f.codigo, tipo: f.tipo }))}
+              nombreComunidad={comunidad.nombre}
+              urlApp={
+                process.env.NEXT_PUBLIC_URL_APP ?? "https://comunidad-nine.vercel.app"
+              }
             />
           ) : undefined
         }
@@ -119,6 +124,8 @@ export default async function PaginaVecinos() {
             const perfil = mapaPerfiles.get(m.usuario_id);
             const finca = m.finca_principal_id ? mapaFincas.get(m.finca_principal_id) : null;
             const titularesFinca = finca ? titularesPorFinca.get(finca.id) ?? [] : [];
+            const correoVisible =
+              perfil?.correo && !esCorreoInterno(perfil.correo) ? perfil.correo : null;
             return (
               <li key={m.id} className="tarjeta flex items-start gap-4 p-4">
                 <span className="grid size-11 shrink-0 place-items-center rounded-full bg-principal-claro text-sm font-bold text-principal-oscuro">
@@ -141,13 +148,13 @@ export default async function PaginaVecinos() {
                     </p>
                   )}
                   <div className="mt-2 flex flex-col gap-1 text-sm text-suave">
-                    {perfil?.correo && (
+                    {correoVisible && (
                       <a
-                        href={`mailto:${perfil.correo}`}
+                        href={`mailto:${correoVisible}`}
                         className="flex items-center gap-1.5 hover:text-principal"
                       >
                         <Mail className="size-3.5" aria-hidden />
-                        <span className="truncate">{perfil.correo}</span>
+                        <span className="truncate">{correoVisible}</span>
                       </a>
                     )}
                     {perfil?.telefono && (
@@ -156,7 +163,7 @@ export default async function PaginaVecinos() {
                         className="flex items-center gap-1.5 hover:text-principal"
                       >
                         <Phone className="size-3.5" aria-hidden />
-                        {perfil.telefono}
+                        {formatearTelefono(perfil.telefono)}
                       </a>
                     )}
                   </div>

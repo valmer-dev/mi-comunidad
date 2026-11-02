@@ -2,6 +2,7 @@ import { Building2, LogOut, ShieldCheck, UserCircle } from "lucide-react";
 import { cerrarSesion } from "@/app/acciones/autenticacion";
 import { requerirContexto } from "@/lib/auth";
 import { ETIQUETAS_ROL } from "@/lib/permisos";
+import { esCorreoInterno, formatearTelefono } from "@/lib/telefono";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { CabeceraPagina } from "@/components/ui/CabeceraPagina";
 import { CambiarContrasena } from "./CambiarContrasena";
@@ -111,11 +112,17 @@ export default async function PaginaAjustes() {
             </div>
             <div className="flex justify-between gap-4">
               <dt className="text-suave">Correo</dt>
-              <dd className="text-right font-medium">{perfil?.correo ?? "—"}</dd>
+              <dd className="text-right font-medium">
+                {perfil?.correo && !esCorreoInterno(perfil.correo)
+                  ? perfil.correo
+                  : "No indicado"}
+              </dd>
             </div>
             <div className="flex justify-between gap-4">
               <dt className="text-suave">Teléfono</dt>
-              <dd className="text-right font-medium">{perfil?.telefono ?? "—"}</dd>
+              <dd className="text-right font-medium">
+                {formatearTelefono(perfil?.telefono)}
+              </dd>
             </div>
             <div className="flex justify-between gap-4">
               <dt className="text-suave">Rol</dt>
