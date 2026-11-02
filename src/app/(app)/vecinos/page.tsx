@@ -23,7 +23,7 @@ export default async function PaginaVecinos() {
       .order("creado_en", { ascending: true }),
     supabase
       .from("fincas")
-      .select("id, codigo, tipo, numero, coeficiente")
+      .select("id, codigo, tipo, numero")
       .eq("comunidad_id", comunidad.id)
       .order("tipo")
       .order("numero"),
@@ -74,10 +74,6 @@ export default async function PaginaVecinos() {
     titularesPorFinca.set(titular.finca_id, lista);
   }
 
-  const coeficienteTotal = (fincas ?? []).reduce(
-    (total, finca) => total + Number(finca.coeficiente ?? 0),
-    0,
-  );
   const sinTitular = (fincas ?? []).filter(
     (finca) => (titularesPorFinca.get(finca.id) ?? []).length === 0,
   ).length;
@@ -101,13 +97,6 @@ export default async function PaginaVecinos() {
           ) : undefined
         }
       />
-
-      {admin && (fincas ?? []).length > 0 && coeficienteTotal !== 100 && (
-        <p className="mb-4 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-800">
-          Los coeficientes de las fincas suman <strong>{coeficienteTotal.toFixed(2)} %</strong> y
-          deberían sumar 100 %. Revísalos en Ajustes.
-        </p>
-      )}
 
       {admin && sinTitular > 0 && (
         <p className="mb-4 rounded-xl bg-fondo px-4 py-3 text-sm text-suave">
@@ -191,7 +180,6 @@ export default async function PaginaVecinos() {
                 <tr>
                   <th className="px-4 py-2.5 font-semibold">Finca</th>
                   <th className="px-4 py-2.5 font-semibold">Titulares</th>
-                  <th className="px-4 py-2.5 text-right font-semibold">Coeficiente</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-borde">
@@ -204,9 +192,6 @@ export default async function PaginaVecinos() {
                         {titularesFinca.length > 0
                           ? titularesFinca.map((t) => t.nombre).join(" y ")
                           : "Sin titular"}
-                      </td>
-                      <td className="px-4 py-2.5 text-right tabular-nums">
-                        {Number(finca.coeficiente).toFixed(2)} %
                       </td>
                     </tr>
                   );

@@ -17,13 +17,9 @@ export default async function PaginaAjustes() {
 
   const { data: fincas } = await supabase
     .from("fincas")
-    .select("id, coeficiente")
+    .select("id")
     .eq("comunidad_id", comunidad.id);
 
-  const coeficienteTotal = (fincas ?? []).reduce(
-    (total, finca) => total + Number(finca.coeficiente ?? 0),
-    0,
-  );
   const puedeConfigurar = esAdminPlataforma || miembro.rol === "presidente";
 
   return (
@@ -57,12 +53,6 @@ export default async function PaginaAjustes() {
             <div className="flex justify-between gap-4">
               <dt className="text-suave">CIF</dt>
               <dd className="text-right font-medium">{comunidad.cif ?? "Sin definir"}</dd>
-            </div>
-            <div className="flex justify-between gap-4">
-              <dt className="text-suave">Coeficiente total</dt>
-              <dd className="text-right font-medium">
-                {Number(comunidad.coeficiente_total).toFixed(2)} %
-              </dd>
             </div>
             <div className="flex justify-between gap-4">
               <dt className="text-suave">Casas y pisos</dt>
@@ -147,7 +137,6 @@ export default async function PaginaAjustes() {
             numeroCasas={comunidad.numero_casas}
             numeroPisos={comunidad.numero_pisos}
             totalFincas={fincas?.length ?? 0}
-            coeficienteTotal={coeficienteTotal}
           />
         </div>
       )}

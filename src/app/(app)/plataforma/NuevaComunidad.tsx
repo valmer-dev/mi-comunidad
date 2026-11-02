@@ -12,7 +12,6 @@ export function NuevaComunidad() {
   const [pisos, setPisos] = useState(0);
 
   const total = casas + pisos;
-  const coeficiente = total > 0 ? 100 / total : 0;
 
   return (
     <form action={accion} className="tarjeta grid gap-3">
@@ -97,9 +96,7 @@ export function NuevaComunidad() {
 
       <p className="rounded-xl bg-fondo px-3.5 py-2.5 text-xs leading-relaxed text-suave">
         {total > 0
-          ? `Se crearán ${total} fincas (${casas} casas y ${pisos} pisos) con un coeficiente de ${coeficiente.toFixed(
-              4,
-            )} % cada una.`
+          ? `Se crearán ${total} fincas (${casas} casas y ${pisos} pisos).`
           : "Indica cuántas casas y pisos tiene la comunidad para generarlas automáticamente."}
       </p>
 

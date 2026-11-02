@@ -10,14 +10,12 @@ type Props = {
   numeroCasas: number;
   numeroPisos: number;
   totalFincas: number;
-  coeficienteTotal: number;
 };
 
 export function ConfigurarFincas({
   numeroCasas,
   numeroPisos,
   totalFincas,
-  coeficienteTotal,
 }: Props) {
   const [estado, accion, pendiente] = useActionState(configurarFincas, ESTADO_INICIAL);
 
@@ -29,10 +27,10 @@ export function ConfigurarFincas({
       </h2>
       <p className="mt-2 text-sm leading-relaxed text-suave">
         Indica cuántas casas y pisos tiene la comunidad. Se crean automáticamente con
-        su número (Casa 1, 1ºA, 1ºB…) y el coeficiente se reparte a partes iguales.
+        su número (Casa 1, 1ºA, 1ºB…).
       </p>
 
-      <dl className="mt-4 grid grid-cols-3 gap-3 text-center">
+      <dl className="mt-4 grid grid-cols-2 gap-3 text-center">
         <div className="rounded-xl bg-fondo px-3 py-2.5">
           <dt className="text-xs text-suave">Casas</dt>
           <dd className="text-lg font-bold tabular-nums">{numeroCasas}</dd>
@@ -40,12 +38,6 @@ export function ConfigurarFincas({
         <div className="rounded-xl bg-fondo px-3 py-2.5">
           <dt className="text-xs text-suave">Pisos</dt>
           <dd className="text-lg font-bold tabular-nums">{numeroPisos}</dd>
-        </div>
-        <div className="rounded-xl bg-fondo px-3 py-2.5">
-          <dt className="text-xs text-suave">Coeficiente</dt>
-          <dd className="text-lg font-bold tabular-nums">
-            {coeficienteTotal.toFixed(2)} %
-          </dd>
         </div>
       </dl>
 
