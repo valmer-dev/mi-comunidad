@@ -51,6 +51,15 @@ export function iniciales(nombre?: string | null, apellidos?: string | null) {
   return (partes[0][0] + partes[1][0]).toUpperCase();
 }
 
+export function formatoTamano(bytes: number | null | undefined) {
+  const valor = Number(bytes ?? 0);
+  if (!Number.isFinite(valor) || valor <= 0) return "—";
+  const unidades = ["B", "KB", "MB", "GB"];
+  const indice = Math.min(Math.floor(Math.log(valor) / Math.log(1024)), unidades.length - 1);
+  const cantidad = valor / 1024 ** indice;
+  return `${cantidad.toFixed(indice === 0 ? 0 : 1)} ${unidades[indice]}`;
+}
+
 export function primerDiaDelMes(fecha = new Date()) {
   return new Date(fecha.getFullYear(), fecha.getMonth(), 1);
 }

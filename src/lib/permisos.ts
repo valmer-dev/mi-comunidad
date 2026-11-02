@@ -10,6 +10,8 @@ const FINANZAS: RolMiembro[] = [
   "vocal",
   "administrador_fincas",
 ];
+/** Roles que pueden subir documentos (ademas del administrador de plataforma). */
+const GESTORES_DOCUMENTOS: RolMiembro[] = ["presidente", "vicepresidente", "vocal"];
 
 export function esAdministrador(rol: RolMiembro | null | undefined) {
   return !!rol && ADMINISTRADORES.includes(rol);
@@ -17,6 +19,13 @@ export function esAdministrador(rol: RolMiembro | null | undefined) {
 
 export function puedeVerFinanzas(rol: RolMiembro | null | undefined) {
   return !!rol && FINANZAS.includes(rol);
+}
+
+export function puedeImportarDocumentos(
+  rol: RolMiembro | null | undefined,
+  esAdminPlataforma = false,
+) {
+  return esAdminPlataforma || (!!rol && GESTORES_DOCUMENTOS.includes(rol));
 }
 
 export const ETIQUETAS_ROL: Record<RolMiembro, string> = {
