@@ -1,4 +1,4 @@
-import { MapPin, Wrench } from "lucide-react";
+import { MapPin, UserRound, Wrench } from "lucide-react";
 import { requerirContexto } from "@/lib/auth";
 import { esAdministrador } from "@/lib/permisos";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
@@ -39,11 +39,71 @@ export default async function PaginaIncidencias() {
     (i) => i.estado === "resuelta" || i.estado === "cerrada",
   );
 
+  // Quien registro cada incidencia: nombre y vivienda.
+  const idsReportadores = [
+    ...new Set(
+      (incidencias ?? [])
+        .map((i) => i.reportado_por)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+
+  const { data: perfilesReportadores } = idsReportadores.length
+    ? await supabase
+        .from("perfiles")
+        .select("id, nombre, apellidos")
+        .in("id", idsReportadores)
+    : { data: [] };
+
+  const { data: miembrosReportadores } = idsReportadores.length
+    ? await supabase
+        .from("miembros")
+        .select("usuario_id, finca_principal_id")
+        .eq("comunidad_id", comunidad.id)
+        .in("usuario_id", idsReportadores)
+    : { data: [] };
+
+  const idsFincasReportadores = [
+    ...new Set(
+      (miembrosReportadores ?? [])
+        .map((m) => m.finca_principal_id)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+
+  const { data: fincasReportadores } = idsFincasReportadores.length
+    ? await supabase.from("fincas").select("id, codigo").in("id", idsFincasReportadores)
+    : { data: [] };
+
+  const mapaPerfiles = new Map(
+    (perfilesReportadores ?? []).map((p) => [p.id, p]),
+  );
+  const mapaMiembros = new Map(
+    (miembrosReportadores ?? []).map((m) => [m.usuario_id, m]),
+  );
+  const mapaFincas = new Map(
+    (fincasReportadores ?? []).map((f) => [f.id, f.codigo]),
+  );
+
+  function reportador(id: string | null) {
+    const perfil = id ? mapaPerfiles.get(id) : null;
+    const nombre =
+      [perfil?.nombre, perfil?.apellidos].filter(Boolean).join(" ") ||
+      "un vecino de la comunidad";
+    const miembroReportador = id ? mapaMiembros.get(id) : null;
+    const finca = miembroReportador?.finca_principal_id
+      ? mapaFincas.get(miembroReportador.finca_principal_id) ?? null
+      : null;
+    return { nombre, finca };
+  }
+
   function puedeEditar(reportadoPor: string | null) {
     return admin || reportadoPor === usuario.id;
   }
 
   function Tarjeta({ incidencia }: { incidencia: NonNullable<typeof incidencias>[number] }) {
+    const quien = reportador(incidencia.reportado_por);
+
     return (
       <li className="tarjeta">
         <div className="flex flex-wrap items-start justify-between gap-2">
@@ -68,12 +128,25 @@ export default async function PaginaIncidencias() {
           {incidencia.descripcion}
         </p>
 
-        {incidencia.ubicacion && (
-          <p className="mt-2 flex items-center gap-1.5 text-xs text-suave">
-            <MapPin className="size-3.5" aria-hidden />
-            {incidencia.ubicacion}
-          </p>
-        )}
+        <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs text-suave">
+          <span className="flex items-center gap-1.5">
+            <UserRound className="size-3.5" aria-hidden />
+            {incidencia.reportado_por === usuario.id
+              ? "La registraste tú"
+              : `La registró ${quien.nombre}`}
+            {quien.finca && (
+              <span className="rounded-full bg-fondo px-2 py-0.5 font-medium text-tinta/80">
+                {quien.finca}
+              </span>
+            )}
+          </span>
+          {incidencia.ubicacion && (
+            <span className="flex items-center gap-1.5">
+              <MapPin className="size-3.5" aria-hidden />
+              {incidencia.ubicacion}
+            </span>
+          )}
+        </div>
       </li>
     );
   }
