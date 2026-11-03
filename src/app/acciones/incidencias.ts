@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requerirContexto } from "@/lib/auth";
+import { puedeGestionarIncidencias } from "@/lib/permisos";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 
 const esquema = z.object({
@@ -60,22 +61,84 @@ export async function crearIncidencia(
   return { ok: true };
 }
 
-export async function cambiarEstadoIncidencia(id: string, estado: string) {
-  const estados = ["abierta", "en_curso", "resuelta", "cerrada"] as const;
-  if (!estados.includes(estado as (typeof estados)[number])) return;
+export async function cambiarEstadoIncidencia(
+  id: string,
+  estado: string,
+  comentario = "",
+): Promise<{ error?: string; ok?: boolean }> {
+  const esquemaEstado = z.object({
+    id: z.string().uuid("Incidencia no válida."),
+    estado: z.enum(["abierta", "en_curso", "resuelta", "cerrada"]),
+    comentario: z
+      .string()
+      .trim()
+      .max(600, "El comentario no puede superar los 600 caracteres."),
+  });
 
-  const { miembro } = await requerirContexto();
+  const resultado = esquemaEstado.safeParse({ id, estado, comentario });
+
+  if (!resultado.success) {
+    return { error: resultado.error.issues[0]?.message ?? "Revisa los datos." };
+  }
+
+  const { usuario, miembro, comunidad } = await requerirContexto();
+
+  if (!puedeGestionarIncidencias(miembro.rol)) {
+    return { error: "Solo la junta directiva puede cambiar el estado de una incidencia." };
+  }
+
   const supabase = await crearClienteServidor();
 
-  await supabase
+  const { data: incidencia, error: errorLectura } = await supabase
     .from("incidencias")
-    .update({
-      estado: estado as (typeof estados)[number],
-      resuelto_en: estado === "resuelta" || estado === "cerrada" ? new Date().toISOString() : null,
-    })
-    .eq("id", id)
-    .eq("comunidad_id", miembro.comunidad_id);
+    .select("id, estado")
+    .eq("id", resultado.data.id)
+    .eq("comunidad_id", comunidad.id)
+    .maybeSingle();
+
+  if (errorLectura || !incidencia) {
+    return { error: "No se encontró la incidencia." };
+  }
+
+  const { estado: nuevoEstado, comentario: texto } = resultado.data;
+
+  if (incidencia.estado !== nuevoEstado) {
+    const { error } = await supabase
+      .from("incidencias")
+      .update({
+        estado: nuevoEstado,
+        resuelto_en:
+          nuevoEstado === "resuelta" || nuevoEstado === "cerrada"
+            ? new Date().toISOString()
+            : null,
+      })
+      .eq("id", incidencia.id)
+      .eq("comunidad_id", comunidad.id);
+
+    if (error) {
+      return { error: "No se pudo cambiar el estado. Inténtalo de nuevo." };
+    }
+  }
+
+  // Cada cambio de estado queda en el seguimiento. El comentario es opcional.
+  if (incidencia.estado !== nuevoEstado || texto) {
+    const { error: errorSeguimiento } = await supabase
+      .from("seguimientos_incidencia")
+      .insert({
+        incidencia_id: incidencia.id,
+        autor_id: usuario.id,
+        texto,
+        estado_nuevo: nuevoEstado,
+      });
+
+    if (errorSeguimiento) {
+      return {
+        error: "El estado se cambió, pero no se pudo guardar el comentario.",
+      };
+    }
+  }
 
   revalidatePath("/incidencias");
   revalidatePath("/panel");
+  return { ok: true };
 }

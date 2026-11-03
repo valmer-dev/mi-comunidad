@@ -12,6 +12,8 @@ const FINANZAS: RolMiembro[] = [
 ];
 /** Roles que pueden subir documentos (ademas del administrador de plataforma). */
 const GESTORES_DOCUMENTOS: RolMiembro[] = ["presidente", "vicepresidente", "vocal"];
+/** Roles que pueden cambiar el estado de una incidencia y dejar seguimiento. */
+const GESTORES_INCIDENCIAS: RolMiembro[] = ["presidente", "vicepresidente", "vocal"];
 
 export function esAdministrador(rol: RolMiembro | null | undefined) {
   return !!rol && ADMINISTRADORES.includes(rol);
@@ -19,6 +21,10 @@ export function esAdministrador(rol: RolMiembro | null | undefined) {
 
 export function puedeVerFinanzas(rol: RolMiembro | null | undefined) {
   return !!rol && FINANZAS.includes(rol);
+}
+
+export function puedeGestionarIncidencias(rol: RolMiembro | null | undefined) {
+  return !!rol && GESTORES_INCIDENCIAS.includes(rol);
 }
 
 export function puedeImportarDocumentos(

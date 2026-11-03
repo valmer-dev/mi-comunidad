@@ -105,7 +105,7 @@ Roles que se pueden asignar desde la aplicación:
 
 - `presidente`: administra la comunidad y sus datos.
 - `vicepresidente`: sustituye al presidente; también administra.
-- `vocal`: junta directiva; puede subir documentos.
+- `vocal`: junta directiva; puede subir documentos y gestionar incidencias.
 - `vecino`: solo consulta sus datos.
 
 El enum conserva `secretario`, `propietario`, `inquilino` y `administrador_fincas`
@@ -122,6 +122,18 @@ vecino nunca puede leer los recibos de otro.
 Se comprueba en la base de datos con `es_admin_plataforma()` y políticas RLS
 permisivas. No se activa desde la interfaz: hay que hacerlo con la clave
 `service_role`.
+
+## Incidencias
+
+Cualquier miembro puede registrar una incidencia. Solo el **presidente, el
+vicepresidente y los vocales** pueden cambiar su estado (abierta, en curso,
+resuelta o cerrada). Al resolverla o cerrarla se abre un cuadro para dejar un
+comentario opcional con lo que se ha hecho.
+
+Cada cambio de estado queda registrado en `seguimientos_incidencia`, con su
+autor y la fecha, y se muestra en la tarjeta como **Seguimiento**, visible para
+todos los vecinos. Los permisos se comprueban en la acción del servidor y en las
+políticas RLS con `puede_gestionar_incidencias`, no solo en la interfaz.
 
 ## Documentos
 

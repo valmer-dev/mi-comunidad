@@ -1,14 +1,21 @@
 import { MapPin, UserRound, Wrench } from "lucide-react";
 import { requerirContexto } from "@/lib/auth";
-import { esAdministrador } from "@/lib/permisos";
+import { puedeGestionarIncidencias } from "@/lib/permisos";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
-import { formatoFecha } from "@/lib/utilidades";
+import { formatoFecha, formatoFechaCorta } from "@/lib/utilidades";
 import { CabeceraPagina, EstadoVacio } from "@/components/ui/CabeceraPagina";
 import { EtiquetaEstado } from "@/components/ui/EtiquetaEstado";
 import { NuevaIncidencia } from "./NuevaIncidencia";
 import { SelectorEstado } from "./SelectorEstado";
 
 export const metadata = { title: "Incidencias" };
+
+const ETIQUETAS_ESTADO: Record<string, string> = {
+  abierta: "Abierta",
+  en_curso: "En curso",
+  resuelta: "Resuelta",
+  cerrada: "Cerrada",
+};
 
 const ETIQUETAS_TIPO: Record<string, string> = {
   fontaneria: "Fontanería",
@@ -24,7 +31,7 @@ const ETIQUETAS_TIPO: Record<string, string> = {
 export default async function PaginaIncidencias() {
   const { usuario, miembro, comunidad } = await requerirContexto();
   const supabase = await crearClienteServidor();
-  const admin = esAdministrador(miembro.rol);
+  const gestor = puedeGestionarIncidencias(miembro.rol);
 
   const { data: incidencias } = await supabase
     .from("incidencias")
@@ -39,70 +46,83 @@ export default async function PaginaIncidencias() {
     (i) => i.estado === "resuelta" || i.estado === "cerrada",
   );
 
-  // Quien registro cada incidencia: nombre y vivienda.
-  const idsReportadores = [
+  // Seguimiento de cada incidencia: cambios de estado y comentarios.
+  const { data: seguimientos } = await supabase
+    .from("seguimientos_incidencia")
+    .select("id, incidencia_id, autor_id, texto, estado_nuevo, creado_en")
+    .in(
+      "incidencia_id",
+      (incidencias ?? []).map((i) => i.id),
+    )
+    .order("creado_en", { ascending: true });
+
+  const seguimientosPorIncidencia = new Map<
+    string,
+    NonNullable<typeof seguimientos>
+  >();
+  for (const seguimiento of seguimientos ?? []) {
+    const lista = seguimientosPorIncidencia.get(seguimiento.incidencia_id) ?? [];
+    lista.push(seguimiento);
+    seguimientosPorIncidencia.set(seguimiento.incidencia_id, lista);
+  }
+
+  // Personas que aparecen en la pagina: quien registro y quien hizo seguimiento.
+  const idsPersonas = [
     ...new Set(
-      (incidencias ?? [])
-        .map((i) => i.reportado_por)
-        .filter((id): id is string => Boolean(id)),
+      [
+        ...(incidencias ?? []).map((i) => i.reportado_por),
+        ...(seguimientos ?? []).map((s) => s.autor_id),
+      ].filter((id): id is string => Boolean(id)),
     ),
   ];
 
-  const { data: perfilesReportadores } = idsReportadores.length
-    ? await supabase
-        .from("perfiles")
-        .select("id, nombre, apellidos")
-        .in("id", idsReportadores)
+  const { data: perfiles } = idsPersonas.length
+    ? await supabase.from("perfiles").select("id, nombre, apellidos").in("id", idsPersonas)
     : { data: [] };
 
-  const { data: miembrosReportadores } = idsReportadores.length
+  const { data: miembros } = idsPersonas.length
     ? await supabase
         .from("miembros")
         .select("usuario_id, finca_principal_id")
         .eq("comunidad_id", comunidad.id)
-        .in("usuario_id", idsReportadores)
+        .in("usuario_id", idsPersonas)
     : { data: [] };
 
-  const idsFincasReportadores = [
+  const idsFincas = [
     ...new Set(
-      (miembrosReportadores ?? [])
+      (miembros ?? [])
         .map((m) => m.finca_principal_id)
         .filter((id): id is string => Boolean(id)),
     ),
   ];
 
-  const { data: fincasReportadores } = idsFincasReportadores.length
-    ? await supabase.from("fincas").select("id, codigo").in("id", idsFincasReportadores)
+  const { data: fincas } = idsFincas.length
+    ? await supabase.from("fincas").select("id, codigo").in("id", idsFincas)
     : { data: [] };
 
-  const mapaPerfiles = new Map(
-    (perfilesReportadores ?? []).map((p) => [p.id, p]),
-  );
-  const mapaMiembros = new Map(
-    (miembrosReportadores ?? []).map((m) => [m.usuario_id, m]),
-  );
-  const mapaFincas = new Map(
-    (fincasReportadores ?? []).map((f) => [f.id, f.codigo]),
-  );
+  const mapaPerfiles = new Map((perfiles ?? []).map((p) => [p.id, p]));
+  const mapaMiembros = new Map((miembros ?? []).map((m) => [m.usuario_id, m]));
+  const mapaFincas = new Map((fincas ?? []).map((f) => [f.id, f.codigo]));
+
+  function nombrePersona(id: string | null) {
+    const perfil = id ? mapaPerfiles.get(id) : null;
+    return (
+      [perfil?.nombre, perfil?.apellidos].filter(Boolean).join(" ") ||
+      "un vecino de la comunidad"
+    );
+  }
 
   function reportador(id: string | null) {
-    const perfil = id ? mapaPerfiles.get(id) : null;
-    const nombre =
-      [perfil?.nombre, perfil?.apellidos].filter(Boolean).join(" ") ||
-      "un vecino de la comunidad";
     const miembroReportador = id ? mapaMiembros.get(id) : null;
     const finca = miembroReportador?.finca_principal_id
       ? mapaFincas.get(miembroReportador.finca_principal_id) ?? null
       : null;
-    return { nombre, finca };
-  }
-
-  function puedeEditar(reportadoPor: string | null) {
-    return admin || reportadoPor === usuario.id;
+    return { nombre: nombrePersona(id), finca };
   }
 
   function Tarjeta({ incidencia }: { incidencia: NonNullable<typeof incidencias>[number] }) {
     const quien = reportador(incidencia.reportado_por);
+    const historial = seguimientosPorIncidencia.get(incidencia.id) ?? [];
 
     return (
       <li className="tarjeta">
@@ -116,7 +136,7 @@ export default async function PaginaIncidencias() {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <EtiquetaEstado estado={incidencia.prioridad} />
-            {puedeEditar(incidencia.reportado_por) ? (
+            {gestor ? (
               <SelectorEstado id={incidencia.id} estado={incidencia.estado} />
             ) : (
               <EtiquetaEstado estado={incidencia.estado} />
@@ -147,6 +167,38 @@ export default async function PaginaIncidencias() {
             </span>
           )}
         </div>
+
+        {historial.length > 0 && (
+          <div className="mt-3 rounded-xl bg-fondo/70 px-3 py-2">
+            <p className="text-[11px] font-semibold uppercase tracking-wide text-suave">
+              Seguimiento
+            </p>
+            <ul className="mt-1 space-y-1.5 text-xs">
+              {historial.map((seguimiento) => {
+                const estadoNuevo = seguimiento.estado_nuevo
+                  ? ETIQUETAS_ESTADO[seguimiento.estado_nuevo] ?? seguimiento.estado_nuevo
+                  : null;
+                return (
+                  <li key={seguimiento.id}>
+                    <p className="text-suave">
+                      <span className="font-semibold text-tinta">
+                        {nombrePersona(seguimiento.autor_id)}
+                      </span>
+                      {estadoNuevo && <> · {estadoNuevo}</>}
+                      {" · "}
+                      {formatoFechaCorta(seguimiento.creado_en)}
+                    </p>
+                    {seguimiento.texto && (
+                      <p className="mt-0.5 whitespace-pre-line text-tinta/90">
+                        {seguimiento.texto}
+                      </p>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
       </li>
     );
   }
