@@ -29,7 +29,7 @@ export async function crearIncidencia(
   _estado: EstadoIncidencia,
   datos: FormData,
 ): Promise<EstadoIncidencia> {
-  const { usuario, miembro, comunidad } = await requerirContexto();
+  const { usuario, comunidad } = await requerirContexto();
 
   const resultado = esquema.safeParse({
     titulo: datos.get("titulo"),
@@ -81,9 +81,9 @@ export async function cambiarEstadoIncidencia(
     return { error: resultado.error.issues[0]?.message ?? "Revisa los datos." };
   }
 
-  const { usuario, miembro, comunidad } = await requerirContexto();
+  const { usuario, comunidad, permisos } = await requerirContexto();
 
-  if (!puedeGestionarIncidencias(miembro.rol)) {
+  if (!puedeGestionarIncidencias(permisos)) {
     return { error: "Solo la junta directiva puede cambiar el estado de una incidencia." };
   }
 

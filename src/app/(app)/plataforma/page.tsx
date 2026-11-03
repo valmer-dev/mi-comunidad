@@ -1,32 +1,45 @@
 import { redirect } from "next/navigation";
-import { Building2, Home, MapPin, ShieldCheck, Users } from "lucide-react";
+import {
+  Building2,
+  Home,
+  MapPin,
+  ShieldCheck,
+  Users,
+} from "lucide-react";
 import { abrirComunidad } from "@/app/acciones/plataforma";
 import { obtenerContexto } from "@/lib/auth";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { CabeceraPagina } from "@/components/ui/CabeceraPagina";
 import { NuevaComunidad } from "./NuevaComunidad";
+import { TablaRoles } from "./TablaRoles";
+import { TablaVecinos, type VecinoPlataforma } from "./TablaVecinos";
 
 export const metadata = { title: "Plataforma" };
 
 export default async function PaginaPlataforma() {
-  const { usuario, esAdminPlataforma, miembro, comunidad } = await obtenerContexto();
+  const { usuario, esAdminPlataforma, miembro, comunidad, roles } =
+    await obtenerContexto();
 
   if (!esAdminPlataforma) redirect(miembro ? "/panel" : "/sin-acceso");
 
   const supabase = await crearClienteServidor();
 
-  const [{ data: comunidades }, { data: fincas }, { data: miembros }] = await Promise.all([
-    supabase
-      .from("comunidades")
-      .select("id, nombre, direccion, ciudad, numero_casas, numero_pisos, creado_en")
-      .order("creado_en", { ascending: true }),
-    supabase.from("fincas").select("id, comunidad_id"),
-    supabase.from("miembros").select("comunidad_id, usuario_id, estado").eq("estado", "activo"),
-  ]);
+  const [{ data: comunidades }, { data: fincas }, { data: miembros }] =
+    await Promise.all([
+      supabase
+        .from("comunidades")
+        .select("id, nombre, direccion, ciudad, numero_casas, numero_pisos, creado_en")
+        .order("creado_en", { ascending: true }),
+      supabase.from("fincas").select("id, comunidad_id"),
+      supabase.from("miembros").select("comunidad_id, usuario_id, estado").eq("estado", "activo"),
+    ]);
 
   const fincasPorComunidad = new Map<string, number>();
   for (const finca of fincas ?? []) {
-    fincasPorComunidad.set(finca.comunidad_id, (fincasPorComunidad.get(finca.comunidad_id) ?? 0) + 1);
+    fincasPorComunidad.set(
+      finca.comunidad_id,
+      (fincasPorComunidad.get(finca.comunidad_id) ?? 0) + 1,
+    );
   }
 
   const miembrosPorComunidad = new Map<string, number>();
@@ -39,17 +52,77 @@ export default async function PaginaPlataforma() {
     if (fila.usuario_id === usuario.id) misComunidades.add(fila.comunidad_id);
   }
 
+  let fincasComunidad: { id: string; codigo: string; tipo: string }[] = [];
+  let vecinos: VecinoPlataforma[] = [];
+
+  if (comunidad) {
+    const [{ data: fincasActivas }, { data: miembrosActivos }] = await Promise.all([
+      supabase
+        .from("fincas")
+        .select("id, codigo, tipo")
+        .eq("comunidad_id", comunidad.id)
+        .order("tipo")
+        .order("numero"),
+      supabase
+        .from("miembros")
+        .select("id, usuario_id, rol, estado, finca_principal_id")
+        .eq("comunidad_id", comunidad.id)
+        .order("creado_en", { ascending: true }),
+    ]);
+
+    fincasComunidad = fincasActivas ?? [];
+
+    const idsPerfiles = [
+      ...new Set((miembrosActivos ?? []).map((fila) => fila.usuario_id)),
+    ];
+
+    const { data: perfiles } = idsPerfiles.length
+      ? await supabase
+          .from("perfiles")
+          .select(
+            "id, nombre, apellidos, correo, telefono, es_admin_plataforma",
+          )
+          .in("id", idsPerfiles)
+      : { data: [] };
+
+    const mapaPerfiles = new Map((perfiles ?? []).map((perfil) => [perfil.id, perfil]));
+    const mapaFincas = new Map(
+      (fincasActivas ?? []).map((finca) => [finca.id, finca]),
+    );
+
+    vecinos = (miembrosActivos ?? []).map((fila) => {
+      const perfil = mapaPerfiles.get(fila.usuario_id);
+      const finca = fila.finca_principal_id
+        ? mapaFincas.get(fila.finca_principal_id)
+        : null;
+
+      return {
+        miembroId: fila.id,
+        usuarioId: fila.usuario_id,
+        nombre: perfil?.nombre ?? "Sin nombre",
+        apellidos: perfil?.apellidos ?? null,
+        correo: perfil?.correo ?? null,
+        telefono: perfil?.telefono ?? null,
+        rol: fila.rol,
+        estado: fila.estado,
+        fincaId: fila.finca_principal_id,
+        fincaCodigo: finca?.codigo ?? null,
+        esAdminPlataforma: Boolean(perfil?.es_admin_plataforma),
+      };
+    });
+  }
+
   return (
     <div>
       <CabeceraPagina
         titulo="Plataforma"
-        descripcion="Todas las comunidades y creación de nuevas comunidades"
+        descripcion="Todas las comunidades, roles y gestión de vecinos"
       />
 
       <p className="mb-5 flex items-start gap-2 rounded-xl bg-principal-claro/60 px-4 py-3 text-sm text-principal-oscuro">
         <ShieldCheck className="mt-0.5 size-4 shrink-0" aria-hidden />
-        Eres administrador de la plataforma: puedes crear comunidades y entrar en
-        cualquier comunidad en la que participes.
+        Eres administrador de la plataforma: puedes crear comunidades, editar los
+        roles y gestionar los vecinos de la comunidad activa.
       </p>
 
       <div className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
@@ -127,6 +200,42 @@ export default async function PaginaPlataforma() {
           <NuevaComunidad />
         </section>
       </div>
+
+      <section className="mt-8">
+        <h2 className="mb-1 flex items-center gap-2 text-base font-bold">
+          <ShieldCheck className="size-4.5 text-principal" aria-hidden />
+          Roles y permisos
+        </h2>
+        <p className="mb-3 text-sm text-suave">
+          Edita el nombre, la descripción y los permisos de cada rol. Los cambios se
+          aplican a toda la aplicación.
+        </p>
+        <TablaRoles roles={roles} />
+      </section>
+
+      <section className="mt-8">
+        {comunidad ? (
+          <TablaVecinos
+            vecinos={vecinos}
+            fincas={fincasComunidad}
+            roles={roles}
+            nombreComunidad={comunidad.nombre}
+            urlApp={
+              process.env.NEXT_PUBLIC_URL_APP ?? "https://comunidad-nine.vercel.app"
+            }
+          />
+        ) : (
+          <div>
+            <h2 className="mb-3 flex items-center gap-2 text-base font-bold">
+              <Users className="size-4.5 text-principal" aria-hidden />
+              Vecinos
+            </h2>
+            <p className="rounded-2xl border border-borde bg-superficie px-4 py-8 text-center text-sm text-suave">
+              Entra en una comunidad para gestionar sus vecinos.
+            </p>
+          </div>
+        )}
+      </section>
     </div>
   );
 }

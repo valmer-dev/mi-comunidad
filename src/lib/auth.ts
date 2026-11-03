@@ -1,6 +1,12 @@
 import { cache } from "react";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
+import {
+  permisosDeRol,
+  TODOS_LOS_PERMISOS,
+  type PermisosRol,
+  type RolSistema,
+} from "@/lib/permisos";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 
 export type UsuarioSesion = { id: string };
@@ -24,9 +30,9 @@ export const obtenerUsuarioActual = cache(async (): Promise<UsuarioSesion | null
 });
 
 /**
- * Contexto completo del usuario: perfil, comunidad y rol.
- * Una sola consulta a la base de datos (perfil y comunidad vienen anidados).
- * Si no hay sesion redirige a /entrar.
+ * Contexto completo del usuario: perfil, comunidad, rol y permisos.
+ * Los permisos se leen de la tabla roles; el administrador de plataforma
+ * siempre tiene todos.
  */
 export const obtenerContexto = cache(async () => {
   const usuario = await obtenerUsuarioActual();
@@ -38,12 +44,17 @@ export const obtenerContexto = cache(async () => {
 
   // Un administrador de plataforma puede pertenecer a varias comunidades.
   // La cookie guarda la que esta viendo; si no es valida, se usa la primera.
-  const { data: miembros } = await supabase
-    .from("miembros")
-    .select("*, comunidades(*), perfiles(*)")
-    .eq("usuario_id", usuario.id)
-    .eq("estado", "activo")
-    .order("creado_en", { ascending: true });
+  const [{ data: miembros }, { data: roles }] = await Promise.all([
+    supabase
+      .from("miembros")
+      .select("*, comunidades(*), perfiles(*)")
+      .eq("usuario_id", usuario.id)
+      .eq("estado", "activo")
+      .order("creado_en", { ascending: true }),
+    supabase.from("roles").select("*").order("orden", { ascending: true }),
+  ]);
+
+  const listaRoles: RolSistema[] = roles ?? [];
 
   const miembro =
     (comunidadActiva
@@ -59,23 +70,33 @@ export const obtenerContexto = cache(async () => {
       .eq("id", usuario.id)
       .maybeSingle();
 
+    const esAdminPlataforma = Boolean(perfil?.es_admin_plataforma);
+
     return {
       usuario,
       perfil: perfil ?? null,
       miembro: null,
       comunidad: null,
-      esAdminPlataforma: Boolean(perfil?.es_admin_plataforma),
+      roles: listaRoles,
+      esAdminPlataforma,
+      permisos: esAdminPlataforma ? TODOS_LOS_PERMISOS : permisosDeRol(null, listaRoles),
     };
   }
 
   const { comunidades, perfiles, ...datosMiembro } = miembro;
+  const esAdminPlataforma = Boolean(perfiles?.es_admin_plataforma);
+  const permisos: PermisosRol = esAdminPlataforma
+    ? TODOS_LOS_PERMISOS
+    : permisosDeRol(datosMiembro.rol, listaRoles);
 
   return {
     usuario,
     perfil: perfiles ?? null,
     miembro: datosMiembro,
     comunidad: comunidades ?? null,
-    esAdminPlataforma: Boolean(perfiles?.es_admin_plataforma),
+    roles: listaRoles,
+    esAdminPlataforma,
+    permisos,
   };
 });
 

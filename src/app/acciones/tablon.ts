@@ -18,8 +18,8 @@ export async function publicarAnuncio(
   _estado: EstadoAnuncio,
   datos: FormData,
 ): Promise<EstadoAnuncio> {
-  const { usuario, miembro, comunidad } = await requerirContexto();
-  if (!esAdministrador(miembro.rol)) {
+  const { usuario, comunidad, permisos } = await requerirContexto();
+  if (!esAdministrador(permisos)) {
     return { error: "Solo la junta directiva puede publicar anuncios." };
   }
 

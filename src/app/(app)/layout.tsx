@@ -2,7 +2,11 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { Building2 } from "lucide-react";
 import { obtenerContexto } from "@/lib/auth";
-import { esAdministrador, puedeVerFinanzas } from "@/lib/permisos";
+import {
+  esAdministrador,
+  etiquetaRol,
+  puedeVerFinanzas,
+} from "@/lib/permisos";
 import { Estructura } from "@/components/estructura/Estructura";
 import { iniciales } from "@/lib/utilidades";
 
@@ -11,7 +15,8 @@ export default async function LayoutApp({
 }: {
   children: React.ReactNode;
 }) {
-  const { perfil, miembro, comunidad, esAdminPlataforma } = await obtenerContexto();
+  const { perfil, miembro, comunidad, esAdminPlataforma, permisos, roles } =
+    await obtenerContexto();
   const nombre = perfil?.nombre?.trim() || "Vecino";
 
   // Un administrador de plataforma puede no pertenecer a ninguna comunidad:
@@ -45,9 +50,9 @@ export default async function LayoutApp({
     <Estructura
       nombreComunidad={comunidad.nombre}
       nombreUsuario={nombre}
-      rol={miembro.rol}
-      esAdmin={esAdministrador(miembro.rol)}
-      puedeVerFinanzas={puedeVerFinanzas(miembro.rol)}
+      etiquetaRol={etiquetaRol(miembro.rol, roles)}
+      esAdmin={esAdministrador(permisos)}
+      puedeVerFinanzas={puedeVerFinanzas(permisos)}
       esAdminPlataforma={esAdminPlataforma}
     >
       {children}

@@ -10,13 +10,14 @@ import {
   X,
 } from "lucide-react";
 import { crearVecino, type CuentaCreada, type EstadoVecino } from "@/app/acciones/vecinos";
-import { ROLES_ASIGNABLES } from "@/lib/permisos";
+import { opcionesDeRol, type RolSistema } from "@/lib/permisos";
 import { formatearTelefono } from "@/lib/telefono";
 
 type Finca = { id: string; codigo: string; tipo: string };
 
 type Props = {
   fincas: Finca[];
+  roles?: RolSistema[];
   nombreComunidad: string;
   urlApp: string;
 };
@@ -63,13 +64,14 @@ function enlaceWhatsApp(cuenta: CuentaCreada, mensaje: string) {
   return `https://wa.me/34${cuenta.telefono}?text=${encodeURIComponent(mensaje)}`;
 }
 
-export function NuevoVecino({ fincas, nombreComunidad, urlApp }: Props) {
+export function NuevoVecino({ fincas, roles, nombreComunidad, urlApp }: Props) {
   const [abierto, setAbierto] = useState(false);
   const [rol, setRol] = useState("vecino");
   const [estado, accion, pendiente] = useActionState(crearVecino, ESTADO_INICIAL);
   const [copiado, setCopiado] = useState(false);
 
-  const ayudaRol = ROLES_ASIGNABLES.find((opcion) => opcion.valor === rol)?.ayuda;
+  const opciones = opcionesDeRol(roles);
+  const ayudaRol = opciones.find((opcion) => opcion.valor === rol)?.ayuda;
   const casas = fincas.filter((finca) => finca.tipo === "casa");
   const pisos = fincas.filter((finca) => finca.tipo === "piso");
   const otras = fincas.filter(
@@ -159,7 +161,7 @@ export function NuevoVecino({ fincas, nombreComunidad, urlApp }: Props) {
             value={rol}
             onChange={(evento) => setRol(evento.target.value)}
           >
-            {ROLES_ASIGNABLES.map((opcion) => (
+            {opciones.map((opcion) => (
               <option key={opcion.valor} value={opcion.valor}>
                 {opcion.etiqueta}
               </option>

@@ -10,7 +10,7 @@ import { NuevaJunta } from "./NuevaJunta";
 export const metadata = { title: "Juntas" };
 
 export default async function PaginaJuntas() {
-  const { miembro, comunidad } = await requerirContexto();
+  const { comunidad, permisos } = await requerirContexto();
   const supabase = await crearClienteServidor();
 
   const { data: juntas } = await supabase
@@ -89,7 +89,7 @@ export default async function PaginaJuntas() {
       <CabeceraPagina
         titulo="Juntas"
         descripcion="Convocatorias, puntos del día y acuerdos"
-        accion={esAdministrador(miembro.rol) ? <NuevaJunta /> : undefined}
+        accion={esAdministrador(permisos) ? <NuevaJunta /> : undefined}
       />
 
       <section>

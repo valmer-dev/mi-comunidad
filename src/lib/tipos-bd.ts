@@ -1247,6 +1247,48 @@ export type Database = {
           },
         ]
       }
+      roles: {
+        Row: {
+          actualizado_en: string
+          administra_comunidad: boolean
+          clave: string
+          descripcion: string | null
+          es_admin_plataforma: boolean
+          gestiona_documentos: boolean
+          gestiona_incidencias: boolean
+          gestiona_vecinos: boolean
+          nombre: string
+          orden: number
+          ver_finanzas: boolean
+        }
+        Insert: {
+          actualizado_en?: string
+          administra_comunidad?: boolean
+          clave: string
+          descripcion?: string | null
+          es_admin_plataforma?: boolean
+          gestiona_documentos?: boolean
+          gestiona_incidencias?: boolean
+          gestiona_vecinos?: boolean
+          nombre: string
+          orden?: number
+          ver_finanzas?: boolean
+        }
+        Update: {
+          actualizado_en?: string
+          administra_comunidad?: boolean
+          clave?: string
+          descripcion?: string | null
+          es_admin_plataforma?: boolean
+          gestiona_documentos?: boolean
+          gestiona_incidencias?: boolean
+          gestiona_vecinos?: boolean
+          nombre?: string
+          orden?: number
+          ver_finanzas?: boolean
+        }
+        Relationships: []
+      }
       seguimientos_incidencia: {
         Row: {
           autor_id: string | null
@@ -1450,6 +1492,18 @@ export type Database = {
       es_administrador: { Args: { p_comunidad_id: string }; Returns: boolean }
       es_miembro: { Args: { p_comunidad_id: string }; Returns: boolean }
       es_titular_de: { Args: { p_finca_id: string }; Returns: boolean }
+      puede_gestionar_documentos: {
+        Args: { p_comunidad_id: string }
+        Returns: boolean
+      }
+      puede_gestionar_incidencias: {
+        Args: { p_comunidad_id: string }
+        Returns: boolean
+      }
+      puede_gestionar_vecinos: {
+        Args: { p_comunidad_id: string }
+        Returns: boolean
+      }
       puede_ver_finanzas: { Args: { p_comunidad_id: string }; Returns: boolean }
       tiene_rol: {
         Args: {

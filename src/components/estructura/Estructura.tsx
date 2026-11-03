@@ -2,15 +2,13 @@ import Link from "next/link";
 import { Building2 } from "lucide-react";
 import { BarraLateral } from "./BarraLateral";
 import { NavegacionMovil } from "./NavegacionMovil";
-import type { RolMiembro } from "@/lib/permisos";
-import { ETIQUETAS_ROL } from "@/lib/permisos";
 import { iniciales } from "@/lib/utilidades";
 
 type Props = {
   children: React.ReactNode;
   nombreComunidad: string;
   nombreUsuario: string;
-  rol: RolMiembro;
+  etiquetaRol: string;
   esAdmin: boolean;
   puedeVerFinanzas: boolean;
   esAdminPlataforma: boolean;
@@ -20,7 +18,7 @@ export function Estructura({
   children,
   nombreComunidad,
   nombreUsuario,
-  rol,
+  etiquetaRol,
   esAdmin,
   puedeVerFinanzas,
   esAdminPlataforma,
@@ -30,7 +28,7 @@ export function Estructura({
       <BarraLateral
         nombreComunidad={nombreComunidad}
         nombreUsuario={nombreUsuario}
-        rol={rol}
+        etiquetaRol={etiquetaRol}
         puedeVerFinanzas={puedeVerFinanzas}
         esAdminPlataforma={esAdminPlataforma}
       />
@@ -45,7 +43,7 @@ export function Estructura({
               <span className="block truncate text-sm font-bold leading-tight">
                 {nombreComunidad}
               </span>
-              <span className="block text-[11px] text-suave">{ETIQUETAS_ROL[rol]}</span>
+              <span className="block text-[11px] text-suave">{etiquetaRol}</span>
             </span>
           </Link>
           <div className="flex items-center gap-2">

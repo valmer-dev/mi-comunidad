@@ -19,8 +19,8 @@ export async function crearGasto(
   _estado: EstadoGasto,
   datos: FormData,
 ): Promise<EstadoGasto> {
-  const { usuario, miembro, comunidad } = await requerirContexto();
-  if (!esAdministrador(miembro.rol)) {
+  const { usuario, comunidad, permisos } = await requerirContexto();
+  if (!esAdministrador(permisos)) {
     return { error: "Solo la junta directiva puede registrar gastos." };
   }
 

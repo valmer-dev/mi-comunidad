@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requerirContexto } from "@/lib/auth";
+import { esAdministrador } from "@/lib/permisos";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 
 const esquema = z.object({
@@ -24,9 +25,9 @@ export async function actualizarComunidad(
   _estado: EstadoComunidad,
   datos: FormData,
 ): Promise<EstadoComunidad> {
-  const { miembro, comunidad, esAdminPlataforma } = await requerirContexto();
-  if (!esAdminPlataforma && miembro.rol !== "presidente") {
-    return { error: "Solo el presidente puede editar los datos de la comunidad." };
+  const { comunidad, permisos } = await requerirContexto();
+  if (!esAdministrador(permisos)) {
+    return { error: "Solo quien administra la comunidad puede editar sus datos." };
   }
 
   const resultado = esquema.safeParse({
@@ -96,9 +97,9 @@ export async function configurarFincas(
   _estado: EstadoFincas,
   datos: FormData,
 ): Promise<EstadoFincas> {
-  const { miembro, comunidad, esAdminPlataforma } = await requerirContexto();
-  if (!esAdminPlataforma && miembro.rol !== "presidente") {
-    return { error: "Solo el presidente puede cambiar el número de casas y pisos." };
+  const { comunidad, permisos } = await requerirContexto();
+  if (!esAdministrador(permisos)) {
+    return { error: "Solo quien administra la comunidad puede cambiar las casas y pisos." };
   }
 
   const resultado = esquemaFincas.safeParse({

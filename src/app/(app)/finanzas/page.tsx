@@ -10,11 +10,11 @@ import { NuevoGasto } from "./NuevoGasto";
 export const metadata = { title: "Finanzas" };
 
 export default async function PaginaFinanzas() {
-  const { miembro, comunidad } = await requerirContexto();
+  const { comunidad, permisos } = await requerirContexto();
   const supabase = await crearClienteServidor();
   const ejercicio = new Date().getFullYear();
-  const verFinanzas = puedeVerFinanzas(miembro.rol);
-  const admin = esAdministrador(miembro.rol);
+  const verFinanzas = puedeVerFinanzas(permisos);
+  const admin = esAdministrador(permisos);
 
   const [{ data: presupuesto }, { data: gastos }, { data: recibos }, { data: categorias }, { data: fincas }] =
     await Promise.all([

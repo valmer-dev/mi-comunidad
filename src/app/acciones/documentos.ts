@@ -7,7 +7,7 @@ import {
   esCategoriaDocumento,
   TAMANO_MAXIMO_DOCUMENTO,
 } from "@/lib/documentos";
-import { puedeImportarDocumentos } from "@/lib/permisos";
+import { puedeGestionarDocumentos } from "@/lib/permisos";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 
@@ -27,9 +27,9 @@ export async function subirDocumento(
   _estado: EstadoDocumento,
   datos: FormData,
 ): Promise<EstadoDocumento> {
-  const { usuario, miembro, comunidad, esAdminPlataforma } = await requerirContexto();
+  const { usuario, comunidad, permisos } = await requerirContexto();
 
-  if (!puedeImportarDocumentos(miembro.rol, esAdminPlataforma)) {
+  if (!puedeGestionarDocumentos(permisos)) {
     return { error: "No tienes permiso para subir documentos." };
   }
 

@@ -101,34 +101,66 @@ Para medir: `node --env-file=.env.local scripts/probar-render.mjs <url>`
 
 ## Roles
 
+Los permisos ya no están fijados en el código: viven en la tabla `roles` y se
+pueden editar desde **`/plataforma`**. Cada rol guarda cinco permisos:
+
+| Permiso | Qué permite |
+| --- | --- |
+| `administra_comunidad` | Editar datos de la comunidad, fincas, tablón, juntas y gastos |
+| `gestiona_vecinos` | Dar de alta, editar y eliminar vecinos y titulares |
+| `gestiona_documentos` | Subir y borrar documentos |
+| `gestiona_incidencias` | Cambiar el estado de las incidencias y dejar seguimiento |
+| `ver_finanzas` | Consultar gastos, recibos y presupuestos |
+
 Roles que se pueden asignar desde la aplicación:
 
-- `presidente`: administra la comunidad y sus datos.
-- `vicepresidente`: sustituye al presidente; también administra.
-- `vocal`: junta directiva; puede subir documentos y gestionar incidencias.
-- `vecino`: solo consulta sus datos.
+- `presidente`: todos los permisos.
+- `vicepresidente`: todos los permisos.
+- `vocal`: documentos, incidencias y finanzas.
+- `vecino`: solo consulta.
+
+El rol `administrador_plataforma` no se puede editar (siempre tiene todos los
+permisos). Los roles **no se crean ni se borran**: solo se cambia su nombre,
+descripción y permisos.
 
 El enum conserva `secretario`, `propietario`, `inquilino` y `administrador_fincas`
-por compatibilidad con datos antiguos. Los antiguos `propietario` e `inquilino`
-se migraron a `vecino`.
+por compatibilidad con datos antiguos; si no tienen fila en `roles` usan unos
+permisos por defecto. Los antiguos `propietario` e `inquilino` se migraron a
+`vecino`.
 
-La autorización real vive en la base de datos (RLS), no solo en la interfaz. Un
-vecino nunca puede leer los recibos de otro.
+La autorización real vive en la base de datos (RLS), no solo en la interfaz. Las
+funciones `es_administrador`, `puede_gestionar_vecinos`,
+`puede_gestionar_documentos` y `puede_gestionar_incidencias` leen la tabla
+`roles`. Un vecino nunca puede leer los recibos de otro.
 
 ### Administrador de la plataforma
 
 `perfiles.es_admin_plataforma` da acceso total a todas las comunidades y a
-`/plataforma`, donde se crean comunidades nuevas y se cambia la comunidad activa.
-Se comprueba en la base de datos con `es_admin_plataforma()` y políticas RLS
-permisivas. No se activa desde la interfaz: hay que hacerlo con la clave
-`service_role`.
+`/plataforma`, donde se crean comunidades, se edita la tabla de roles y se
+gestionan los vecinos de la comunidad activa. Se comprueba en la base de datos
+con `es_admin_plataforma()` y políticas RLS permisivas.
+
+Este acceso se puede conceder desde la propia interfaz al editar un vecino, pero
+no se puede retirar a sí mismo el administrador de la plataforma.
+
+### Vecinos desde `/plataforma`
+
+La tabla de vecinos muestra solo los de la **comunidad activa** y permite:
+
+- **Crear**: reutiliza el alta por teléfono (con correo opcional y segundo titular).
+- **Editar**: nombre, apellidos, teléfono, correo, rol y vivienda. Al cambiar la
+  vivienda, la titularidad se mueve y los coeficientes se reparten de nuevo.
+- **Eliminar**: borra su pertenencia a la comunidad y sus titulares. Si la
+  persona no tiene más comunidades ni viviendas, se elimina también su cuenta.
+
 
 ## Incidencias
 
-Cualquier miembro puede registrar una incidencia. Solo el **presidente, el
-vicepresidente y los vocales** pueden cambiar su estado (abierta, en curso,
-resuelta o cerrada). Al resolverla o cerrarla se abre un cuadro para dejar un
-comentario opcional con lo que se ha hecho.
+Cualquier miembro puede registrar una incidencia. Solo quien tenga el permiso
+`gestiona_incidencias` (por defecto, presidente, vicepresidente y vocal) puede
+cambiar su estado (abierta, en curso, resuelta o cerrada). Al resolverla o
+cerrarla se abre un cuadro para dejar un comentario opcional con lo que se ha
+hecho.
 
 Cada cambio de estado queda registrado en `seguimientos_incidencia`, con su
 autor y la fecha, y se muestra en la tarjeta como **Seguimiento**, visible para
@@ -139,9 +171,9 @@ políticas RLS con `puede_gestionar_incidencias`, no solo en la interfaz.
 
 Los documentos se dividen en cinco categorías fijas: **Estatutos, Actas,
 Contratos, Certificados y Presupuestos**. Solo se admiten PDF (máximo 25 MB) y
-solo pueden subirlos el administrador de la plataforma, el presidente, el
-vicepresidente y el vocal. El resto de vecinos puede consultarlos y
-descargarlos.
+solo pueden subirlos el administrador de la plataforma y quien tenga el permiso
+`gestiona_documentos` (por defecto, presidente, vicepresidente y vocal). El resto
+de vecinos puede consultarlos y descargarlos.
 
 Los archivos se guardan en un bucket privado de Supabase Storage (`documentos`).
 Los permisos se comprueban en la acción del servidor, en la política RLS de

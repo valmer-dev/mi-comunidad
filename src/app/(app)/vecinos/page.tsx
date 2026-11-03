@@ -1,6 +1,6 @@
 import { Mail, Phone, Users } from "lucide-react";
 import { requerirContexto } from "@/lib/auth";
-import { esAdministrador, ETIQUETAS_ROL } from "@/lib/permisos";
+import { puedeGestionarVecinos, etiquetaRol } from "@/lib/permisos";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { iniciales } from "@/lib/utilidades";
 import { esCorreoInterno, formatearTelefono } from "@/lib/telefono";
@@ -11,9 +11,9 @@ import { NuevoVecino } from "./NuevoVecino";
 export const metadata = { title: "Vecinos" };
 
 export default async function PaginaVecinos() {
-  const { miembro, comunidad, esAdminPlataforma } = await requerirContexto();
+  const { comunidad, permisos, roles } = await requerirContexto();
   const supabase = await crearClienteServidor();
-  const admin = esAdminPlataforma || esAdministrador(miembro.rol);
+  const admin = puedeGestionarVecinos(permisos);
 
   const [{ data: miembros }, { data: fincas }] = await Promise.all([
     supabase
@@ -89,6 +89,7 @@ export default async function PaginaVecinos() {
           admin ? (
             <NuevoVecino
               fincas={(fincas ?? []).map((f) => ({ id: f.id, codigo: f.codigo, tipo: f.tipo }))}
+              roles={roles}
               nombreComunidad={comunidad.nombre}
               urlApp={
                 process.env.NEXT_PUBLIC_URL_APP ?? "https://comunidad-nine.vercel.app"
@@ -128,7 +129,7 @@ export default async function PaginaVecinos() {
                     <EtiquetaEstado estado={m.estado} />
                   </div>
                   <p className="mt-0.5 text-sm text-suave">
-                    {ETIQUETAS_ROL[m.rol]}
+                    {etiquetaRol(m.rol, roles)}
                     {finca ? ` · ${finca.codigo}` : ""}
                   </p>
                   {titularesFinca.length > 1 && (

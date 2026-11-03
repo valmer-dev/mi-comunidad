@@ -18,9 +18,9 @@ import { EtiquetaEstado } from "@/components/ui/EtiquetaEstado";
 export const metadata = { title: "Panel" };
 
 export default async function PaginaPanel() {
-  const { perfil, comunidad, miembro } = await requerirContexto();
+  const { perfil, comunidad, permisos } = await requerirContexto();
   const supabase = await crearClienteServidor();
-  const verFinanzas = puedeVerFinanzas(miembro.rol);
+  const verFinanzas = puedeVerFinanzas(permisos);
 
   const [
     { count: totalVecinos },

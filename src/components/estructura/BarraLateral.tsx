@@ -15,14 +15,13 @@ import {
   Wrench,
 } from "lucide-react";
 import { cerrarSesion } from "@/app/acciones/autenticacion";
-import { ETIQUETAS_ROL, type RolMiembro } from "@/lib/permisos";
 import { iniciales } from "@/lib/utilidades";
 import { EnlaceLateral } from "./EnlaceLateral";
 
 type Props = {
   nombreComunidad: string;
   nombreUsuario: string;
-  rol: RolMiembro;
+  etiquetaRol: string;
   puedeVerFinanzas: boolean;
   esAdminPlataforma: boolean;
 };
@@ -30,7 +29,7 @@ type Props = {
 export function BarraLateral({
   nombreComunidad,
   nombreUsuario,
-  rol,
+  etiquetaRol,
   puedeVerFinanzas,
   esAdminPlataforma,
 }: Props) {
@@ -80,7 +79,7 @@ export function BarraLateral({
               {nombreUsuario}
             </span>
             <span className="block truncate text-xs text-suave">
-              {ETIQUETAS_ROL[rol]}
+              {etiquetaRol}
             </span>
           </span>
         </div>

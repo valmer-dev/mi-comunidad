@@ -29,9 +29,9 @@ const ETIQUETAS_TIPO: Record<string, string> = {
 };
 
 export default async function PaginaIncidencias() {
-  const { usuario, miembro, comunidad } = await requerirContexto();
+  const { usuario, comunidad, permisos } = await requerirContexto();
   const supabase = await crearClienteServidor();
-  const gestor = puedeGestionarIncidencias(miembro.rol);
+  const gestor = puedeGestionarIncidencias(permisos);
 
   const { data: incidencias } = await supabase
     .from("incidencias")

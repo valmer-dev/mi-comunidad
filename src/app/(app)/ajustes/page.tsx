@@ -1,7 +1,7 @@
 import { Building2, LogOut, ShieldCheck, UserCircle } from "lucide-react";
 import { cerrarSesion } from "@/app/acciones/autenticacion";
 import { requerirContexto } from "@/lib/auth";
-import { ETIQUETAS_ROL } from "@/lib/permisos";
+import { esAdministrador, etiquetaRol } from "@/lib/permisos";
 import { esCorreoInterno, formatearTelefono } from "@/lib/telefono";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { CabeceraPagina } from "@/components/ui/CabeceraPagina";
@@ -12,7 +12,8 @@ import { EditarComunidad } from "./EditarComunidad";
 export const metadata = { title: "Ajustes" };
 
 export default async function PaginaAjustes() {
-  const { perfil, miembro, comunidad, esAdminPlataforma } = await requerirContexto();
+  const { perfil, miembro, comunidad, esAdminPlataforma, permisos, roles } =
+    await requerirContexto();
   const supabase = await crearClienteServidor();
 
   const { data: fincas } = await supabase
@@ -20,7 +21,7 @@ export default async function PaginaAjustes() {
     .select("id")
     .eq("comunidad_id", comunidad.id);
 
-  const puedeConfigurar = esAdminPlataforma || miembro.rol === "presidente";
+  const puedeConfigurar = esAdminPlataforma || esAdministrador(permisos);
 
   return (
     <div>
@@ -116,7 +117,9 @@ export default async function PaginaAjustes() {
             </div>
             <div className="flex justify-between gap-4">
               <dt className="text-suave">Rol</dt>
-              <dd className="text-right font-medium">{ETIQUETAS_ROL[miembro.rol]}</dd>
+              <dd className="text-right font-medium">
+                {etiquetaRol(miembro.rol, roles)}
+              </dd>
             </div>
           </dl>
 

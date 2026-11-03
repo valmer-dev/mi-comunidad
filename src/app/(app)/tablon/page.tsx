@@ -9,7 +9,7 @@ import { NuevoAnuncio } from "./NuevoAnuncio";
 export const metadata = { title: "Tablón" };
 
 export default async function PaginaTablón() {
-  const { miembro, comunidad } = await requerirContexto();
+  const { comunidad, permisos } = await requerirContexto();
   const supabase = await crearClienteServidor();
 
   const { data: anuncios } = await supabase
@@ -30,7 +30,7 @@ export default async function PaginaTablón() {
       <CabeceraPagina
         titulo="Tablón"
         descripcion="Avisos y comunicados de la comunidad"
-        accion={esAdministrador(miembro.rol) ? <NuevoAnuncio /> : undefined}
+        accion={esAdministrador(permisos) ? <NuevoAnuncio /> : undefined}
       />
 
       {anuncios && anuncios.length > 0 ? (

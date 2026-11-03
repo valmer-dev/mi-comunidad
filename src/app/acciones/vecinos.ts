@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requerirContexto } from "@/lib/auth";
-import { esAdministrador } from "@/lib/permisos";
+import { puedeGestionarVecinos } from "@/lib/permisos";
 import { generarContrasenaTemporal } from "@/lib/contrasenas";
 import {
   correoDesdeTelefono,
@@ -34,7 +34,13 @@ const esquema = z.object({
   nombre: z.string().trim().min(2, "Escribe el nombre."),
   telefono: telefonoObligatorio,
   correo: correoOpcional.optional(),
-  rol: z.enum(["presidente", "vicepresidente", "vocal", "vecino"]),
+  rol: z.enum([
+    "presidente",
+    "vicepresidente",
+    "vocal",
+    "vecino",
+    "administrador_plataforma",
+  ]),
   fincaId: z.string().uuid().optional().or(z.literal("")),
   titular2Nombre: z.string().trim().optional(),
   titular2Telefono: telefonoOpcional.optional(),
@@ -149,8 +155,8 @@ export async function crearVecino(
   _estado: EstadoVecino,
   datos: FormData,
 ): Promise<EstadoVecino> {
-  const { miembro, comunidad, esAdminPlataforma } = await requerirContexto();
-  if (!esAdminPlataforma && !esAdministrador(miembro.rol)) {
+  const { comunidad, permisos } = await requerirContexto();
+  if (!puedeGestionarVecinos(permisos)) {
     return { error: "No tienes permiso para añadir vecinos." };
   }
 
@@ -169,7 +175,12 @@ export async function crearVecino(
     return { error: resultado.error.issues[0]?.message ?? "Revisa los datos." };
   }
 
-  const { nombre, rol, fincaId, titular2Nombre } = resultado.data;
+  const { nombre, fincaId, titular2Nombre } = resultado.data;
+  const esAdminPlataformaNuevo = resultado.data.rol === "administrador_plataforma";
+  const rol =
+    resultado.data.rol === "administrador_plataforma"
+      ? "vecino"
+      : resultado.data.rol;
   const telefono = normalizarTelefono(resultado.data.telefono);
   const correo = resultado.data.correo ? resultado.data.correo : null;
   const titular2Telefono = resultado.data.titular2Telefono
@@ -243,6 +254,14 @@ export async function crearVecino(
       usuarioId = creada.usuarioId;
       creados.push(usuarioId);
       cuentas.push(creada.cuenta);
+    }
+
+    if (esAdminPlataformaNuevo) {
+      const { error: errorFlag } = await admin
+        .from("perfiles")
+        .update({ es_admin_plataforma: true })
+        .eq("id", usuarioId);
+      if (errorFlag) throw new Error("perfil");
     }
 
     const { error: errorMiembro } = await supabase.from("miembros").insert({
@@ -353,6 +372,7 @@ export async function crearVecino(
   revalidatePath("/vecinos");
   revalidatePath("/panel");
   revalidatePath("/ajustes");
+  revalidatePath("/plataforma");
 
   return {
     ok: true,

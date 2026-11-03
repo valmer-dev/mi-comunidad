@@ -14,7 +14,7 @@ import {
   DESCRIPCION_CATEGORIA,
   esCategoriaDocumento,
 } from "@/lib/documentos";
-import { puedeImportarDocumentos } from "@/lib/permisos";
+import { puedeGestionarDocumentos } from "@/lib/permisos";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { formatoFechaCorta, formatoTamano } from "@/lib/utilidades";
@@ -32,7 +32,7 @@ const ICONOS = {
 } satisfies Record<CategoriaDocumento, typeof FileText>;
 
 export default async function PaginaDocumentos() {
-  const { miembro, comunidad, esAdminPlataforma } = await requerirContexto();
+  const { comunidad, permisos } = await requerirContexto();
   const supabase = await crearClienteServidor();
 
   const { data: documentos } = await supabase
@@ -103,7 +103,7 @@ export default async function PaginaDocumentos() {
     return [perfil?.nombre, perfil?.apellidos].filter(Boolean).join(" ") || null;
   }
 
-  const puedeSubir = puedeImportarDocumentos(miembro.rol, esAdminPlataforma);
+  const puedeSubir = puedeGestionarDocumentos(permisos);
 
   return (
     <div>
