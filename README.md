@@ -152,9 +152,10 @@ Los permisos se comprueban en la acción del servidor, en la política RLS de
 
 Cada comunidad guarda `numero_casas` y `numero_pisos`. La función SQL
 `configurar_fincas(comunidad, casas, pisos)` crea las fincas que faltan
-(`Casa 1`, `1ºA`, `1ºB`, `2ºA`…), elimina las que ya no se piden **solo si no
+(`Casa 1`, `1ºA`, `1ºB`, `1ºC`, `1ºD`, `2ºA`…), elimina las que ya no se piden **solo si no
 tienen titulares** y reparte el coeficiente a partes iguales hasta sumar 100 %.
-Los pisos se numeran por planta y puerta: dos puertas (A y B) por planta.
+Los pisos se numeran por planta y puerta: cuatro puertas (A, B, C y D) por planta.
+El número de pisos es el total de viviendas: 12 pisos son 3 plantas × 4 puertas.
 
 Al dar de alta un vecino se elige su casa o piso y, opcionalmente, un segundo
 titular: con correo se le crea su cuenta (o se reutiliza la que ya tenía); solo

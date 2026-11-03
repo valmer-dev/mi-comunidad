@@ -26,8 +26,8 @@ export function ConfigurarFincas({
         Casas y pisos
       </h2>
       <p className="mt-2 text-sm leading-relaxed text-suave">
-        Indica cuántas casas y pisos tiene la comunidad. Se crean automáticamente con
-        su número (Casa 1, 1ºA, 1ºB…).
+        Indica cuántas casas y pisos tiene la comunidad. Se crean automáticamente
+        con su número (Casa 1, 1ºA, 1ºB, 1ºC, 1ºD…).
       </p>
 
       <dl className="mt-4 grid grid-cols-2 gap-3 text-center">
@@ -74,6 +74,9 @@ export function ConfigurarFincas({
             defaultValue={numeroPisos}
             className="campo"
           />
+          <p className="mt-1 text-xs text-suave">
+            Total de viviendas: cuatro puertas por planta (A, B, C y D).
+          </p>
         </div>
 
         <p className="rounded-xl bg-fondo px-3.5 py-2.5 text-xs leading-relaxed text-suave sm:col-span-2">
