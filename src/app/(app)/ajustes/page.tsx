@@ -1,7 +1,7 @@
 import { Building2, LogOut, ShieldCheck, UserCircle } from "lucide-react";
 import { cerrarSesion } from "@/app/acciones/autenticacion";
 import { requerirContexto } from "@/lib/auth";
-import { esAdministrador, etiquetaRol } from "@/lib/permisos";
+import { esAdministrador, etiquetaRol, etiquetaRolPersona } from "@/lib/permisos";
 import { esCorreoInterno, formatearTelefono } from "@/lib/telefono";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { CabeceraPagina } from "@/components/ui/CabeceraPagina";
@@ -118,9 +118,17 @@ export default async function PaginaAjustes() {
             <div className="flex justify-between gap-4">
               <dt className="text-suave">Rol</dt>
               <dd className="text-right font-medium">
-                {etiquetaRol(miembro.rol, roles)}
+                {etiquetaRolPersona(miembro.rol, esAdminPlataforma, roles)}
               </dd>
             </div>
+            {esAdminPlataforma && (
+              <div className="flex justify-between gap-4">
+                <dt className="text-suave">Rol en la comunidad</dt>
+                <dd className="text-right font-medium">
+                  {etiquetaRol(miembro.rol, roles)}
+                </dd>
+              </div>
+            )}
           </dl>
 
           <form action={cerrarSesion} className="mt-5">

@@ -106,16 +106,33 @@ export const ETIQUETAS_ROL: Record<RolMiembro, string> = {
   administrador_fincas: "Administrador de fincas",
 };
 
+export type RolAsignable = RolMiembro | "administrador_plataforma";
+
 /** Nombre visible del rol, usando el que se haya editado en la tabla roles. */
 export function etiquetaRol(
-  rol: RolMiembro | null | undefined,
+  rol: RolAsignable | null | undefined,
   roles?: RolSistema[] | null,
 ) {
   if (!rol) return "";
-  return roles?.find((fila) => fila.clave === rol)?.nombre ?? ETIQUETAS_ROL[rol] ?? rol;
+  return (
+    roles?.find((fila) => fila.clave === rol)?.nombre ??
+    ETIQUETAS_ROL[rol as RolMiembro] ??
+    rol
+  );
 }
 
-export type RolAsignable = RolMiembro | "administrador_plataforma";
+/**
+ * Etiqueta visible de una persona. El acceso de administrador de la plataforma
+ * manda sobre el rol que tenga en la comunidad.
+ */
+export function etiquetaRolPersona(
+  rol: RolMiembro | null | undefined,
+  esAdminPlataforma: boolean | null | undefined,
+  roles?: RolSistema[] | null,
+) {
+  if (esAdminPlataforma) return etiquetaRol("administrador_plataforma", roles);
+  return etiquetaRol(rol, roles);
+}
 
 export type OpcionRol = {
   valor: RolAsignable;

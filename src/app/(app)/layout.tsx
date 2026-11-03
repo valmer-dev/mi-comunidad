@@ -4,7 +4,7 @@ import { Building2 } from "lucide-react";
 import { obtenerContexto } from "@/lib/auth";
 import {
   esAdministrador,
-  etiquetaRol,
+  etiquetaRolPersona,
   puedeVerFinanzas,
 } from "@/lib/permisos";
 import { Estructura } from "@/components/estructura/Estructura";
@@ -50,7 +50,11 @@ export default async function LayoutApp({
     <Estructura
       nombreComunidad={comunidad.nombre}
       nombreUsuario={nombre}
-      etiquetaRol={etiquetaRol(miembro.rol, roles)}
+      etiquetaRol={etiquetaRolPersona(
+        miembro.rol,
+        esAdminPlataforma,
+        roles,
+      )}
       esAdmin={esAdministrador(permisos)}
       puedeVerFinanzas={puedeVerFinanzas(permisos)}
       esAdminPlataforma={esAdminPlataforma}

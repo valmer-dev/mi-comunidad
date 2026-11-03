@@ -1,6 +1,6 @@
 import { Mail, Phone, Users } from "lucide-react";
 import { requerirContexto } from "@/lib/auth";
-import { puedeGestionarVecinos, etiquetaRol } from "@/lib/permisos";
+import { puedeGestionarVecinos, etiquetaRolPersona } from "@/lib/permisos";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { iniciales } from "@/lib/utilidades";
 import { esCorreoInterno, formatearTelefono } from "@/lib/telefono";
@@ -48,7 +48,7 @@ export default async function PaginaVecinos() {
   const { data: perfiles } = idsPerfiles.length
     ? await supabase
         .from("perfiles")
-        .select("id, nombre, apellidos, correo, telefono")
+        .select("id, nombre, apellidos, correo, telefono, es_admin_plataforma")
         .in("id", idsPerfiles)
     : { data: [] };
 
@@ -129,7 +129,7 @@ export default async function PaginaVecinos() {
                     <EtiquetaEstado estado={m.estado} />
                   </div>
                   <p className="mt-0.5 text-sm text-suave">
-                    {etiquetaRol(m.rol, roles)}
+                    {etiquetaRolPersona(m.rol, perfil?.es_admin_plataforma, roles)}
                     {finca ? ` · ${finca.codigo}` : ""}
                   </p>
                   {titularesFinca.length > 1 && (
