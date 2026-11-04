@@ -104,3 +104,59 @@ export async function subirDocumento(
   revalidatePath("/documentos");
   return { ok: true, mensaje: `«${nombre}» añadido a ${categoria}.` };
 }
+
+/** Elimina un documento: primero la ficha y después el PDF del almacenamiento. */
+export async function eliminarDocumento(
+  _estado: EstadoDocumento,
+  datos: FormData,
+): Promise<EstadoDocumento> {
+  const { comunidad, permisos } = await requerirContexto();
+
+  if (!puedeGestionarDocumentos(permisos)) {
+    return { error: "No tienes permiso para eliminar documentos." };
+  }
+
+  const id = String(datos.get("id") ?? "");
+  if (!z.string().uuid().safeParse(id).success) {
+    return { error: "Documento no válido." };
+  }
+
+  const supabase = await crearClienteServidor();
+  const { data: documento, error: errorLectura } = await supabase
+    .from("documentos")
+    .select("id, ruta_almacenamiento")
+    .eq("id", id)
+    .eq("comunidad_id", comunidad.id)
+    .maybeSingle();
+
+  if (errorLectura || !documento) {
+    return { error: "No se encontró el documento." };
+  }
+
+  const { error } = await supabase
+    .from("documentos")
+    .delete()
+    .eq("id", documento.id)
+    .eq("comunidad_id", comunidad.id);
+
+  if (error) {
+    return { error: "No se pudo eliminar el documento. Inténtalo de nuevo." };
+  }
+
+  revalidatePath("/documentos");
+
+  if (documento.ruta_almacenamiento) {
+    const admin = crearClienteAdmin();
+    const { error: errorAlmacen } = await admin.storage
+      .from("documentos")
+      .remove([documento.ruta_almacenamiento]);
+
+    if (errorAlmacen) {
+      return {
+        error: "El documento se eliminó, pero no se pudo borrar el PDF del almacenamiento.",
+      };
+    }
+  }
+
+  return { ok: true };
+}

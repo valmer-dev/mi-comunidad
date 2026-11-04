@@ -48,3 +48,35 @@ export async function publicarAnuncio(
   revalidatePath("/panel");
   return { ok: true };
 }
+
+/** Elimina un anuncio de la comunidad activa. */
+export async function eliminarAnuncio(
+  _estado: EstadoAnuncio,
+  datos: FormData,
+): Promise<EstadoAnuncio> {
+  const { comunidad, permisos } = await requerirContexto();
+
+  if (!esAdministrador(permisos)) {
+    return { error: "Solo la junta directiva puede eliminar anuncios." };
+  }
+
+  const id = String(datos.get("id") ?? "");
+  if (!z.string().uuid().safeParse(id).success) {
+    return { error: "Anuncio no válido." };
+  }
+
+  const supabase = await crearClienteServidor();
+  const { error } = await supabase
+    .from("anuncios")
+    .delete()
+    .eq("id", id)
+    .eq("comunidad_id", comunidad.id);
+
+  if (error) {
+    return { error: "No se pudo eliminar el anuncio. Inténtalo de nuevo." };
+  }
+
+  revalidatePath("/tablon");
+  revalidatePath("/panel");
+  return { ok: true };
+}

@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requerirContexto } from "@/lib/auth";
-import { puedeGestionarIncidencias } from "@/lib/permisos";
+import { esAdministrador, puedeGestionarIncidencias } from "@/lib/permisos";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 
 const esquema = z.object({
@@ -136,6 +136,38 @@ export async function cambiarEstadoIncidencia(
         error: "El estado se cambió, pero no se pudo guardar el comentario.",
       };
     }
+  }
+
+  revalidatePath("/incidencias");
+  revalidatePath("/panel");
+  return { ok: true };
+}
+
+/** Elimina una incidencia y su seguimiento. */
+export async function eliminarIncidencia(
+  _estado: EstadoIncidencia,
+  datos: FormData,
+): Promise<EstadoIncidencia> {
+  const { comunidad, permisos } = await requerirContexto();
+
+  if (!esAdministrador(permisos)) {
+    return { error: "Solo la junta directiva puede eliminar incidencias." };
+  }
+
+  const id = String(datos.get("id") ?? "");
+  if (!z.string().uuid().safeParse(id).success) {
+    return { error: "Incidencia no válida." };
+  }
+
+  const supabase = await crearClienteServidor();
+  const { error } = await supabase
+    .from("incidencias")
+    .delete()
+    .eq("id", id)
+    .eq("comunidad_id", comunidad.id);
+
+  if (error) {
+    return { error: "No se pudo eliminar la incidencia. Inténtalo de nuevo." };
   }
 
   revalidatePath("/incidencias");

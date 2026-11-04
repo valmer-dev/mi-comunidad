@@ -1,8 +1,10 @@
 import { CalendarDays, Gavel, MapPin } from "lucide-react";
+import { eliminarJunta } from "@/app/acciones/juntas";
 import { requerirContexto } from "@/lib/auth";
 import { esAdministrador } from "@/lib/permisos";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { formatoFechaHora } from "@/lib/utilidades";
+import { BotonEliminar } from "@/components/ui/BotonEliminar";
 import { CabeceraPagina, EstadoVacio } from "@/components/ui/CabeceraPagina";
 import { EtiquetaEstado } from "@/components/ui/EtiquetaEstado";
 import { NuevaJunta } from "./NuevaJunta";
@@ -12,6 +14,7 @@ export const metadata = { title: "Juntas" };
 export default async function PaginaJuntas() {
   const { comunidad, permisos } = await requerirContexto();
   const supabase = await crearClienteServidor();
+  const administrador = esAdministrador(permisos);
 
   const { data: juntas } = await supabase
     .from("juntas")
@@ -62,6 +65,15 @@ export default async function PaginaJuntas() {
           <div className="flex flex-wrap items-center gap-2">
             <span className="chip bg-slate-100 capitalize text-slate-600">{junta.tipo}</span>
             <EtiquetaEstado estado={junta.estado} />
+            {administrador && (
+              <BotonEliminar
+                accion={eliminarJunta}
+                id={junta.id}
+                etiqueta="Eliminar"
+                titulo="Eliminar junta"
+                mensaje={`¿Eliminar la junta «${junta.titulo}»? Se borrarán también sus puntos del día y asistencias.`}
+              />
+            )}
           </div>
         </div>
 
@@ -89,7 +101,7 @@ export default async function PaginaJuntas() {
       <CabeceraPagina
         titulo="Juntas"
         descripcion="Convocatorias, puntos del día y acuerdos"
-        accion={esAdministrador(permisos) ? <NuevaJunta /> : undefined}
+        accion={administrador ? <NuevaJunta /> : undefined}
       />
 
       <section>

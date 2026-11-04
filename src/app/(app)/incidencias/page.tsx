@@ -1,8 +1,10 @@
 import { MapPin, UserRound, Wrench } from "lucide-react";
+import { eliminarIncidencia } from "@/app/acciones/incidencias";
 import { requerirContexto } from "@/lib/auth";
-import { puedeGestionarIncidencias } from "@/lib/permisos";
+import { esAdministrador, puedeGestionarIncidencias } from "@/lib/permisos";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { formatoFecha, formatoFechaCorta } from "@/lib/utilidades";
+import { BotonEliminar } from "@/components/ui/BotonEliminar";
 import { CabeceraPagina, EstadoVacio } from "@/components/ui/CabeceraPagina";
 import { EtiquetaEstado } from "@/components/ui/EtiquetaEstado";
 import { NuevaIncidencia } from "./NuevaIncidencia";
@@ -32,6 +34,7 @@ export default async function PaginaIncidencias() {
   const { usuario, comunidad, permisos } = await requerirContexto();
   const supabase = await crearClienteServidor();
   const gestor = puedeGestionarIncidencias(permisos);
+  const administrador = esAdministrador(permisos);
 
   const { data: incidencias } = await supabase
     .from("incidencias")
@@ -140,6 +143,15 @@ export default async function PaginaIncidencias() {
               <SelectorEstado id={incidencia.id} estado={incidencia.estado} />
             ) : (
               <EtiquetaEstado estado={incidencia.estado} />
+            )}
+            {administrador && (
+              <BotonEliminar
+                accion={eliminarIncidencia}
+                id={incidencia.id}
+                etiqueta="Eliminar"
+                titulo="Eliminar incidencia"
+                mensaje={`¿Eliminar la incidencia «${incidencia.titulo}» y todo su seguimiento? Esta acción no se puede deshacer.`}
+              />
             )}
           </div>
         </div>

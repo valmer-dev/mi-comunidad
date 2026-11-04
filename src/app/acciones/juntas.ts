@@ -82,3 +82,35 @@ export async function crearJunta(
   revalidatePath("/panel");
   return { ok: true };
 }
+
+/** Elimina una junta y todo su contenido (puntos del día y asistencias). */
+export async function eliminarJunta(
+  _estado: EstadoJunta,
+  datos: FormData,
+): Promise<EstadoJunta> {
+  const { comunidad, permisos } = await requerirContexto();
+
+  if (!esAdministrador(permisos)) {
+    return { error: "Solo la junta directiva puede eliminar juntas." };
+  }
+
+  const id = String(datos.get("id") ?? "");
+  if (!z.string().uuid().safeParse(id).success) {
+    return { error: "Junta no válida." };
+  }
+
+  const supabase = await crearClienteServidor();
+  const { error } = await supabase
+    .from("juntas")
+    .delete()
+    .eq("id", id)
+    .eq("comunidad_id", comunidad.id);
+
+  if (error) {
+    return { error: "No se pudo eliminar la junta. Inténtalo de nuevo." };
+  }
+
+  revalidatePath("/juntas");
+  revalidatePath("/panel");
+  return { ok: true };
+}

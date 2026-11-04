@@ -1,8 +1,10 @@
 import { Megaphone, Pin } from "lucide-react";
+import { eliminarAnuncio } from "@/app/acciones/tablon";
 import { requerirContexto } from "@/lib/auth";
 import { esAdministrador } from "@/lib/permisos";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { formatoFecha } from "@/lib/utilidades";
+import { BotonEliminar } from "@/components/ui/BotonEliminar";
 import { CabeceraPagina, EstadoVacio } from "@/components/ui/CabeceraPagina";
 import { NuevoAnuncio } from "./NuevoAnuncio";
 
@@ -11,6 +13,7 @@ export const metadata = { title: "Tablón" };
 export default async function PaginaTablón() {
   const { comunidad, permisos } = await requerirContexto();
   const supabase = await crearClienteServidor();
+  const administrador = esAdministrador(permisos);
 
   const { data: anuncios } = await supabase
     .from("anuncios")
@@ -30,7 +33,7 @@ export default async function PaginaTablón() {
       <CabeceraPagina
         titulo="Tablón"
         descripcion="Avisos y comunicados de la comunidad"
-        accion={esAdministrador(permisos) ? <NuevoAnuncio /> : undefined}
+        accion={administrador ? <NuevoAnuncio /> : undefined}
       />
 
       {anuncios && anuncios.length > 0 ? (
@@ -39,12 +42,23 @@ export default async function PaginaTablón() {
             <li key={anuncio.id} className="tarjeta">
               <div className="flex flex-wrap items-start justify-between gap-2">
                 <h2 className="text-base font-bold leading-snug">{anuncio.titulo}</h2>
-                {anuncio.fijado && (
-                  <span className="chip bg-acento-claro text-acento">
-                    <Pin className="size-3" aria-hidden />
-                    Fijado
-                  </span>
-                )}
+                <div className="flex flex-wrap items-center gap-2">
+                  {anuncio.fijado && (
+                    <span className="chip bg-acento-claro text-acento">
+                      <Pin className="size-3" aria-hidden />
+                      Fijado
+                    </span>
+                  )}
+                  {administrador && (
+                    <BotonEliminar
+                      accion={eliminarAnuncio}
+                      id={anuncio.id}
+                      etiqueta="Eliminar"
+                      titulo="Eliminar anuncio"
+                      mensaje={`¿Eliminar el anuncio «${anuncio.titulo}»? Esta acción no se puede deshacer.`}
+                    />
+                  )}
+                </div>
               </div>
               <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-tinta/90">
                 {anuncio.contenido}

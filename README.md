@@ -106,7 +106,7 @@ pueden editar desde **`/plataforma`**. Cada rol guarda cinco permisos:
 
 | Permiso | Qué permite |
 | --- | --- |
-| `administra_comunidad` | Editar datos de la comunidad, fincas, tablón, juntas y gastos |
+| `administra_comunidad` | Editar datos de la comunidad, fincas, tablón, juntas y gastos; borrar anuncios, incidencias y juntas |
 | `gestiona_vecinos` | Dar de alta, editar y eliminar vecinos y titulares |
 | `gestiona_documentos` | Subir y borrar documentos |
 | `gestiona_incidencias` | Cambiar el estado de las incidencias y dejar seguimiento |
@@ -154,6 +154,21 @@ La tabla de vecinos muestra solo los de la **comunidad activa** y permite:
   persona no tiene más comunidades ni viviendas, se elimina también su cuenta.
 
 
+### Borrado de contenido
+
+Desde `/tablon`, `/incidencias`, `/juntas` y `/documentos` aparece el botón
+**Eliminar** cuando el usuario tiene el permiso correspondiente. Siempre se pide
+confirmación, la acción vuelve a comprobar el permiso en el servidor y RLS
+valida el borrado. Al eliminar:
+
+- un **anuncio**, se borran también sus lecturas;
+- una **incidencia**, se borra su seguimiento;
+- una **junta**, se borran sus puntos del día y asistencias;
+- un **documento**, se borra su ficha y el PDF del bucket privado.
+
+El administrador de la plataforma tiene todos los permisos, por lo que puede
+eliminar los cuatro tipos de contenido en cualquier comunidad.
+
 ## Incidencias
 
 Cualquier miembro puede registrar una incidencia. Solo quien tenga el permiso
@@ -167,6 +182,10 @@ autor y la fecha, y se muestra en la tarjeta como **Seguimiento**, visible para
 todos los vecinos. Los permisos se comprueban en la acción del servidor y en las
 políticas RLS con `puede_gestionar_incidencias`, no solo en la interfaz.
 
+Además, quien tenga el permiso `administra_comunidad` (el administrador de la
+plataforma, el presidente y el vicepresidente) puede **eliminar una incidencia**
+con todo su seguimiento desde la propia tarjeta.
+
 ## Documentos
 
 Los documentos se dividen en cinco categorías fijas: **Estatutos, Actas,
@@ -179,6 +198,10 @@ Los archivos se guardan en un bucket privado de Supabase Storage (`documentos`).
 Los permisos se comprueban en la acción del servidor, en la política RLS de
 `documentos` y en las políticas de Storage con la función
 `puede_gestionar_documentos`, no solo en la interfaz.
+
+Quien puede subir documentos también puede **eliminarlos**: se borra la ficha y,
+si existe, el PDF del almacenamiento. El administrador de la plataforma puede
+hacerlo siempre porque tiene todos los permisos.
 
 ## Casas, pisos y titulares
 

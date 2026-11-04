@@ -7,6 +7,7 @@ import {
   Scale,
   ScrollText,
 } from "lucide-react";
+import { eliminarDocumento } from "@/app/acciones/documentos";
 import { requerirContexto } from "@/lib/auth";
 import {
   CATEGORIAS_DOCUMENTOS,
@@ -18,6 +19,7 @@ import { puedeGestionarDocumentos } from "@/lib/permisos";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { formatoFechaCorta, formatoTamano } from "@/lib/utilidades";
+import { BotonEliminar } from "@/components/ui/BotonEliminar";
 import { CabeceraPagina } from "@/components/ui/CabeceraPagina";
 import { SubirDocumento } from "./SubirDocumento";
 
@@ -103,14 +105,14 @@ export default async function PaginaDocumentos() {
     return [perfil?.nombre, perfil?.apellidos].filter(Boolean).join(" ") || null;
   }
 
-  const puedeSubir = puedeGestionarDocumentos(permisos);
+  const puedeGestionar = puedeGestionarDocumentos(permisos);
 
   return (
     <div>
       <CabeceraPagina
         titulo="Documentos"
         descripcion="Estatutos, actas, contratos, certificados y presupuestos"
-        accion={puedeSubir ? <SubirDocumento /> : undefined}
+        accion={puedeGestionar ? <SubirDocumento /> : undefined}
       />
 
       <div className="space-y-6">
@@ -175,6 +177,16 @@ export default async function PaginaDocumentos() {
                             <Download className="size-4" aria-hidden />
                             Ver PDF
                           </a>
+                        )}
+
+                        {puedeGestionar && (
+                          <BotonEliminar
+                            accion={eliminarDocumento}
+                            id={documento.id}
+                            etiqueta="Eliminar"
+                            titulo="Eliminar documento"
+                            mensaje={`¿Eliminar «${documento.nombre}»? El PDF también se borrará del almacenamiento.`}
+                          />
                         )}
                       </li>
                     );
