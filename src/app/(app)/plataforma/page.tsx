@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { abrirComunidad } from "@/app/acciones/plataforma";
 import { obtenerContexto } from "@/lib/auth";
+import { esCorreoInterno } from "@/lib/telefono";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { CabeceraPagina } from "@/components/ui/CabeceraPagina";
 import { NuevaComunidad } from "./NuevaComunidad";
@@ -15,6 +16,13 @@ import { TablaRoles } from "./TablaRoles";
 import { TablaVecinos, type VecinoPlataforma } from "./TablaVecinos";
 
 export const metadata = { title: "Plataforma" };
+
+type TitularFila = {
+  id: string;
+  finca_id: string;
+  usuario_id: string | null;
+  nombre: string | null;
+};
 
 export default async function PaginaPlataforma() {
   const { usuario, esAdminPlataforma, miembro, comunidad, roles } =
@@ -72,8 +80,22 @@ export default async function PaginaPlataforma() {
 
     fincasComunidad = fincasActivas ?? [];
 
+    const idsFincasActivas = (fincasActivas ?? []).map((finca) => finca.id);
+    const { data: titulares } = idsFincasActivas.length
+      ? await supabase
+          .from("titulares")
+          .select("id, finca_id, usuario_id, nombre")
+          .in("finca_id", idsFincasActivas)
+          .order("creado_en", { ascending: true })
+      : { data: [] };
+
     const idsPerfiles = [
-      ...new Set((miembrosActivos ?? []).map((fila) => fila.usuario_id)),
+      ...new Set([
+        ...(miembrosActivos ?? []).map((fila) => fila.usuario_id),
+        ...(titulares ?? [])
+          .map((titular) => titular.usuario_id)
+          .filter((id): id is string => Boolean(id)),
+      ]),
     ];
 
     const { data: perfiles } = idsPerfiles.length
@@ -90,11 +112,50 @@ export default async function PaginaPlataforma() {
       (fincasActivas ?? []).map((finca) => [finca.id, finca]),
     );
 
+    const titularesPorFinca = new Map<string, TitularFila[]>();
+    for (const titular of titulares ?? []) {
+      const lista = titularesPorFinca.get(titular.finca_id) ?? [];
+      lista.push(titular);
+      titularesPorFinca.set(titular.finca_id, lista);
+    }
+
     vecinos = (miembrosActivos ?? []).map((fila) => {
       const perfil = mapaPerfiles.get(fila.usuario_id);
       const finca = fila.finca_principal_id
         ? mapaFincas.get(fila.finca_principal_id)
         : null;
+
+      const nombreMiembro = [perfil?.nombre, perfil?.apellidos]
+        .filter(Boolean)
+        .join(" ")
+        .trim()
+        .toLowerCase();
+
+      const titularesFinca = fila.finca_principal_id
+        ? titularesPorFinca.get(fila.finca_principal_id) ?? []
+        : [];
+
+      // El otro titular de la vivienda: una persona distinta con o sin cuenta.
+      const otroTitular =
+        titularesFinca.find(
+          (titular) =>
+            titular.usuario_id && titular.usuario_id !== fila.usuario_id,
+        ) ??
+        titularesFinca.find(
+          (titular) =>
+            !titular.usuario_id &&
+            Boolean(titular.nombre?.trim()) &&
+            titular.nombre!.trim().toLowerCase() !== nombreMiembro,
+        ) ??
+        null;
+
+      const perfilCotitular = otroTitular?.usuario_id
+        ? mapaPerfiles.get(otroTitular.usuario_id)
+        : null;
+      const correoCotitular =
+        perfilCotitular?.correo && !esCorreoInterno(perfilCotitular.correo)
+          ? perfilCotitular.correo
+          : null;
 
       return {
         miembroId: fila.id,
@@ -108,6 +169,20 @@ export default async function PaginaPlataforma() {
         fincaId: fila.finca_principal_id,
         fincaCodigo: finca?.codigo ?? null,
         esAdminPlataforma: Boolean(perfil?.es_admin_plataforma),
+        cotitular: otroTitular
+          ? {
+              titularId: otroTitular.id,
+              usuarioId: otroTitular.usuario_id,
+              nombre:
+                [perfilCotitular?.nombre, perfilCotitular?.apellidos]
+                  .filter(Boolean)
+                  .join(" ") ||
+                otroTitular.nombre ||
+                "Titular",
+              telefono: perfilCotitular?.telefono ?? null,
+              correo: correoCotitular,
+            }
+          : null,
       };
     });
   }

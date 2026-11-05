@@ -6,11 +6,18 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { obtenerContexto } from "@/lib/auth";
 import {
+  buscarPerfilPorContacto,
+  crearCuentaVecino,
+  type CuentaCreada,
+} from "@/lib/alta-vecinos";
+import {
   correoDesdeTelefono,
   esCorreoInterno,
   normalizarTelefono,
   telefonoValido,
 } from "@/lib/telefono";
+import { repartirPorcentajes } from "@/lib/titulares";
+import { asegurarMiembroComunidad } from "@/lib/miembros";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 
@@ -248,40 +255,29 @@ const esquemaVecino = z.object({
   correo: correoOpcional.optional(),
   rol: z.enum(ROLES_EDITABLES),
   fincaId: z.string().uuid().optional().or(z.literal("")),
+  cotitularTitularId: z.string().uuid().optional().or(z.literal("")),
+  cotitularNombre: z.string().trim().max(140).optional(),
+  cotitularTelefono: telefonoOpcional.optional(),
+  cotitularCorreo: correoOpcional.optional(),
 });
 
-export type EstadoVecinoPlataforma = { error?: string; ok?: boolean };
+export type EstadoVecinoPlataforma =
+  | { error?: string }
+  | { ok: true; cuentas?: CuentaCreada[] };
 
-/** Recalcula el porcentaje de los titulares de una finca a partes iguales. */
-async function repartirPorcentajes(
-  supabase: Awaited<ReturnType<typeof crearClienteServidor>>,
-  fincaIds: string[],
-) {
-  for (const fincaId of fincaIds) {
-    const { data: filas } = await supabase
-      .from("titulares")
-      .select("id")
-      .eq("finca_id", fincaId)
-      .order("creado_en", { ascending: true });
-
-    if (!filas || filas.length === 0) continue;
-
-    const base = Math.floor((100 / filas.length) * 100) / 100;
-    let acumulado = 0;
-
-    for (let indice = 0; indice < filas.length; indice += 1) {
-      const esUltimo = indice === filas.length - 1;
-      const porcentaje = esUltimo ? Number((100 - acumulado).toFixed(2)) : base;
-      await supabase
-        .from("titulares")
-        .update({ porcentaje })
-        .eq("id", filas[indice].id);
-      acumulado += porcentaje;
-    }
-  }
+/** Separa un nombre completo en nombre y apellidos para el perfil. */
+function repartirNombreCompleto(valor: string) {
+  const partes = valor.trim().split(/\s+/).filter(Boolean);
+  const nombre = partes.shift() ?? valor.trim();
+  const apellidos = partes.join(" ") || null;
+  return { nombre, apellidos };
 }
 
-/** Edita los datos, el rol y la vivienda de un vecino de la comunidad activa. */
+/**
+ * Edita los datos, el rol y la vivienda de un vecino de la comunidad activa.
+ * Tambien permite anadir o actualizar el segundo titular de la vivienda, con
+ * su propio telefono y cuenta de acceso.
+ */
 export async function actualizarVecino(
   _estado: EstadoVecinoPlataforma,
   datos: FormData,
@@ -302,6 +298,10 @@ export async function actualizarVecino(
     correo: datos.get("correo") || "",
     rol: datos.get("rol"),
     fincaId: datos.get("fincaId") || "",
+    cotitularTitularId: datos.get("cotitularTitularId") || "",
+    cotitularNombre: datos.get("cotitularNombre") || undefined,
+    cotitularTelefono: datos.get("cotitularTelefono") || "",
+    cotitularCorreo: datos.get("cotitularCorreo") || "",
   });
 
   if (!resultado.success) {
@@ -313,9 +313,38 @@ export async function actualizarVecino(
     ? normalizarTelefono(resultado.data.telefono)
     : null;
   const correo = resultado.data.correo ? resultado.data.correo.toLowerCase() : null;
+  const cotitularTitularId = resultado.data.cotitularTitularId || null;
+  const cotitularNombre = resultado.data.cotitularNombre?.trim() || null;
+  const cotitularTelefono = resultado.data.cotitularTelefono
+    ? normalizarTelefono(resultado.data.cotitularTelefono)
+    : null;
+  const cotitularCorreo = resultado.data.cotitularCorreo
+    ? resultado.data.cotitularCorreo.toLowerCase()
+    : null;
+  const hayCotitular = Boolean(
+    cotitularTitularId ||
+      cotitularNombre ||
+      cotitularTelefono ||
+      cotitularCorreo,
+  );
 
   if (correo && esCorreoInterno(correo)) {
     return { error: "Ese correo no es válido." };
+  }
+  if (cotitularCorreo && esCorreoInterno(cotitularCorreo)) {
+    return { error: "El correo del segundo titular no es válido." };
+  }
+  if (hayCotitular && !fincaId) {
+    return { error: "Elige la vivienda para poder añadir al segundo titular." };
+  }
+  if (hayCotitular && !cotitularNombre && !cotitularTitularId) {
+    return { error: "Escribe el nombre del segundo titular." };
+  }
+  if (cotitularTelefono && cotitularTelefono === telefono) {
+    return { error: "El segundo titular no puede tener el mismo teléfono que el primero." };
+  }
+  if (cotitularCorreo && cotitularCorreo === correo) {
+    return { error: "El segundo titular no puede tener el mismo correo que el primero." };
   }
 
   const supabase = await crearClienteServidor();
@@ -395,6 +424,7 @@ export async function actualizarVecino(
 
   const nuevoRol = esAdminElegido ? miembro.rol : rol;
   const admin = crearClienteAdmin();
+  const cuentas: CuentaCreada[] = [];
 
   const { data: datosAuth } = await admin.auth.admin.getUserById(miembro.usuario_id);
   const correoAuthActual = datosAuth?.user?.email ?? null;
@@ -429,7 +459,9 @@ export async function actualizarVecino(
       nombre,
       apellidos: apellidos || null,
       telefono,
-      correo,
+      // Si no se indica un correo real, se conserva el interno del telefono
+      // (es el que usa Auth para entrar) en vez de borrarlo.
+      correo: correo ?? (esCorreoInterno(correoAuthActual) ? correoAuthActual : null),
       es_admin_plataforma: esAdminElegido,
     })
     .eq("id", miembro.usuario_id);
@@ -503,11 +535,248 @@ export async function actualizarVecino(
     await repartirPorcentajes(supabase, [...afectadas]);
   }
 
+  // Segundo titular de la misma vivienda: puede tener su propia cuenta y
+  // entrar con su telefono. Si ya existia sin cuenta, se le crea ahora.
+  if (hayCotitular && fincaId) {
+    const fincaCompartida = fincaId;
+    const nombreCotitular = cotitularNombre ?? "";
+
+    if (cotitularTitularId) {
+      const { data: titular } = await supabase
+        .from("titulares")
+        .select("id, usuario_id, nombre")
+        .eq("id", cotitularTitularId)
+        .eq("finca_id", fincaCompartida)
+        .maybeSingle();
+
+      if (!titular) {
+        return { error: "El segundo titular indicado no pertenece a esa vivienda." };
+      }
+      if (titular.usuario_id === miembro.usuario_id) {
+        return {
+          error: "El segundo titular no puede ser la misma persona que el primero.",
+        };
+      }
+
+      const nombreFinal = nombreCotitular || titular.nombre || "Titular";
+      let usuarioCotitular = titular.usuario_id;
+
+      if (usuarioCotitular) {
+        if (cotitularTelefono) {
+          const { data: repetido } = await admin
+            .from("perfiles")
+            .select("id")
+            .eq("telefono", cotitularTelefono)
+            .neq("id", usuarioCotitular)
+            .limit(1)
+            .maybeSingle();
+          if (repetido) {
+            return { error: "Ese teléfono ya está en uso por otra persona." };
+          }
+        }
+        if (cotitularCorreo) {
+          const { data: repetido } = await admin
+            .from("perfiles")
+            .select("id")
+            .ilike("correo", cotitularCorreo)
+            .neq("id", usuarioCotitular)
+            .limit(1)
+            .maybeSingle();
+          if (repetido) {
+            return { error: "Ese correo ya está en uso por otra persona." };
+          }
+        }
+
+        const datosPerfil = repartirNombreCompleto(nombreFinal);
+        const { error: errorPerfilCotitular } = await admin
+          .from("perfiles")
+          .update({
+            nombre: datosPerfil.nombre,
+            apellidos: datosPerfil.apellidos,
+            ...(cotitularTelefono ? { telefono: cotitularTelefono } : {}),
+            // Si no se indica correo real se conserva el que tuviera (p. ej.
+            // el interno del telefono), para no romper su acceso.
+            ...(cotitularCorreo ? { correo: cotitularCorreo } : {}),
+          })
+          .eq("id", usuarioCotitular);
+
+        if (errorPerfilCotitular) {
+          return { error: "No se pudieron guardar los datos del segundo titular." };
+        }
+      } else if (cotitularTelefono || cotitularCorreo) {
+        const busqueda = await buscarPerfilPorContacto(
+          admin,
+          cotitularTelefono,
+          cotitularCorreo,
+        );
+        if (busqueda.conflicto) {
+          return {
+            error: "El teléfono y el correo del segundo titular son de cuentas distintas.",
+          };
+        }
+        if (busqueda.perfil?.id === miembro.usuario_id) {
+          return {
+            error: "El segundo titular no puede ser la misma persona que el primero.",
+          };
+        }
+
+        if (busqueda.perfil) {
+          usuarioCotitular = busqueda.perfil.id;
+          const datosPerfil = repartirNombreCompleto(nombreFinal);
+          const { error: errorPerfilCotitular } = await admin
+            .from("perfiles")
+            .update({
+              nombre: datosPerfil.nombre,
+              apellidos: datosPerfil.apellidos,
+              ...(cotitularTelefono ? { telefono: cotitularTelefono } : {}),
+              ...(cotitularCorreo ? { correo: cotitularCorreo } : {}),
+            })
+            .eq("id", usuarioCotitular);
+          if (errorPerfilCotitular) {
+            return { error: "No se pudieron guardar los datos del segundo titular." };
+          }
+        } else {
+          const creada = await crearCuentaVecino(admin, {
+            nombre: nombreFinal,
+            telefono: cotitularTelefono,
+            correo: cotitularCorreo,
+          });
+          if ("error" in creada) {
+            return { error: "No se pudo crear la cuenta del segundo titular." };
+          }
+          usuarioCotitular = creada.usuarioId;
+          cuentas.push(creada.cuenta);
+        }
+
+        const miembroCotitular = await asegurarMiembroComunidad(supabase, {
+          comunidadId: comunidad.id,
+          usuarioId: usuarioCotitular,
+          fincaId: fincaCompartida,
+        });
+        if (!miembroCotitular) {
+          return { error: "No se pudo dar acceso al segundo titular." };
+        }
+      }
+
+      const { error: errorTitularCompartido } = await supabase
+        .from("titulares")
+        .update({
+          usuario_id: usuarioCotitular,
+          nombre: nombreFinal,
+          tipo: "propietario",
+        })
+        .eq("id", titular.id);
+
+      if (errorTitularCompartido) {
+        return { error: "No se pudo actualizar al segundo titular." };
+      }
+    } else if (nombreCotitular) {
+      let usuarioCotitular: string | null = null;
+
+      if (cotitularTelefono || cotitularCorreo) {
+        const busqueda = await buscarPerfilPorContacto(
+          admin,
+          cotitularTelefono,
+          cotitularCorreo,
+        );
+        if (busqueda.conflicto) {
+          return {
+            error: "El teléfono y el correo del segundo titular son de cuentas distintas.",
+          };
+        }
+        if (busqueda.perfil?.id === miembro.usuario_id) {
+          return {
+            error: "El segundo titular no puede ser la misma persona que el primero.",
+          };
+        }
+
+        if (busqueda.perfil) {
+          usuarioCotitular = busqueda.perfil.id;
+          const datosPerfil = repartirNombreCompleto(nombreCotitular);
+          const { error: errorPerfilCotitular } = await admin
+            .from("perfiles")
+            .update({
+              nombre: datosPerfil.nombre,
+              apellidos: datosPerfil.apellidos,
+              ...(cotitularTelefono ? { telefono: cotitularTelefono } : {}),
+              ...(cotitularCorreo ? { correo: cotitularCorreo } : {}),
+            })
+            .eq("id", usuarioCotitular);
+          if (errorPerfilCotitular) {
+            return { error: "No se pudieron guardar los datos del segundo titular." };
+          }
+        } else {
+          const creada = await crearCuentaVecino(admin, {
+            nombre: nombreCotitular,
+            telefono: cotitularTelefono,
+            correo: cotitularCorreo,
+          });
+          if ("error" in creada) {
+            return { error: "No se pudo crear la cuenta del segundo titular." };
+          }
+          usuarioCotitular = creada.usuarioId;
+          cuentas.push(creada.cuenta);
+        }
+
+        if (usuarioCotitular) {
+          const miembroCotitular = await asegurarMiembroComunidad(supabase, {
+            comunidadId: comunidad.id,
+            usuarioId: usuarioCotitular,
+            fincaId: fincaCompartida,
+          });
+          if (!miembroCotitular) {
+            return { error: "No se pudo dar acceso al segundo titular." };
+          }
+        }
+      }
+
+      if (usuarioCotitular) {
+        const { data: yaEsTitular } = await supabase
+          .from("titulares")
+          .select("id")
+          .eq("finca_id", fincaCompartida)
+          .eq("usuario_id", usuarioCotitular)
+          .maybeSingle();
+
+        if (yaEsTitular) {
+          await supabase
+            .from("titulares")
+            .update({ nombre: nombreCotitular, tipo: "propietario" })
+            .eq("id", yaEsTitular.id);
+        } else {
+          const { error: errorNuevoTitular } = await supabase.from("titulares").insert({
+            finca_id: fincaCompartida,
+            usuario_id: usuarioCotitular,
+            nombre: nombreCotitular,
+            tipo: "propietario",
+            porcentaje: 100,
+          });
+          if (errorNuevoTitular) {
+            return { error: "No se pudo añadir al segundo titular." };
+          }
+        }
+      } else {
+        const { error: errorNuevoTitular } = await supabase.from("titulares").insert({
+          finca_id: fincaCompartida,
+          usuario_id: null,
+          nombre: nombreCotitular,
+          tipo: "propietario",
+          porcentaje: 100,
+        });
+        if (errorNuevoTitular) {
+          return { error: "No se pudo añadir al segundo titular." };
+        }
+      }
+    }
+
+    await repartirPorcentajes(supabase, [fincaCompartida]);
+  }
+
   revalidatePath("/plataforma");
   revalidatePath("/vecinos");
   revalidatePath("/panel");
   revalidatePath("/ajustes");
-  return { ok: true };
+  return { ok: true, cuentas };
 }
 
 /** Elimina a un vecino de la comunidad activa y, si procede, su cuenta. */

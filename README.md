@@ -99,6 +99,17 @@ Para medir: `node --env-file=.env.local scripts/probar-render.mjs <url>`
 (credenciales en `COMUNIDAD_CORREO`/`COMUNIDAD_CONTRASENA` o en
 `.secretos/credenciales-presidente.txt`).
 
+La segunda titularidad tiene su propia prueba de punta a punta, que crea datos
+temporales y los borra al terminar:
+
+```bash
+npm run build && npm start
+node --env-file=.env.local scripts/probar-titulares.mjs
+```
+
+Comprueba el alta con dos titulares, el reparto al 50 %, el acceso con los dos
+teléfonos y la conversión de un titular sin cuenta en usuario con acceso.
+
 ## Roles
 
 Los permisos ya no están fijados en el código: viven en la tabla `roles` y se
@@ -150,6 +161,10 @@ La tabla de vecinos muestra solo los de la **comunidad activa** y permite:
 - **Crear**: reutiliza el alta por teléfono (con correo opcional y segundo titular).
 - **Editar**: nombre, apellidos, teléfono, correo, rol y vivienda. Al cambiar la
   vivienda, la titularidad se mueve y los coeficientes se reparten de nuevo.
+  Desde la misma ficha se puede añadir o actualizar el **segundo titular** de la
+  vivienda: si se le indica teléfono o correo se le crea (o reutiliza) su cuenta
+  y se muestran sus credenciales para entregárselas; si solo se indica el nombre,
+  queda registrado como titular sin acceso.
 - **Eliminar**: borra su pertenencia a la comunidad y sus titulares. Si la
   persona no tiene más comunidades ni viviendas, se elimina también su cuenta.
 
@@ -213,9 +228,12 @@ Los pisos se numeran por planta y puerta: cuatro puertas (A, B, C y D) por plant
 El número de pisos es el total de viviendas: 12 pisos son 3 plantas × 4 puertas.
 
 Al dar de alta un vecino se elige su casa o piso y, opcionalmente, un segundo
-titular: con correo se le crea su cuenta (o se reutiliza la que ya tenía); solo
-con nombre queda registrado como titular sin acceso. Los dos titulares comparten
-la finca al 50 %.
+titular: con teléfono o correo se le crea su cuenta (o se reutiliza la que ya
+tenía) y **los dos pueden entrar por separado**, cada uno con su propio número de
+teléfono; solo con nombre queda registrado como titular sin acceso. Los
+porcentajes de la finca se reparten a partes iguales entre todos sus titulares
+(50 % y 50 % cuando son dos). El segundo titular también se puede añadir o
+completar después desde la ficha del vecino en `/plataforma`.
 
 ## Despliegue
 

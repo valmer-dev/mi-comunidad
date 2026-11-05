@@ -3,16 +3,23 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requerirContexto } from "@/lib/auth";
-import { puedeGestionarVecinos } from "@/lib/permisos";
-import { generarContrasenaTemporal } from "@/lib/contrasenas";
 import {
-  correoDesdeTelefono,
+  buscarPerfilPorContacto,
+  crearCuentaVecino,
+  type CuentaCreada,
+} from "@/lib/alta-vecinos";
+import { puedeGestionarVecinos } from "@/lib/permisos";
+import { asegurarMiembroComunidad } from "@/lib/miembros";
+import { repartirPorcentajes } from "@/lib/titulares";
+import {
   esCorreoInterno,
   normalizarTelefono,
   telefonoValido,
 } from "@/lib/telefono";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
+
+export type { CuentaCreada } from "@/lib/alta-vecinos";
 
 const telefonoObligatorio = z
   .string()
@@ -47,14 +54,6 @@ const esquema = z.object({
   titular2Correo: correoOpcional.optional(),
 });
 
-export type CuentaCreada = {
-  nombre: string;
-  telefono: string | null;
-  /** Solo si se indico un correo real (no el interno del telefono). */
-  correo: string | null;
-  contrasena: string;
-};
-
 export type EstadoVecino =
   | { error?: string }
   | {
@@ -66,85 +65,8 @@ export type EstadoVecino =
       fincaCodigo: string | null;
     };
 
-type ClienteAdmin = ReturnType<typeof crearClienteAdmin>;
-
 /** Error de validacion detectado despues de haber creado alguna cuenta. */
 class ErrorAlta extends Error {}
-
-/**
- * Busca una cuenta por telefono o por correo. El telefono manda: es el
- * identificador que se entrega al vecino.
- */
-async function buscarPerfil(
-  admin: ClienteAdmin,
-  telefono: string | null,
-  correo: string | null,
-): Promise<
-  | { conflicto: true }
-  | { conflicto?: false; perfil: { id: string } | null }
-> {
-  const porTelefono = telefono
-    ? (
-        await admin
-          .from("perfiles")
-          .select("id")
-          .eq("telefono", telefono)
-          .maybeSingle()
-      ).data
-    : null;
-
-  const porCorreo = correo
-    ? (
-        await admin
-          .from("perfiles")
-          .select("id")
-          .ilike("correo", correo)
-          .maybeSingle()
-      ).data
-    : null;
-
-  if (porTelefono && porCorreo && porTelefono.id !== porCorreo.id) {
-    return { conflicto: true };
-  }
-
-  return { perfil: porTelefono ?? porCorreo ?? null };
-}
-
-async function crearCuenta(
-  admin: ClienteAdmin,
-  datos: { nombre: string; telefono: string | null; correo: string | null },
-): Promise<
-  | { error: true }
-  | { usuarioId: string; cuenta: CuentaCreada }
-> {
-  const correoAuth =
-    datos.correo ?? (datos.telefono ? correoDesdeTelefono(datos.telefono) : null);
-  if (!correoAuth) return { error: true };
-
-  const contrasena = generarContrasenaTemporal();
-  const { data, error } = await admin.auth.admin.createUser({
-    email: correoAuth,
-    password: contrasena,
-    email_confirm: true,
-    user_metadata: { nombre: datos.nombre },
-  });
-
-  if (error || !data.user) return { error: true };
-
-  if (datos.telefono) {
-    await admin.from("perfiles").update({ telefono: datos.telefono }).eq("id", data.user.id);
-  }
-
-  return {
-    usuarioId: data.user.id,
-    cuenta: {
-      nombre: datos.nombre,
-      telefono: datos.telefono,
-      correo: datos.correo,
-      contrasena,
-    },
-  };
-}
 
 /**
  * Da de alta a un vecino usando el telefono como identificador. El correo es
@@ -224,7 +146,7 @@ export async function crearVecino(
 
   try {
     // --- Titular principal ---
-    const busqueda = await buscarPerfil(admin, telefono, correo);
+    const busqueda = await buscarPerfilPorContacto(admin, telefono, correo);
     if (busqueda.conflicto) {
       return { error: "Ese teléfono y ese correo pertenecen a cuentas distintas." };
     }
@@ -247,7 +169,7 @@ export async function crearVecino(
       avisos.push("Esa persona ya tenía cuenta: entra con su contraseña actual.");
       await admin.from("perfiles").update({ telefono }).eq("id", usuarioId);
     } else {
-      const creada = await crearCuenta(admin, { nombre, telefono, correo });
+      const creada = await crearCuentaVecino(admin, { nombre, telefono, correo });
       if ("error" in creada) {
         return { error: "No se pudo crear la cuenta. Inténtalo de nuevo." };
       }
@@ -277,7 +199,11 @@ export async function crearVecino(
     let segundoId: string | null = null;
 
     if (haySegundoTitular && haySegundoContacto) {
-      const busqueda2 = await buscarPerfil(admin, titular2Telefono, titular2Correo);
+      const busqueda2 = await buscarPerfilPorContacto(
+        admin,
+        titular2Telefono,
+        titular2Correo,
+      );
       if (busqueda2.conflicto) {
         throw new ErrorAlta(
           "El teléfono y el correo del segundo titular son de cuentas distintas.",
@@ -298,7 +224,7 @@ export async function crearVecino(
           await admin.from("perfiles").update({ telefono: titular2Telefono }).eq("id", segundoId);
         }
       } else {
-        const creada2 = await crearCuenta(admin, {
+        const creada2 = await crearCuentaVecino(admin, {
           nombre: titular2Nombre ?? "",
           telefono: titular2Telefono,
           correo: titular2Correo,
@@ -310,16 +236,12 @@ export async function crearVecino(
       }
 
       // El segundo titular tambien es miembro: puede entrar y ver su finca.
-      await supabase.from("miembros").upsert(
-        {
-          comunidad_id: comunidad.id,
-          usuario_id: segundoId,
-          rol: "vecino",
-          estado: "activo",
-          finca_principal_id: fincaId || null,
-        },
-        { onConflict: "comunidad_id,usuario_id", ignoreDuplicates: true },
-      );
+      const miembroSegundo = await asegurarMiembroComunidad(supabase, {
+        comunidadId: comunidad.id,
+        usuarioId: segundoId,
+        fincaId: fincaId || null,
+      });
+      if (!miembroSegundo) throw new Error("miembro2");
     }
 
     // --- Finca y titulares ---
@@ -360,6 +282,8 @@ export async function crearVecino(
 
       const { error: errorTitulares } = await supabase.from("titulares").insert(titulares);
       if (errorTitulares) throw new Error("titulares");
+
+      await repartirPorcentajes(supabase, [fincaId]);
     }
   } catch (error) {
     for (const creado of creados.reverse()) {

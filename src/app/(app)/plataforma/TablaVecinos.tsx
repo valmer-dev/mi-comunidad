@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useActionState } from "react";
 import {
+  Check,
+  Copy,
   Loader2,
   Pencil,
   Save,
@@ -28,6 +30,14 @@ import { iniciales } from "@/lib/utilidades";
 import { EtiquetaEstado } from "@/components/ui/EtiquetaEstado";
 import { NuevoVecino } from "../vecinos/NuevoVecino";
 
+export type CotitularPlataforma = {
+  titularId: string;
+  usuarioId: string | null;
+  nombre: string;
+  telefono: string | null;
+  correo: string | null;
+};
+
 export type VecinoPlataforma = {
   miembroId: string;
   usuarioId: string;
@@ -40,6 +50,7 @@ export type VecinoPlataforma = {
   fincaId: string | null;
   fincaCodigo: string | null;
   esAdminPlataforma: boolean;
+  cotitular: CotitularPlataforma | null;
 };
 
 type Finca = { id: string; codigo: string; tipo: string };
@@ -92,15 +103,63 @@ function FormularioVecino({
     ? "administrador_plataforma"
     : vecino.rol;
   const [rol, setRol] = useState(rolInicial);
+  const [fincaId, setFincaId] = useState(vecino.fincaId ?? "");
+  const [cotitularTitularId, setCotitularTitularId] = useState(
+    vecino.cotitular?.titularId ?? "",
+  );
+  const [cotitularNombre, setCotitularNombre] = useState(
+    vecino.cotitular?.nombre ?? "",
+  );
+  const [cotitularTelefono, setCotitularTelefono] = useState(
+    vecino.cotitular?.telefono ?? "",
+  );
+  const [cotitularCorreo, setCotitularCorreo] = useState(
+    vecino.cotitular?.correo ?? "",
+  );
+  const [copiado, setCopiado] = useState(false);
   const ayudaRol = opciones.find((opcion) => opcion.valor === rol)?.ayuda;
+  // Los correos internos (telefono@telefono.micomunidad.local) no se muestran
+  // ni se reenvian: si se enviaran, la validacion los rechazaria.
+  const correoVisible =
+    vecino.correo && !esCorreoInterno(vecino.correo) ? vecino.correo : "";
 
   useEffect(() => {
-    if ("ok" in estado && estado.ok) alCerrar();
+    if (
+      "ok" in estado &&
+      estado.ok &&
+      (!estado.cuentas || estado.cuentas.length === 0)
+    ) {
+      alCerrar();
+    }
   }, [estado, alCerrar]);
+
+  function cambiarFinca(valor: string) {
+    setFincaId(valor);
+    if (valor !== vecino.fincaId) {
+      setCotitularTitularId("");
+      setCotitularNombre("");
+      setCotitularTelefono("");
+      setCotitularCorreo("");
+    }
+  }
+
+  function copiarCredenciales() {
+    if (!("ok" in estado) || !estado.ok || !estado.cuentas?.length) return;
+    const texto = estado.cuentas
+      .map(
+        (cuenta) =>
+          `${cuenta.nombre}\nTeléfono: ${cuenta.telefono ?? "-"}\nContraseña: ${cuenta.contrasena}`,
+      )
+      .join("\n\n");
+    navigator.clipboard.writeText(texto);
+    setCopiado(true);
+    setTimeout(() => setCopiado(false), 2000);
+  }
 
   return (
     <form action={accion} className="rounded-xl border border-borde bg-fondo/60 p-4">
       <input type="hidden" name="miembroId" value={vecino.miembroId} />
+      <input type="hidden" name="cotitularTitularId" value={cotitularTitularId} />
 
       <div className="grid gap-3 sm:grid-cols-2">
         <div>
@@ -148,7 +207,7 @@ function FormularioVecino({
             id={`correo-${vecino.miembroId}`}
             name="correo"
             type="email"
-            defaultValue={vecino.correo ?? ""}
+            defaultValue={correoVisible}
             className="campo"
             placeholder="ana@correo.com"
           />
@@ -180,7 +239,8 @@ function FormularioVecino({
             id={`finca-${vecino.miembroId}`}
             name="fincaId"
             className="campo"
-            defaultValue={vecino.fincaId ?? ""}
+            value={fincaId}
+            onChange={(evento) => cambiarFinca(evento.target.value)}
           >
             <option value="">Sin asignar</option>
             {fincas.map((finca) => (
@@ -192,10 +252,118 @@ function FormularioVecino({
         </div>
       </div>
 
+      {fincaId && (
+        <fieldset className="mt-4 rounded-xl border border-borde p-3">
+          <legend className="px-1 text-sm font-semibold">
+            Segundo titular (opcional)
+          </legend>
+          <p className="text-xs text-suave">
+            Si la vivienda tiene dos titulares, añade al segundo con su propio
+            teléfono. Los dos podrán entrar por separado.
+          </p>
+          <div className="mt-3 grid gap-3 sm:grid-cols-3">
+            <div>
+              <label
+                htmlFor={`cotitular-nombre-${vecino.miembroId}`}
+                className="etiqueta"
+              >
+                Nombre
+              </label>
+              <input
+                id={`cotitular-nombre-${vecino.miembroId}`}
+                name="cotitularNombre"
+                className="campo"
+                value={cotitularNombre}
+                onChange={(evento) => setCotitularNombre(evento.target.value)}
+                placeholder="Luis García"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor={`cotitular-telefono-${vecino.miembroId}`}
+                className="etiqueta"
+              >
+                Teléfono
+              </label>
+              <input
+                id={`cotitular-telefono-${vecino.miembroId}`}
+                name="cotitularTelefono"
+                type="tel"
+                inputMode="tel"
+                className="campo"
+                value={cotitularTelefono}
+                onChange={(evento) => setCotitularTelefono(evento.target.value)}
+                placeholder="600 000 000"
+              />
+            </div>
+            <div>
+              <label
+                htmlFor={`cotitular-correo-${vecino.miembroId}`}
+                className="etiqueta"
+              >
+                Correo
+              </label>
+              <input
+                id={`cotitular-correo-${vecino.miembroId}`}
+                name="cotitularCorreo"
+                type="email"
+                className="campo"
+                value={cotitularCorreo}
+                onChange={(evento) => setCotitularCorreo(evento.target.value)}
+                placeholder="luis@correo.com"
+              />
+            </div>
+          </div>
+          {vecino.cotitular?.usuarioId && (
+            <p className="mt-2 text-xs font-medium text-emerald-700">
+              Este titular ya tiene cuenta de acceso.
+            </p>
+          )}
+        </fieldset>
+      )}
+
       {"error" in estado && estado.error && (
         <p className="mt-3 rounded-xl bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-700">
           {estado.error}
         </p>
+      )}
+
+      {"ok" in estado && estado.ok && Boolean(estado.cuentas?.length) && (
+        <div className="mt-3 rounded-xl bg-emerald-50 p-4">
+          <p className="text-sm font-semibold text-emerald-900">
+            Cuenta creada para el segundo titular
+          </p>
+          <p className="mt-1 text-sm text-emerald-800">
+            Entrega estas credenciales. No se volverán a mostrar.
+          </p>
+          <div className="mt-2 space-y-2">
+            {estado.cuentas?.map((cuenta) => (
+              <div
+                key={cuenta.telefono ?? cuenta.correo ?? cuenta.nombre}
+                className="rounded-lg bg-white p-3 font-mono text-sm"
+              >
+                <p className="font-sans font-semibold">{cuenta.nombre}</p>
+                {cuenta.telefono && (
+                  <p>Teléfono: {formatearTelefono(cuenta.telefono)}</p>
+                )}
+                {cuenta.correo && <p>Correo: {cuenta.correo}</p>}
+                <p>Contraseña: {cuenta.contrasena}</p>
+              </div>
+            ))}
+          </div>
+          <button
+            type="button"
+            onClick={copiarCredenciales}
+            className="boton boton-borde mt-3"
+          >
+            {copiado ? (
+              <Check className="size-4" aria-hidden />
+            ) : (
+              <Copy className="size-4" aria-hidden />
+            )}
+            {copiado ? "Copiado" : "Copiar credenciales"}
+          </button>
+        </div>
       )}
 
       <div className="mt-4 flex gap-2">
