@@ -3,6 +3,7 @@
 import { useActionState, useState } from "react";
 import { Loader2, Megaphone, Plus, X } from "lucide-react";
 import { publicarAnuncio, type EstadoAnuncio } from "@/app/acciones/tablon";
+import { EditorTextoRico } from "@/components/ui/EditorTextoRico";
 
 const ESTADO_INICIAL: EstadoAnuncio = {};
 
@@ -54,14 +55,10 @@ export function NuevoAnuncio() {
           <label htmlFor="contenido" className="etiqueta">
             Contenido
           </label>
-          <textarea
-            id="contenido"
-            name="contenido"
-            required
-            rows={5}
-            className="campo resize-y"
-            placeholder="Escribe aquí el anuncio para los vecinos…"
-          />
+          <EditorTextoRico id="contenido" name="contenido" />
+          <p className="mt-1 text-xs text-suave">
+            Puedes usar negrita, cursiva, listas y enlaces.
+          </p>
         </div>
 
         <label className="flex items-center gap-2 text-sm font-medium">

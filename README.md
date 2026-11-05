@@ -184,6 +184,25 @@ valida el borrado. Al eliminar:
 El administrador de la plataforma tiene todos los permisos, por lo que puede
 eliminar los cuatro tipos de contenido en cualquier comunidad.
 
+## Tablón de anuncios
+
+La junta publica anuncios con un editor enriquecido: **negrita**, *cursiva*,
+subrayado, listas con viñetas o numeradas y enlaces. El editor responde a los
+atajos habituales (`Ctrl+B`, `Ctrl+I`, `Ctrl+U`) y la barra de formato se adapta
+al ancho de la pantalla.
+
+El contenido se guarda como HTML restringido y se limpia con una lista cerrada de
+etiquetas (`sanitize-html`) al guardarlo y al pintarlo; nunca se inserta HTML sin
+sanear. Los anuncios antiguos guardados como texto plano se siguen viendo igual,
+conservando sus saltos de línea, y el panel de inicio muestra un extracto sin
+etiquetas.
+
+Prueba automática (crea y borra datos temporales):
+
+```bash
+node --env-file=.env.local scripts/probar-anuncio-rico.mjs
+```
+
 ## Incidencias
 
 Cualquier miembro puede registrar una incidencia. Solo quien tenga el permiso

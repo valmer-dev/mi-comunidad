@@ -2,13 +2,14 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { limpiarContenidoAnuncio, textoPlanoAnuncio } from "@/lib/anuncios";
 import { requerirContexto } from "@/lib/auth";
 import { esAdministrador } from "@/lib/permisos";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 
 const esquema = z.object({
   titulo: z.string().trim().min(3, "El título es demasiado corto."),
-  contenido: z.string().trim().min(5, "Escribe el contenido del anuncio."),
+  contenido: z.string().trim().min(1, "Escribe el contenido del anuncio."),
   fijado: z.enum(["on", "off"]).optional(),
 });
 
@@ -33,11 +34,18 @@ export async function publicarAnuncio(
     return { error: resultado.error.issues[0]?.message ?? "Revisa los datos." };
   }
 
+  // El editor envia HTML: se limpia antes de guardarlo y se comprueba que
+  // quede texto de verdad (no solo etiquetas o parrafos vacios).
+  const contenido = limpiarContenidoAnuncio(resultado.data.contenido);
+  if (textoPlanoAnuncio(contenido).length < 5) {
+    return { error: "Escribe el contenido del anuncio." };
+  }
+
   const supabase = await crearClienteServidor();
   const { error } = await supabase.from("anuncios").insert({
     comunidad_id: comunidad.id,
     titulo: resultado.data.titulo,
-    contenido: resultado.data.contenido,
+    contenido,
     fijado: resultado.data.fijado === "on",
     autor_id: usuario.id,
   });

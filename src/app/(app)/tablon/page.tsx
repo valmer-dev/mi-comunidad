@@ -6,6 +6,7 @@ import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { formatoFecha } from "@/lib/utilidades";
 import { BotonEliminar } from "@/components/ui/BotonEliminar";
 import { CabeceraPagina, EstadoVacio } from "@/components/ui/CabeceraPagina";
+import { ContenidoAnuncio } from "@/components/ui/ContenidoAnuncio";
 import { NuevoAnuncio } from "./NuevoAnuncio";
 
 export const metadata = { title: "Tablón" };
@@ -60,9 +61,10 @@ export default async function PaginaTablón() {
                   )}
                 </div>
               </div>
-              <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-tinta/90">
-                {anuncio.contenido}
-              </p>
+              <ContenidoAnuncio
+                contenido={anuncio.contenido}
+                className="mt-2 text-sm leading-relaxed text-tinta/90"
+              />
               <p className="mt-3 text-xs text-suave">
                 {formatoFecha(anuncio.publicado_en)}
                 {anuncio.autor_id ? ` · ${mapaAutores.get(anuncio.autor_id) ?? "Junta"}` : ""}

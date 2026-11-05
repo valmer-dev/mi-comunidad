@@ -71,3 +71,76 @@ body {
     background: white;
   }
 }
+
+/* Editor y contenido enriquecido de los anuncios */
+.editor-rico {
+  overflow-y: auto;
+  line-height: 1.6;
+}
+
+.editor-rico[data-vacio="true"]::before {
+  content: attr(data-placeholder);
+  color: color-mix(in srgb, var(--color-suave) 60%, transparent);
+  pointer-events: none;
+}
+
+.editor-rico > :first-child {
+  margin-top: 0;
+}
+
+.editor-rico p,
+.contenido-rico p {
+  margin: 0.35rem 0;
+}
+
+.editor-rico ul,
+.contenido-rico ul {
+  margin: 0.35rem 0;
+  padding-left: 1.35rem;
+  list-style: disc outside;
+}
+
+.editor-rico ol,
+.contenido-rico ol {
+  margin: 0.35rem 0;
+  padding-left: 1.5rem;
+  list-style: decimal outside;
+}
+
+.editor-rico li,
+.contenido-rico li {
+  margin: 0.15rem 0;
+}
+
+.contenido-rico b,
+.contenido-rico strong {
+  font-weight: 600;
+}
+
+.contenido-rico i,
+.contenido-rico em {
+  font-style: italic;
+}
+
+.contenido-rico u {
+  text-decoration: underline;
+}
+
+.contenido-rico a {
+  color: var(--color-principal);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.contenido-rico blockquote {
+  margin: 0.5rem 0;
+  border-left: 3px solid var(--color-borde);
+  padding-left: 0.75rem;
+  color: var(--color-suave);
+}
+
+.contenido-rico h3,
+.contenido-rico h4 {
+  margin: 0.5rem 0 0.25rem;
+  font-weight: 700;
+}

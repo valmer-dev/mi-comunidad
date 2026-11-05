@@ -10,6 +10,7 @@ import {
   Wrench,
 } from "lucide-react";
 import { requerirContexto } from "@/lib/auth";
+import { textoPlanoAnuncio } from "@/lib/anuncios";
 import { puedeVerFinanzas } from "@/lib/permisos";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { formatoFecha, formatoFechaHora, formatoMoneda } from "@/lib/utilidades";
@@ -162,7 +163,7 @@ export default async function PaginaPanel() {
                     )}
                   </div>
                   <p className="mt-1 line-clamp-2 text-sm leading-relaxed text-suave">
-                    {anuncio.contenido}
+                    {textoPlanoAnuncio(anuncio.contenido)}
                   </p>
                   <p className="mt-1.5 text-xs text-suave">
                     {formatoFecha(anuncio.publicado_en)}
