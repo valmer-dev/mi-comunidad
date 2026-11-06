@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requerirContexto } from "@/lib/auth";
-import { esAdministrador } from "@/lib/permisos";
+import { puedeEditarFinanzas } from "@/lib/permisos";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 
 const esquema = z.object({
@@ -19,9 +19,11 @@ export async function crearGasto(
   _estado: EstadoGasto,
   datos: FormData,
 ): Promise<EstadoGasto> {
-  const { usuario, comunidad, permisos } = await requerirContexto();
-  if (!esAdministrador(permisos)) {
-    return { error: "Solo la junta directiva puede registrar gastos." };
+  const { usuario, miembro, esAdminPlataforma, comunidad } = await requerirContexto();
+  if (!puedeEditarFinanzas(miembro.rol, esAdminPlataforma)) {
+    return {
+      error: "Solo el presidente o el administrador de plataforma pueden registrar gastos.",
+    };
   }
 
   const resultado = esquema.safeParse({
@@ -51,5 +53,39 @@ export async function crearGasto(
 
   revalidatePath("/finanzas");
   revalidatePath("/panel");
+  return { ok: true };
+}
+
+const esquemaCuota = z.object({
+  cuota: z.coerce.number().min(0, "La cuota no puede ser negativa."),
+});
+
+export type EstadoCuota = { error?: string; ok?: boolean };
+
+export async function actualizarCuotaMensual(
+  _estado: EstadoCuota,
+  datos: FormData,
+): Promise<EstadoCuota> {
+  const { miembro, esAdminPlataforma, comunidad } = await requerirContexto();
+  if (!puedeEditarFinanzas(miembro.rol, esAdminPlataforma)) {
+    return {
+      error: "Solo el presidente o el administrador de plataforma pueden editar la cuota.",
+    };
+  }
+
+  const resultado = esquemaCuota.safeParse({ cuota: datos.get("cuota") });
+  if (!resultado.success) {
+    return { error: resultado.error.issues[0]?.message ?? "Revisa la cuota." };
+  }
+
+  const supabase = await crearClienteServidor();
+  const { error } = await supabase
+    .from("comunidades")
+    .update({ cuota_mensual: resultado.data.cuota })
+    .eq("id", comunidad.id);
+
+  if (error) return { error: "No se pudo guardar la cuota mensual." };
+
+  revalidatePath("/finanzas");
   return { ok: true };
 }

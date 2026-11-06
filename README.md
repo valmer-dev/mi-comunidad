@@ -117,11 +117,11 @@ pueden editar desde **`/plataforma`**. Cada rol guarda cinco permisos:
 
 | Permiso | Qué permite |
 | --- | --- |
-| `administra_comunidad` | Editar datos de la comunidad, fincas, tablón, juntas, servicios y gastos; borrar anuncios, incidencias, juntas y servicios |
+| `administra_comunidad` | Editar datos de la comunidad, fincas, tablón, juntas y servicios; borrar anuncios, incidencias, juntas y servicios |
 | `gestiona_vecinos` | Dar de alta, editar y eliminar vecinos y titulares |
 | `gestiona_documentos` | Subir y borrar documentos |
 | `gestiona_incidencias` | Cambiar el estado de las incidencias y dejar seguimiento |
-| `ver_finanzas` | Consultar gastos, recibos y presupuestos |
+| `ver_finanzas` | Consultar los gastos y el resumen económico de la comunidad |
 
 Roles que se pueden asignar desde la aplicación:
 
@@ -141,8 +141,14 @@ permisos por defecto. Los antiguos `propietario` e `inquilino` se migraron a
 
 La autorización real vive en la base de datos (RLS), no solo en la interfaz. Las
 funciones `es_administrador`, `puede_gestionar_vecinos`,
-`puede_gestionar_documentos` y `puede_gestionar_incidencias` leen la tabla
-`roles`. Un vecino nunca puede leer los recibos de otro.
+`puede_gestionar_documentos`, `puede_gestionar_incidencias` y
+`puede_editar_finanzas` leen la tabla `roles`. Un vecino nunca puede leer los
+recibos de otro.
+
+La edición de la parte económica (gastos, cuota mensual, presupuestos,
+proveedores, categorías, recibos y pagos) está reservada al **presidente** de la
+comunidad y al **administrador de plataforma** mediante `puede_editar_finanzas`.
+El resto de roles con `ver_finanzas` solo puede consultarla.
 
 ### Administrador de la plataforma
 

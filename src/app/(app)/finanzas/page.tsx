@@ -1,112 +1,114 @@
-import { ReceiptText, TrendingDown, TrendingUp, Wallet } from "lucide-react";
+import { redirect } from "next/navigation";
+import { CalendarDays, TrendingDown } from "lucide-react";
 import { requerirContexto } from "@/lib/auth";
-import { esAdministrador, puedeVerFinanzas } from "@/lib/permisos";
+import { puedeEditarFinanzas, puedeVerFinanzas } from "@/lib/permisos";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { formatoFechaCorta, formatoMoneda, nombreMes } from "@/lib/utilidades";
-import { CabeceraPagina, EstadoVacio } from "@/components/ui/CabeceraPagina";
-import { EtiquetaEstado } from "@/components/ui/EtiquetaEstado";
+import { CabeceraPagina } from "@/components/ui/CabeceraPagina";
 import { NuevoGasto } from "./NuevoGasto";
+import { ResumenMensual } from "./ResumenMensual";
+import { TarjetaCuota } from "./TarjetaCuota";
 
 export const metadata = { title: "Finanzas" };
 
 export default async function PaginaFinanzas() {
-  const { comunidad, permisos } = await requerirContexto();
+  const { miembro, comunidad, esAdminPlataforma, permisos } = await requerirContexto();
   const supabase = await crearClienteServidor();
-  const ejercicio = new Date().getFullYear();
+
   const verFinanzas = puedeVerFinanzas(permisos);
-  const admin = esAdministrador(permisos);
+  if (!verFinanzas) redirect("/panel");
 
-  const [{ data: presupuesto }, { data: gastos }, { data: recibos }, { data: categorias }, { data: fincas }] =
-    await Promise.all([
-      supabase
-        .from("presupuestos")
-        .select("id, ejercicio, estado, total_ingresos, total_gastos")
-        .eq("comunidad_id", comunidad.id)
-        .eq("ejercicio", ejercicio)
-        .maybeSingle(),
-      supabase
-        .from("gastos")
-        .select("id, concepto, total, fecha, categoria_id")
-        .eq("comunidad_id", comunidad.id)
-        .eq("pagado", true)
-        .gte("fecha", `${ejercicio}-01-01`)
-        .lte("fecha", `${ejercicio}-12-31`)
-        .order("fecha", { ascending: false }),
-      supabase
-        .from("recibos")
-        .select("id, periodo, concepto, importe, estado, finca_id")
-        .eq("comunidad_id", comunidad.id)
-        .order("periodo", { ascending: false })
-        .limit(60),
-      supabase
-        .from("categorias_gasto")
-        .select("id, nombre")
-        .eq("comunidad_id", comunidad.id)
-        .eq("tipo", "gasto")
-        .order("nombre"),
-      supabase.from("fincas").select("id, codigo").eq("comunidad_id", comunidad.id),
-    ]);
+  const editaFinanzas = puedeEditarFinanzas(miembro.rol, esAdminPlataforma);
+  const ahora = new Date();
+  const ejercicio = ahora.getFullYear();
 
-  const gastado = (gastos ?? []).reduce((total, gasto) => total + Number(gasto.total), 0);
-  const pendiente = (recibos ?? [])
-    .filter((recibo) => recibo.estado === "pendiente")
-    .reduce((total, recibo) => total + Number(recibo.importe), 0);
+  const [{ data: gastos }, { data: categorias }] = await Promise.all([
+    supabase
+      .from("gastos")
+      .select("id, concepto, total, fecha, categoria_id")
+      .eq("comunidad_id", comunidad.id)
+      .gte("fecha", `${ejercicio}-01-01`)
+      .lte("fecha", `${ejercicio}-12-31`)
+      .order("fecha", { ascending: false }),
+    supabase
+      .from("categorias_gasto")
+      .select("id, nombre")
+      .eq("comunidad_id", comunidad.id)
+      .eq("tipo", "gasto")
+      .order("nombre"),
+  ]);
 
-  const mapaFincas = new Map((fincas ?? []).map((finca) => [finca.id, finca.codigo]));
-  const mapaCategorias = new Map((categorias ?? []).map((categoria) => [categoria.id, categoria.nombre]));
+  const listaGastos = gastos ?? [];
+
+  // Un gasto cuenta desde que se registra, aunque todavia no se haya marcado
+  // como pagado: antes se filtraba por pagado = true y los gastos nuevos no
+  // aparecian en los totales.
+  const totalesPorMes = Array.from({ length: 12 }, () => 0);
+  for (const gasto of listaGastos) {
+    const mes = Number(gasto.fecha.slice(5, 7)) - 1;
+    if (mes >= 0 && mes < 12) totalesPorMes[mes] += Number(gasto.total);
+  }
+
+  const gastadoAnio = listaGastos.reduce((total, gasto) => total + Number(gasto.total), 0);
+  const gastadoMes = totalesPorMes[ahora.getMonth()] ?? 0;
+
+  const mapaCategorias = new Map(
+    (categorias ?? []).map((categoria) => [categoria.id, categoria.nombre]),
+  );
 
   return (
     <div>
       <CabeceraPagina
         titulo="Finanzas"
-        descripcion={verFinanzas ? `Ejercicio ${ejercicio}` : "Tus cuotas y recibos"}
-        accion={admin ? <NuevoGasto categorias={categorias ?? []} /> : undefined}
+        descripcion={`Gastos de la comunidad · Ejercicio ${ejercicio}`}
+        accion={editaFinanzas ? <NuevoGasto categorias={categorias ?? []} /> : undefined}
       />
 
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-3">
-        <div className="tarjeta p-4">
-          <span className="grid size-9 place-items-center rounded-xl bg-principal/10 text-principal">
-            <Wallet className="size-[18px]" aria-hidden />
-          </span>
-          <p className="mt-3 text-xs text-suave">Presupuesto anual</p>
-          <p className="text-xl font-bold">{formatoMoneda(presupuesto?.total_gastos ?? 0)}</p>
-          <p className="mt-0.5 text-xs text-suave">
-            {presupuesto ? `Estado: ${presupuesto.estado}` : "Sin presupuesto aprobado"}
-          </p>
-        </div>
-
         <div className="tarjeta p-4">
           <span className="grid size-9 place-items-center rounded-xl bg-acento-claro text-acento">
             <TrendingDown className="size-[18px]" aria-hidden />
           </span>
           <p className="mt-3 text-xs text-suave">Gastado este año</p>
-          <p className="text-xl font-bold">{formatoMoneda(gastado)}</p>
-          {Number(presupuesto?.total_gastos ?? 0) > 0 && (
-            <p className="mt-0.5 text-xs text-suave">
-              {Math.round((gastado / Number(presupuesto?.total_gastos)) * 100)} % del presupuesto
-            </p>
-          )}
+          <p className="text-xl font-bold">{formatoMoneda(gastadoAnio)}</p>
+          <p className="mt-0.5 text-xs text-suave">
+            {listaGastos.length} {listaGastos.length === 1 ? "gasto" : "gastos"} registrados
+          </p>
         </div>
 
-        <div className="tarjeta col-span-2 p-4 lg:col-span-1">
-          <span className="grid size-9 place-items-center rounded-xl bg-blue-100 text-blue-700">
-            <TrendingUp className="size-[18px]" aria-hidden />
+        <div className="tarjeta p-4">
+          <span className="grid size-9 place-items-center rounded-xl bg-emerald-100 text-emerald-700">
+            <CalendarDays className="size-[18px]" aria-hidden />
           </span>
-          <p className="mt-3 text-xs text-suave">
-            {verFinanzas ? "Pendiente de cobro" : "Mis recibos pendientes"}
-          </p>
-          <p className="text-xl font-bold">{formatoMoneda(pendiente)}</p>
-          <p className="mt-0.5 text-xs text-suave">
-            {(recibos ?? []).filter((r) => r.estado === "pendiente").length} recibos
-          </p>
+          <p className="mt-3 text-xs text-suave">Gastado este mes</p>
+          <p className="text-xl font-bold">{formatoMoneda(gastadoMes)}</p>
+          <p className="mt-0.5 text-xs capitalize text-suave">{nombreMes(ahora)}</p>
+        </div>
+
+        <TarjetaCuota
+          className="col-span-2 lg:col-span-1"
+          cuota={Number(comunidad.cuota_mensual ?? 0)}
+          puedeEditar={editaFinanzas}
+        />
+      </section>
+
+      <section className="mt-8">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-sm font-bold uppercase tracking-wide text-suave">
+            Resumen mensual de gastos
+          </h2>
+          <span className="text-xs text-suave">Ejercicio {ejercicio}</span>
+        </div>
+        <div className="tarjeta p-4 sm:p-5">
+          <ResumenMensual anio={ejercicio} totales={totalesPorMes} />
         </div>
       </section>
 
-      {verFinanzas && gastos && gastos.length > 0 && (
-        <section className="mt-8">
-          <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-suave">
-            Últimos gastos
-          </h2>
+      <section className="mt-8">
+        <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-suave">
+          Últimos gastos ({listaGastos.length})
+        </h2>
+        {listaGastos.length > 0 ? (
           <div className="overflow-hidden rounded-2xl border border-borde bg-superficie">
             <table className="w-full text-sm">
               <thead className="bg-fondo text-left text-xs uppercase tracking-wide text-suave">
@@ -118,7 +120,7 @@ export default async function PaginaFinanzas() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-borde">
-                {gastos.slice(0, 12).map((gasto) => (
+                {listaGastos.slice(0, 24).map((gasto) => (
                   <tr key={gasto.id}>
                     <td className="px-4 py-2.5 font-medium">{gasto.concepto}</td>
                     <td className="hidden px-4 py-2.5 text-suave sm:table-cell">
@@ -133,48 +135,10 @@ export default async function PaginaFinanzas() {
               </tbody>
             </table>
           </div>
-        </section>
-      )}
-
-      <section className="mt-8">
-        <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-suave">
-          {verFinanzas ? "Recibos" : "Mis recibos"} ({(recibos ?? []).length})
-        </h2>
-        {recibos && recibos.length > 0 ? (
-          <ul className="space-y-2">
-            {recibos.slice(0, 24).map((recibo) => (
-              <li
-                key={recibo.id}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-borde bg-superficie px-4 py-3"
-              >
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold">{recibo.concepto}</p>
-                  <p className="text-xs text-suave">
-                    {nombreMes(recibo.periodo)}
-                    {verFinanzas && recibo.finca_id
-                      ? ` · ${mapaFincas.get(recibo.finca_id) ?? "Finca"}`
-                      : ""}
-                  </p>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-bold tabular-nums">
-                    {formatoMoneda(recibo.importe)}
-                  </span>
-                  <EtiquetaEstado estado={recibo.estado} />
-                </div>
-              </li>
-            ))}
-          </ul>
         ) : (
-          <EstadoVacio
-            titulo="Todavía no hay recibos"
-            descripcion={
-              verFinanzas
-                ? "Cuando se generen las cuotas mensuales aparecerán aquí."
-                : "Cuando la comunidad emita tus cuotas aparecerán aquí."
-            }
-            accion={<ReceiptText className="size-8 text-suave/50" aria-hidden />}
-          />
+          <p className="rounded-2xl border border-dashed border-borde bg-superficie px-4 py-6 text-center text-sm text-suave">
+            Todavía no hay gastos registrados este año.
+          </p>
         )}
       </section>
     </div>

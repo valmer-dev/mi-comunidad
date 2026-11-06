@@ -271,6 +271,7 @@ export type Database = {
           codigo_postal: string | null
           coeficiente_total: number
           creado_en: string
+          cuota_mensual: number
           direccion: string | null
           iban: string | null
           id: string
@@ -290,6 +291,7 @@ export type Database = {
           codigo_postal?: string | null
           coeficiente_total?: number
           creado_en?: string
+          cuota_mensual?: number
           direccion?: string | null
           iban?: string | null
           id?: string
@@ -309,6 +311,7 @@ export type Database = {
           codigo_postal?: string | null
           coeficiente_total?: number
           creado_en?: string
+          cuota_mensual?: number
           direccion?: string | null
           iban?: string | null
           id?: string
@@ -1492,6 +1495,7 @@ export type Database = {
       es_administrador: { Args: { p_comunidad_id: string }; Returns: boolean }
       es_miembro: { Args: { p_comunidad_id: string }; Returns: boolean }
       es_titular_de: { Args: { p_finca_id: string }; Returns: boolean }
+      puede_editar_finanzas: { Args: { p_comunidad_id: string }; Returns: boolean }
       puede_gestionar_documentos: {
         Args: { p_comunidad_id: string }
         Returns: boolean

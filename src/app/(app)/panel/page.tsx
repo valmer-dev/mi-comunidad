@@ -4,7 +4,6 @@ import {
   CalendarDays,
   Megaphone,
   Plus,
-  ReceiptText,
   Users,
   Wallet,
   Wrench,
@@ -22,11 +21,12 @@ export default async function PaginaPanel() {
   const { perfil, comunidad, permisos } = await requerirContexto();
   const supabase = await crearClienteServidor();
   const verFinanzas = puedeVerFinanzas(permisos);
+  const ejercicio = new Date().getFullYear();
 
   const [
     { count: totalVecinos },
     { count: incidenciasAbiertas },
-    { data: recibosPendientes },
+    { data: gastosAnio },
     { data: proximaJunta },
     { data: anuncios },
   ] = await Promise.all([
@@ -41,10 +41,11 @@ export default async function PaginaPanel() {
       .eq("comunidad_id", comunidad.id)
       .in("estado", ["abierta", "en_curso"]),
     supabase
-      .from("recibos")
-      .select("importe")
+      .from("gastos")
+      .select("total")
       .eq("comunidad_id", comunidad.id)
-      .eq("estado", "pendiente"),
+      .gte("fecha", `${ejercicio}-01-01`)
+      .lte("fecha", `${ejercicio}-12-31`),
     supabase
       .from("juntas")
       .select("*")
@@ -63,8 +64,8 @@ export default async function PaginaPanel() {
       .limit(3),
   ]);
 
-  const pendiente = (recibosPendientes ?? []).reduce(
-    (total, recibo) => total + Number(recibo.importe),
+  const gastadoAnio = (gastosAnio ?? []).reduce(
+    (total, gasto) => total + Number(gasto.total),
     0,
   );
 
@@ -87,19 +88,16 @@ export default async function PaginaPanel() {
       icono: Wrench,
       href: "/incidencias",
     },
-    verFinanzas
-      ? {
-          etiqueta: "Pendiente de cobro",
-          valor: formatoMoneda(pendiente),
-          icono: Wallet,
-          href: "/finanzas",
-        }
-      : {
-          etiqueta: "Mis recibos pendientes",
-          valor: formatoMoneda(pendiente),
-          icono: ReceiptText,
-          href: "/finanzas",
-        },
+    ...(verFinanzas
+      ? [
+          {
+            etiqueta: "Gastado este año",
+            valor: formatoMoneda(gastadoAnio),
+            icono: Wallet,
+            href: "/finanzas",
+          },
+        ]
+      : []),
     {
       etiqueta: "Próxima junta",
       valor: proximaJunta ? formatoFecha(proximaJunta.fecha_hora) : "Sin convocar",

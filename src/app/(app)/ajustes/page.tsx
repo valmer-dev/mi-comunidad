@@ -158,9 +158,10 @@ export default async function PaginaAjustes() {
           Privacidad y datos
         </h2>
         <p className="mt-2 text-sm leading-relaxed text-suave">
-          Solo los miembros de la comunidad pueden acceder a la aplicación. Cada vecino
-          ve únicamente sus propios recibos; los datos económicos globales solo los
-          consulta la junta directiva. Los datos se alojan en la Unión Europea.
+          Solo los miembros de la comunidad pueden acceder a la aplicación. Los datos
+          económicos globales los consulta la junta directiva; solo el presidente y el
+          administrador de plataforma pueden editarlos. Los datos se alojan en la Unión
+          Europea.
         </p>
         <p className="mt-2 text-sm leading-relaxed text-suave">
           Para darte de baja o corregir tus datos, habla con el presidente o el

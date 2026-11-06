@@ -87,6 +87,17 @@ export function puedeVerFinanzas(permisos: PermisosRol | null | undefined) {
   return Boolean(permisos?.ver_finanzas);
 }
 
+/**
+ * Editar la parte economica: gastos, cuota mensual, presupuestos y proveedores.
+ * Solo el presidente de la comunidad y el administrador de plataforma.
+ */
+export function puedeEditarFinanzas(
+  rol: RolMiembro | null | undefined,
+  esAdminPlataforma: boolean | null | undefined,
+) {
+  return Boolean(esAdminPlataforma) || rol === "presidente";
+}
+
 export function puedeGestionarIncidencias(permisos: PermisosRol | null | undefined) {
   return Boolean(permisos?.gestiona_incidencias);
 }
