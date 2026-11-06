@@ -128,7 +128,7 @@ Roles que se pueden asignar desde la aplicación:
 - `presidente`: todos los permisos.
 - `vicepresidente`: todos los permisos.
 - `vocal`: documentos, incidencias y finanzas.
-- `vecino`: solo consulta.
+- `vecino`: consulta el tablón, sus datos y las finanzas (sin editar).
 
 El rol `administrador_plataforma` no se puede editar (siempre tiene todos los
 permisos). Los roles **no se crean ni se borran**: solo se cambia su nombre,

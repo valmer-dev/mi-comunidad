@@ -47,7 +47,10 @@ export const PERMISOS_POR_DEFECTO: Record<RolMiembro, PermisosRol> = {
     gestiona_incidencias: true,
     ver_finanzas: true,
   },
-  vecino: SIN_PERMISOS,
+  vecino: {
+    ...SIN_PERMISOS,
+    ver_finanzas: true,
+  },
   propietario: SIN_PERMISOS,
   inquilino: SIN_PERMISOS,
   administrador_fincas: {
@@ -155,7 +158,7 @@ const AYUDA_ROL: Record<RolMiembro, string> = {
   presidente: "Administra la comunidad",
   vicepresidente: "Sustituye al presidente",
   vocal: "Junta directiva, sin edición",
-  vecino: "Solo consulta sus datos",
+  vecino: "Consulta el tablón, sus datos y las finanzas",
   secretario: "Administra la comunidad y los vecinos",
   propietario: "Solo consulta sus datos",
   inquilino: "Solo consulta sus datos",
