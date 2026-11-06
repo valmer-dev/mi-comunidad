@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import {
+  Briefcase,
   Building2,
   FolderOpen,
   Gavel,
@@ -37,6 +38,7 @@ export function BarraLateral({
     { href: "/panel", etiqueta: "Panel", icono: LayoutDashboard },
     { href: "/tablon", etiqueta: "Tablón", icono: Megaphone },
     { href: "/incidencias", etiqueta: "Incidencias", icono: Wrench },
+    { href: "/servicios", etiqueta: "Servicios", icono: Briefcase },
     { href: "/vecinos", etiqueta: "Vecinos", icono: Users },
     ...(puedeVerFinanzas
       ? [{ href: "/finanzas", etiqueta: "Finanzas", icono: Wallet }]

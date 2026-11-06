@@ -63,7 +63,7 @@ src/
   app/
     (auth)/entrar/          acceso
     (app)/                  zona privada
-      panel/  vecinos/  tablon/  incidencias/
+      panel/  vecinos/  tablon/  incidencias/  servicios/
       finanzas/  juntas/  documentos/  ajustes/  plataforma/
     acciones/               Server Actions (español)
   components/
@@ -117,7 +117,7 @@ pueden editar desde **`/plataforma`**. Cada rol guarda cinco permisos:
 
 | Permiso | Qué permite |
 | --- | --- |
-| `administra_comunidad` | Editar datos de la comunidad, fincas, tablón, juntas y gastos; borrar anuncios, incidencias y juntas |
+| `administra_comunidad` | Editar datos de la comunidad, fincas, tablón, juntas, servicios y gastos; borrar anuncios, incidencias, juntas y servicios |
 | `gestiona_vecinos` | Dar de alta, editar y eliminar vecinos y titulares |
 | `gestiona_documentos` | Subir y borrar documentos |
 | `gestiona_incidencias` | Cambiar el estado de las incidencias y dejar seguimiento |
@@ -171,18 +171,20 @@ La tabla de vecinos muestra solo los de la **comunidad activa** y permite:
 
 ### Borrado de contenido
 
-Desde `/tablon`, `/incidencias`, `/juntas` y `/documentos` aparece el botón
-**Eliminar** cuando el usuario tiene el permiso correspondiente. Siempre se pide
-confirmación, la acción vuelve a comprobar el permiso en el servidor y RLS
-valida el borrado. Al eliminar:
+Desde `/tablon`, `/incidencias`, `/juntas`, `/servicios` y `/documentos` aparece
+el botón **Eliminar** cuando el usuario tiene el permiso correspondiente. Siempre
+se pide confirmación, la acción vuelve a comprobar el permiso en el servidor y
+RLS valida el borrado. Al eliminar:
 
 - un **anuncio**, se borran también sus lecturas;
 - una **incidencia**, se borra su seguimiento;
 - una **junta**, se borran sus puntos del día y asistencias;
+- un **servicio**, se borra su ficha de contacto; los gastos o incidencias que
+  lo tuvieran vinculado se quedan sin proveedor;
 - un **documento**, se borra su ficha y el PDF del bucket privado.
 
 El administrador de la plataforma tiene todos los permisos, por lo que puede
-eliminar los cuatro tipos de contenido en cualquier comunidad.
+eliminar los cinco tipos de contenido en cualquier comunidad.
 
 ## Tablón de anuncios
 
@@ -201,6 +203,26 @@ Prueba automática (crea y borra datos temporales):
 
 ```bash
 node --env-file=.env.local scripts/probar-anuncio-rico.mjs
+```
+
+## Servicios
+
+`/servicios` reúne las empresas que prestan servicios a la comunidad:
+mantenimiento de ascensores, puerta del garaje, administración, limpieza, etc.
+Cada ficha muestra el **servicio**, la **empresa** y el **teléfono de contacto**,
+que es un enlace para llamar directamente desde el móvil.
+
+Cualquier miembro puede consultar los servicios. Crear, editar y eliminar está
+reservado al **Administrador Plataforma, Presidente y Vicepresidente** (permiso
+`administra_comunidad`). Los datos se guardan en la tabla `proveedores`:
+`categoria` es el servicio, `nombre` la empresa y `telefono` el contacto. RLS
+permite la lectura a los miembros y la escritura a quien administra la
+comunidad; el servidor vuelve a comprobar el permiso en cada acción.
+
+Prueba automática (crea y borra datos temporales):
+
+```bash
+node --env-file=.env.local scripts/probar-servicios.mjs
 ```
 
 ## Incidencias

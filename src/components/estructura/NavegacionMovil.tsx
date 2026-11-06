@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Briefcase,
   FolderOpen,
   Gavel,
   LayoutDashboard,
@@ -42,6 +43,7 @@ export function NavegacionMovil({
   const enlacesSecundarios = [
     { href: "/documentos", etiqueta: "Documentos", icono: FolderOpen },
     { href: "/juntas", etiqueta: "Juntas", icono: Gavel },
+    { href: "/servicios", etiqueta: "Servicios", icono: Briefcase },
     ...(puedeVerFinanzas
       ? [{ href: "/finanzas", etiqueta: "Finanzas", icono: Wallet }]
       : []),
