@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, viewport-fit=cover"
+    />
+    <meta name="theme-color" content="#0f766e" />
+    <title>Sin conexión · Mi Comunidad</title>
+    <style>
+      :root {
+        color-scheme: light;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100dvh;
+        display: grid;
+        place-items: center;
+        padding: calc(24px + env(safe-area-inset-top)) 24px
+          calc(24px + env(safe-area-inset-bottom));
+        background: #f7f5f0;
+        color: #172033;
+        font-family:
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          sans-serif;
+      }
+
+      main {
+        width: 100%;
+        max-width: 360px;
+        text-align: center;
+      }
+
+      .icono {
+        width: 72px;
+        height: 72px;
+        margin: 0 auto 20px;
+        display: grid;
+        place-items: center;
+        border-radius: 22px;
+        background: #0f766e;
+        color: #fff;
+      }
+
+      h1 {
+        margin: 0 0 8px;
+        font-size: 22px;
+        letter-spacing: -0.01em;
+      }
+
+      p {
+        margin: 0 0 22px;
+        color: #5c6575;
+        font-size: 15px;
+        line-height: 1.55;
+      }
+
+      button {
+        width: 100%;
+        border: 0;
+        border-radius: 12px;
+        padding: 13px 16px;
+        background: #0f766e;
+        color: #fff;
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      button:active {
+        background: #115e59;
+      }
+
+      small {
+        display: block;
+        margin-top: 16px;
+        color: #5c6575;
+        font-size: 12px;
+        line-height: 1.5;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="icono" aria-hidden="true">
+        <svg
+          viewBox="0 0 24 24"
+          width="36"
+          height="36"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="1.9"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M10 12h4" />
+          <path d="M10 8h4" />
+          <path d="M14 21v-3a2 2 0 0 0-4 0v3" />
+          <path
+            d="M6 10H4a2 2 0 0 0-2 2v7a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-2"
+          />
+          <path d="M6 21V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v16" />
+        </svg>
+      </div>
+
+      <h1>Sin conexión</h1>
+      <p>
+        No hemos podido cargar Mi Comunidad. Comprueba tu conexión a internet e
+        inténtalo de nuevo.
+      </p>
+
+      <button type="button" onclick="location.reload()">Reintentar</button>
+
+      <small>
+        Los datos se cargan desde la comunidad, así que necesitas conexión.
+      </small>
+    </main>
+
+    <script>
+      // Si la conexión vuelve mientras se ve esta pantalla, recarga sola.
+      window.addEventListener("online", function () {
+        location.reload();
+      });
+    </script>
+  </body>
+</html>

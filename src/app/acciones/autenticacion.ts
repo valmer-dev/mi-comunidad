@@ -8,6 +8,7 @@ import {
   normalizarTelefono,
   telefonoValido,
 } from "@/lib/telefono";
+import { destinoSeguro } from "@/lib/utilidades";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 
@@ -77,8 +78,10 @@ export async function entrar(
     return { error: "Teléfono, correo o contraseña incorrectos." };
   }
 
+  const destino = destinoSeguro(String(datos.get("destino") ?? ""));
+
   revalidatePath("/", "layout");
-  redirect("/panel");
+  redirect(destino);
 }
 
 export async function cerrarSesion() {

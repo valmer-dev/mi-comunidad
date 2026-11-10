@@ -19,7 +19,14 @@ const TIPOS = [
 
 export function NuevaIncidencia() {
   const [abierto, setAbierto] = useState(false);
-  const [estado, accion, pendiente] = useActionState(crearIncidencia, ESTADO_INICIAL);
+  const [estado, accion, pendiente] = useActionState(
+    async (anterior: EstadoIncidencia, datos: FormData) => {
+      const resultado = await crearIncidencia(anterior, datos);
+      if (resultado.ok) setAbierto(false);
+      return resultado.ok ? ESTADO_INICIAL : resultado;
+    },
+    ESTADO_INICIAL,
+  );
 
   if (!abierto) {
     return (
@@ -115,11 +122,6 @@ export function NuevaIncidencia() {
         {estado.error && (
           <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-700 sm:col-span-2">
             {estado.error}
-          </p>
-        )}
-        {estado.ok && (
-          <p className="rounded-xl bg-emerald-50 px-3.5 py-2.5 text-sm font-medium text-emerald-800 sm:col-span-2">
-            Incidencia registrada. La junta la revisará.
           </p>
         )}
 

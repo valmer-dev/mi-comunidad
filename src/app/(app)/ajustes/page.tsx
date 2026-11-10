@@ -1,10 +1,11 @@
-import { Building2, LogOut, ShieldCheck, UserCircle } from "lucide-react";
+import { Building2, LogOut, ShieldCheck, Smartphone, UserCircle } from "lucide-react";
 import { cerrarSesion } from "@/app/acciones/autenticacion";
 import { requerirContexto } from "@/lib/auth";
 import { esAdministrador, etiquetaRol, etiquetaRolPersona } from "@/lib/permisos";
 import { esCorreoInterno, formatearTelefono } from "@/lib/telefono";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { CabeceraPagina } from "@/components/ui/CabeceraPagina";
+import { InstalarApp } from "@/components/pwa/InstalarApp";
 import { CambiarContrasena } from "./CambiarContrasena";
 import { ConfigurarFincas } from "./ConfigurarFincas";
 import { EditarComunidad } from "./EditarComunidad";
@@ -151,6 +152,21 @@ export default async function PaginaAjustes() {
           />
         </div>
       )}
+
+      <section className="tarjeta mt-5">
+        <h2 className="flex items-center gap-2 text-base font-bold">
+          <Smartphone className="size-4.5 text-principal" aria-hidden />
+          Llévala en el móvil
+        </h2>
+        <p className="mt-2 text-sm leading-relaxed text-suave">
+          Instala Mi Comunidad como app: tendrás su icono en la pantalla de
+          inicio, se abrirá a pantalla completa y se actualizará sola, sin pasar
+          por la tienda.
+        </p>
+        <div className="mt-4">
+          <InstalarApp />
+        </div>
+      </section>
 
       <section className="tarjeta mt-5">
         <h2 className="flex items-center gap-2 text-base font-bold">

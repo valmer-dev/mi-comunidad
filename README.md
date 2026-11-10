@@ -294,6 +294,44 @@ completar después desde la ficha del vecino en `/plataforma`.
 
 No hace falta dominio propio: `https://<proyecto>.vercel.app` es suficiente y gratuito.
 
+## App en el móvil (PWA)
+
+La web se puede instalar como aplicación en Android (y en iPhone) sin pasar por
+una tienda: icono en la pantalla de inicio, pantalla completa y actualizaciones
+automáticas al desplegar en Vercel.
+
+- **Android**: abrir la URL en Chrome, menú `⋮` → **Instalar app** (o
+  *Añadir a pantalla de inicio*). Si el enlace llega por WhatsApp, hay que
+  abrirlo antes en Chrome.
+- **iPhone/iPad**: abrir en Safari, **Compartir** → *Añadir a pantalla de
+  inicio*.
+- Desde **`/ajustes`** hay un botón **Instalar app** que usa el aviso nativo de
+  Chrome cuando está disponible y, si no, explica los pasos.
+
+Archivos que forman la PWA:
+
+| Archivo | Para qué |
+| --- | --- |
+| `src/app/manifest.ts` | Nombre, iconos, colores, atajos y `start_url` |
+| `public/iconos/` | Iconos 192/512, *maskable* y `apple-touch-icon` |
+| `public/sw.js` | Service worker: caché de estáticos y pantalla offline |
+| `public/offline.html` | Pantalla «Sin conexión» (autocontenida) |
+| `src/components/pwa/` | Registro del SW, captura del evento de instalación y botón |
+
+El service worker **solo se registra en producción** (`npm run build && npm start`),
+no en `next dev`, para no cachear chunks de desarrollo. Si se cambia `sw.js`, hay
+que subir `VERSION` para limpiar la caché anterior.
+
+Los iconos se regeneran desde los SVG de `public/iconos` con:
+
+```bash
+node scripts/generar-iconos.mjs
+```
+
+Para comprobarlo en local: `npm run build && npm start`, abrir en Chrome y mirar
+**DevTools → Application → Manifest** y **Service Workers**. La instalación real
+requiere HTTPS (Vercel ya lo da) y, en localhost, Chrome también la permite.
+
 ## Fases
 
 - [x] Fase 0: cimientos, autenticación, RLS, estructura responsive
@@ -303,6 +341,7 @@ No hace falta dominio propio: `https://<proyecto>.vercel.app` es suficiente y gr
 - [ ] Fase 3: actas en PDF, asistencia y votaciones
 - [ ] Fase 4: reservas, mantenimiento preventivo, notificaciones push
 - [ ] Fase 5: multcomunidad, exportaciones, Telegram
+- [x] PWA instalable en Android e iPhone (icono, pantalla completa y offline)
 
 ## Aviso legal
 

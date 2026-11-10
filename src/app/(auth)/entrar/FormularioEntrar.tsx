@@ -6,11 +6,12 @@ import { entrar, type EstadoEntrar } from "@/app/acciones/autenticacion";
 
 const ESTADO_INICIAL: EstadoEntrar = {};
 
-export function FormularioEntrar() {
+export function FormularioEntrar({ destino = "/panel" }: { destino?: string }) {
   const [estado, accion, pendiente] = useActionState(entrar, ESTADO_INICIAL);
 
   return (
     <form action={accion} className="space-y-4">
+      <input type="hidden" name="destino" value={destino} />
       <div>
         <label htmlFor="identificador" className="etiqueta">
           Teléfono o correo

@@ -76,3 +76,29 @@ export function nombreMes(fecha: string | Date) {
   return new Intl.DateTimeFormat("es-ES", { month: "long", year: "numeric" }).format(valor);
 }
 
+/**
+ * Ruta interna segura para volver tras el login (por ejemplo, al abrir un
+ * atajo de la PWA). Evita redirecciones a otros dominios.
+ */
+export function destinoSeguro(
+  valor: string | null | undefined,
+  porDefecto = "/panel",
+) {
+  if (!valor) return porDefecto;
+
+  try {
+    const base = "https://app.local";
+    const url = new URL(valor, base);
+
+    if (url.origin !== base || !url.pathname.startsWith("/")) {
+      return porDefecto;
+    }
+
+    if (url.pathname === "/entrar") return porDefecto;
+
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return porDefecto;
+  }
+}
+

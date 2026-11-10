@@ -34,7 +34,10 @@ export function Estructura({
       />
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="no-imprimir sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-borde bg-fondo/90 px-4 py-3 backdrop-blur lg:hidden">
+        <header
+          className="no-imprimir sticky top-0 z-30 flex items-center justify-between gap-3 border-b border-borde bg-fondo/90 px-4 py-3 backdrop-blur lg:hidden"
+          style={{ paddingTop: "calc(0.75rem + env(safe-area-inset-top))" }}
+        >
           <Link href="/panel" className="flex min-w-0 items-center gap-2.5">
             <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-principal text-white">
               <Building2 className="size-4.5" aria-hidden />

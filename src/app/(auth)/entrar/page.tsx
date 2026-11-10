@@ -2,13 +2,23 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Building2, Users, Wallet, Wrench } from "lucide-react";
 import { obtenerUsuarioActual } from "@/lib/auth";
+import { destinoSeguro } from "@/lib/utilidades";
 import { FormularioEntrar } from "./FormularioEntrar";
 
 export const metadata: Metadata = { title: "Entrar" };
 
-export default async function PaginaEntrar() {
+export default async function PaginaEntrar({
+  searchParams,
+}: {
+  searchParams: Promise<{ destino?: string | string[] }>;
+}) {
   const usuario = await obtenerUsuarioActual();
   if (usuario) redirect("/panel");
+
+  const { destino } = await searchParams;
+  const destinoFinal = destinoSeguro(
+    typeof destino === "string" ? destino : undefined,
+  );
 
   return (
     <main className="flex min-h-dvh flex-col lg:flex-row">
@@ -63,7 +73,7 @@ export default async function PaginaEntrar() {
             Usa tu teléfono o tu correo y la contraseña que te dio la comunidad.
           </p>
           <div className="mt-7">
-            <FormularioEntrar />
+            <FormularioEntrar destino={destinoFinal} />
           </div>
           <p className="mt-8 text-center text-xs text-suave">
             Mi Comunidad · Gestión vecinal

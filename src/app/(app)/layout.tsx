@@ -26,7 +26,10 @@ export default async function LayoutApp({
 
     return (
       <div className="min-h-dvh">
-        <header className="no-imprimir border-b border-borde bg-superficie px-4 py-3">
+        <header
+          className="no-imprimir border-b border-borde bg-superficie px-4 py-3"
+          style={{ paddingTop: "calc(0.75rem + env(safe-area-inset-top))" }}
+        >
           <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3">
             <Link href="/plataforma" className="flex items-center gap-2.5">
               <span className="grid size-9 place-items-center rounded-xl bg-principal text-white">

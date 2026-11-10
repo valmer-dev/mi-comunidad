@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useRef, useState } from "react";
+import { useActionState, useState } from "react";
 import { Briefcase, Loader2, Plus, X } from "lucide-react";
 import { crearServicio, type EstadoServicio } from "@/app/acciones/servicios";
 
@@ -8,12 +8,14 @@ const ESTADO_INICIAL: EstadoServicio = {};
 
 export function NuevoServicio() {
   const [abierto, setAbierto] = useState(false);
-  const [estado, accion, pendiente] = useActionState(crearServicio, ESTADO_INICIAL);
-  const formulario = useRef<HTMLFormElement>(null);
-
-  useEffect(() => {
-    if (estado.ok) formulario.current?.reset();
-  }, [estado]);
+  const [estado, accion, pendiente] = useActionState(
+    async (anterior: EstadoServicio, datos: FormData) => {
+      const resultado = await crearServicio(anterior, datos);
+      if (resultado.ok) setAbierto(false);
+      return resultado.ok ? ESTADO_INICIAL : resultado;
+    },
+    ESTADO_INICIAL,
+  );
 
   if (!abierto) {
     return (
@@ -46,7 +48,7 @@ export function NuevoServicio() {
         </button>
       </div>
 
-      <form ref={formulario} action={accion} className="mt-4 grid gap-4 sm:grid-cols-2">
+      <form action={accion} className="mt-4 grid gap-4 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <label htmlFor="servicio" className="etiqueta">
             Servicio
@@ -90,11 +92,6 @@ export function NuevoServicio() {
         {estado.error && (
           <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-700 sm:col-span-2">
             {estado.error}
-          </p>
-        )}
-        {estado.ok && (
-          <p className="rounded-xl bg-emerald-50 px-3.5 py-2.5 text-sm font-medium text-emerald-800 sm:col-span-2">
-            {estado.mensaje ?? "Servicio añadido."}
           </p>
         )}
 

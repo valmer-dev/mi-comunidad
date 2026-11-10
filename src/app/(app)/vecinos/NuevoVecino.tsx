@@ -24,11 +24,12 @@ type Props = {
 
 const ESTADO_INICIAL: EstadoVecino = {};
 
-function textoCredenciales(estado: EstadoVecino) {
-  if (!("ok" in estado) || !estado.ok) return "";
+type ResultadoAlta = Extract<EstadoVecino, { ok: true }>;
+
+function textoCredenciales(resultado: ResultadoAlta) {
   return [
     "Acceso a Mi Comunidad",
-    ...estado.cuentas.map((cuenta) =>
+    ...resultado.cuentas.map((cuenta) =>
       [
         `\n${cuenta.nombre}`,
         cuenta.telefono ? `Teléfono: ${formatearTelefono(cuenta.telefono)}` : "",
@@ -64,11 +65,125 @@ function enlaceWhatsApp(cuenta: CuentaCreada, mensaje: string) {
   return `https://wa.me/34${cuenta.telefono}?text=${encodeURIComponent(mensaje)}`;
 }
 
+function TarjetaResultado({
+  resultado,
+  nombreComunidad,
+  urlApp,
+  copiado,
+  onCopiar,
+  onCerrar,
+  onOtro,
+}: {
+  resultado: ResultadoAlta;
+  nombreComunidad: string;
+  urlApp: string;
+  copiado: boolean;
+  onCopiar: () => void;
+  onCerrar: () => void;
+  onOtro: () => void;
+}) {
+  return (
+    <div className="tarjeta w-full">
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <h2 className="text-base font-bold">
+            {resultado.cuentas.length === 0
+              ? `${resultado.nombre} añadido a la comunidad`
+              : resultado.cuentas.length === 1
+                ? `Cuenta creada para ${resultado.cuentas[0].nombre}`
+                : "Cuentas creadas para los dos titulares"}
+          </h2>
+          <p className="mt-0.5 text-sm text-suave">
+            {resultado.cuentas.length > 0
+              ? "Envía la invitación por WhatsApp o copia las credenciales. No se volverán a mostrar."
+              : "No hace falta contraseña nueva."}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={onCerrar}
+          className="rounded-lg p-1.5 text-suave hover:bg-fondo"
+          aria-label="Cerrar"
+        >
+          <X className="size-5" aria-hidden />
+        </button>
+      </div>
+
+      <div className="mt-3 space-y-3">
+        {resultado.cuentas.map((cuenta) => {
+          const mensaje = mensajeWhatsApp(cuenta, {
+            nombreComunidad,
+            urlApp,
+            fincaCodigo: resultado.fincaCodigo,
+          });
+          const enlace = enlaceWhatsApp(cuenta, mensaje);
+          return (
+            <div key={cuenta.nombre + (cuenta.telefono ?? cuenta.correo)} className="rounded-lg bg-white p-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-suave">
+                {cuenta.nombre}
+              </p>
+              <div className="mt-1 font-mono text-sm text-tinta">
+                {cuenta.telefono && <p>Teléfono: {formatearTelefono(cuenta.telefono)}</p>}
+                {cuenta.correo && <p>Correo: {cuenta.correo}</p>}
+                <p>Contraseña: {cuenta.contrasena}</p>
+              </div>
+              {enlace && (
+                <a
+                  href={enlace}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="boton boton-principal mt-2"
+                >
+                  <MessageCircle className="size-4" aria-hidden />
+                  Enviar invitación por WhatsApp
+                </a>
+              )}
+            </div>
+          );
+        })}
+      </div>
+
+      {resultado.aviso && (
+        <p className="mt-2 text-sm text-emerald-800">{resultado.aviso}</p>
+      )}
+
+      <div className="mt-3 flex flex-wrap gap-2">
+        {resultado.cuentas.length > 0 && (
+          <button type="button" onClick={onCopiar} className="boton boton-borde">
+            {copiado ? (
+              <Check className="size-4" aria-hidden />
+            ) : (
+              <Copy className="size-4" aria-hidden />
+            )}
+            {copiado ? "Copiado" : "Copiar credenciales"}
+          </button>
+        )}
+        <button type="button" onClick={onOtro} className="boton boton-borde">
+          <UserPlus className="size-4" aria-hidden />
+          Añadir otro vecino
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function NuevoVecino({ fincas, roles, nombreComunidad, urlApp }: Props) {
   const [abierto, setAbierto] = useState(false);
   const [rol, setRol] = useState("vecino");
-  const [estado, accion, pendiente] = useActionState(crearVecino, ESTADO_INICIAL);
+  const [resultado, setResultado] = useState<ResultadoAlta | null>(null);
   const [copiado, setCopiado] = useState(false);
+  const [estado, accion, pendiente] = useActionState(
+    async (anterior: EstadoVecino, datos: FormData) => {
+      const creado = await crearVecino(anterior, datos);
+      if ("ok" in creado && creado.ok) {
+        setResultado(creado);
+        setAbierto(false);
+        return ESTADO_INICIAL;
+      }
+      return creado;
+    },
+    ESTADO_INICIAL,
+  );
 
   const opciones = opcionesDeRol(roles);
   const ayudaRol = opciones.find((opcion) => opcion.valor === rol)?.ayuda;
@@ -78,16 +193,35 @@ export function NuevoVecino({ fincas, roles, nombreComunidad, urlApp }: Props) {
     (finca) => finca.tipo !== "casa" && finca.tipo !== "piso",
   );
 
+  function abrirFormulario() {
+    setResultado(null);
+    setAbierto(true);
+  }
+
   function copiarCredenciales() {
-    if (!("ok" in estado) || !estado.ok) return;
-    navigator.clipboard.writeText(textoCredenciales(estado));
+    if (!resultado) return;
+    navigator.clipboard.writeText(textoCredenciales(resultado));
     setCopiado(true);
     setTimeout(() => setCopiado(false), 2000);
   }
 
   if (!abierto) {
+    if (resultado) {
+      return (
+        <TarjetaResultado
+          resultado={resultado}
+          nombreComunidad={nombreComunidad}
+          urlApp={urlApp}
+          copiado={copiado}
+          onCopiar={copiarCredenciales}
+          onCerrar={() => setResultado(null)}
+          onOtro={abrirFormulario}
+        />
+      );
+    }
+
     return (
-      <button type="button" onClick={() => setAbierto(true)} className="boton boton-principal">
+      <button type="button" onClick={abrirFormulario} className="boton boton-principal">
         <UserPlus className="size-4" aria-hidden />
         Añadir vecino
       </button>
@@ -261,76 +395,6 @@ export function NuevoVecino({ fincas, roles, nombreComunidad, urlApp }: Props) {
           <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-700 sm:col-span-2">
             {estado.error}
           </p>
-        )}
-
-        {"ok" in estado && estado.ok && (
-          <div className="rounded-xl bg-emerald-50 p-4 sm:col-span-2">
-            <p className="text-sm font-semibold text-emerald-900">
-              {estado.cuentas.length === 0
-                ? `${estado.nombre} añadido a la comunidad`
-                : estado.cuentas.length === 1
-                  ? `Cuenta creada para ${estado.cuentas[0].nombre}`
-                  : "Cuentas creadas para los dos titulares"}
-            </p>
-            <p className="mt-1 text-sm text-emerald-800">
-              {estado.cuentas.length > 0
-                ? "Envía la invitación por WhatsApp o copia las credenciales. No se volverán a mostrar."
-                : "No hace falta contraseña nueva."}
-            </p>
-
-            <div className="mt-3 space-y-3">
-              {estado.cuentas.map((cuenta) => {
-                const mensaje = mensajeWhatsApp(cuenta, {
-                  nombreComunidad,
-                  urlApp,
-                  fincaCodigo: estado.fincaCodigo,
-                });
-                const enlace = enlaceWhatsApp(cuenta, mensaje);
-                return (
-                  <div key={cuenta.nombre + (cuenta.telefono ?? cuenta.correo)} className="rounded-lg bg-white p-3">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-suave">
-                      {cuenta.nombre}
-                    </p>
-                    <div className="mt-1 font-mono text-sm text-tinta">
-                      {cuenta.telefono && <p>Teléfono: {formatearTelefono(cuenta.telefono)}</p>}
-                      {cuenta.correo && <p>Correo: {cuenta.correo}</p>}
-                      <p>Contraseña: {cuenta.contrasena}</p>
-                    </div>
-                    {enlace && (
-                      <a
-                        href={enlace}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="boton boton-principal mt-2"
-                      >
-                        <MessageCircle className="size-4" aria-hidden />
-                        Enviar invitación por WhatsApp
-                      </a>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            {estado.aviso && (
-              <p className="mt-2 text-sm text-emerald-800">{estado.aviso}</p>
-            )}
-
-            {estado.cuentas.length > 0 && (
-              <button
-                type="button"
-                onClick={copiarCredenciales}
-                className="boton boton-borde mt-3"
-              >
-                {copiado ? (
-                  <Check className="size-4" aria-hidden />
-                ) : (
-                  <Copy className="size-4" aria-hidden />
-                )}
-                {copiado ? "Copiado" : "Copiar credenciales"}
-              </button>
-            )}
-          </div>
         )}
 
         <div className="flex gap-2 sm:col-span-2">

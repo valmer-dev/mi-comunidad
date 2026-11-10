@@ -21,7 +21,14 @@ const ESTADO_INICIAL: EstadoComunidad = {};
 
 export function EditarComunidad({ datos }: { datos: Datos }) {
   const [abierto, setAbierto] = useState(false);
-  const [estado, accion, pendiente] = useActionState(actualizarComunidad, ESTADO_INICIAL);
+  const [estado, accion, pendiente] = useActionState(
+    async (anterior: EstadoComunidad, datos: FormData) => {
+      const resultado = await actualizarComunidad(anterior, datos);
+      if (resultado.ok) setAbierto(false);
+      return resultado.ok ? ESTADO_INICIAL : resultado;
+    },
+    ESTADO_INICIAL,
+  );
 
   if (!abierto) {
     return (
@@ -167,11 +174,6 @@ export function EditarComunidad({ datos }: { datos: Datos }) {
       {estado.error && (
         <p className="mt-3 rounded-xl bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-700">
           {estado.error}
-        </p>
-      )}
-      {estado.ok && (
-        <p className="mt-3 rounded-xl bg-emerald-50 px-3.5 py-2.5 text-sm font-medium text-emerald-800">
-          Datos guardados.
         </p>
       )}
 

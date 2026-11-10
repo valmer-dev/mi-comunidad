@@ -9,7 +9,14 @@ const ESTADO_INICIAL: EstadoAnuncio = {};
 
 export function NuevoAnuncio() {
   const [abierto, setAbierto] = useState(false);
-  const [estado, accion, pendiente] = useActionState(publicarAnuncio, ESTADO_INICIAL);
+  const [estado, accion, pendiente] = useActionState(
+    async (anterior: EstadoAnuncio, datos: FormData) => {
+      const resultado = await publicarAnuncio(anterior, datos);
+      if (resultado.ok) setAbierto(false);
+      return resultado.ok ? ESTADO_INICIAL : resultado;
+    },
+    ESTADO_INICIAL,
+  );
 
   if (!abierto) {
     return (
@@ -69,11 +76,6 @@ export function NuevoAnuncio() {
         {estado.error && (
           <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-700">
             {estado.error}
-          </p>
-        )}
-        {estado.ok && (
-          <p className="rounded-xl bg-emerald-50 px-3.5 py-2.5 text-sm font-medium text-emerald-800">
-            Anuncio publicado.
           </p>
         )}
 
