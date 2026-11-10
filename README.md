@@ -251,15 +251,18 @@ con todo su seguimiento desde la propia tarjeta.
 ## Documentos
 
 Los documentos se dividen en cinco categorías fijas: **Estatutos, Actas,
-Contratos, Certificados y Presupuestos**. Solo se admiten PDF (máximo 25 MB) y
+Contratos, Certificados y Presupuestos**. Solo se admiten PDF (máximo 50 MB) y
 solo pueden subirlos el administrador de la plataforma y quien tenga el permiso
 `gestiona_documentos` (por defecto, presidente, vicepresidente y vocal). El resto
 de vecinos puede consultarlos y descargarlos.
 
 Los archivos se guardan en un bucket privado de Supabase Storage (`documentos`).
-Los permisos se comprueban en la acción del servidor, en la política RLS de
-`documentos` y en las políticas de Storage con la función
-`puede_gestionar_documentos`, no solo en la interfaz.
+La subida se hace **directamente desde el navegador a Supabase Storage** para
+evitar el límite de 4,5 MB por petición de las funciones de Vercel. Después, una
+Server Action valida el PDF y guarda sus datos en la base de datos. Los permisos
+se comprueban en la acción del servidor, en la política RLS de `documentos` y en
+las políticas de Storage con la función `puede_gestionar_documentos`, no solo en
+la interfaz.
 
 Quien puede subir documentos también puede **eliminarlos**: se borra la ficha y,
 si existe, el PDF del almacenamiento. El administrador de la plataforma puede

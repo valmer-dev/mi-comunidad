@@ -112,7 +112,7 @@ export default async function PaginaDocumentos() {
       <CabeceraPagina
         titulo="Documentos"
         descripcion="Estatutos, actas, contratos, certificados y presupuestos"
-        accion={puedeGestionar ? <SubirDocumento /> : undefined}
+        accion={puedeGestionar ? <SubirDocumento comunidadId={comunidad.id} /> : undefined}
       />
 
       <div className="space-y-6">
