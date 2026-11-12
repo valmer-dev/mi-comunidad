@@ -2,7 +2,7 @@
 // No cachea HTML autenticado ni respuestas RSC para no mostrar datos viejos.
 // Al cambiar el contenido de este archivo, sube VERSION para limpiar la cache.
 
-const VERSION = "v1";
+const VERSION = "v2";
 const CACHE = `comunidad-${VERSION}`;
 const OFFLINE = "/offline.html";
 

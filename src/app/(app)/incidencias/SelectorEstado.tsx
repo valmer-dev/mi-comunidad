@@ -16,15 +16,17 @@ const PIDE_COMENTARIO = new Set(["resuelta", "cerrada"]);
 
 export function SelectorEstado({ id, estado }: { id: string; estado: string }) {
   const [pendiente, iniciar] = useTransition();
-  const [valor, setValor] = useState(estado);
+  const [cambioLocal, setCambioLocal] = useState<{
+    desde: string;
+    hacia: string;
+  } | null>(null);
   const [nuevoEstado, setNuevoEstado] = useState<string | null>(null);
   const [comentario, setComentario] = useState("");
   const [error, setError] = useState<string>();
 
-  // Mantiene el desplegable al dia cuando el servidor revalida la pagina.
-  useEffect(() => {
-    setValor(estado);
-  }, [estado]);
+  // El valor que se muestra es el del servidor; el cambio local solo cubre el
+  // hueco hasta que la revalidacion actualiza `estado`.
+  const valor = cambioLocal?.desde === estado ? cambioLocal.hacia : estado;
 
   useEffect(() => {
     if (!nuevoEstado) return;
@@ -43,7 +45,7 @@ export function SelectorEstado({ id, estado }: { id: string; estado: string }) {
         setError(resultado.error);
         return;
       }
-      setValor(destino);
+      setCambioLocal({ desde: estado, hacia: destino });
       setNuevoEstado(null);
       setComentario("");
     });

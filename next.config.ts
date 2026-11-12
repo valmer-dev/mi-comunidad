@@ -1,6 +1,16 @@
 import type { NextConfig } from "next";
 
+// Identifica el build desplegado. La app lo compara con /api/version para
+// avisar de que hay una version nueva (ver ComprobarActualizacion).
+const version =
+  process.env.VERCEL_GIT_COMMIT_SHA ||
+  process.env.VERCEL_DEPLOYMENT_ID ||
+  "local";
+
 const nextConfig: NextConfig = {
+  env: {
+    NEXT_PUBLIC_VERSION: version,
+  },
   // Esta app es dinamica y con sesion: desactivamos Cache Components
   // para que las rutas protegidas se rendericen siempre en el servidor.
   cacheComponents: false,

@@ -38,7 +38,7 @@ export default async function PaginaJuntas() {
     puntosPorJunta.set(punto.junta_id, lista);
   }
 
-  const ahora = Date.now();
+  const ahora = new Date().getTime();
   const futuras = (juntas ?? []).filter(
     (j) => new Date(j.fecha_hora).getTime() >= ahora && j.estado !== "cerrada",
   );

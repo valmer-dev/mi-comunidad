@@ -21,11 +21,17 @@ import {
 import { cerrarSesion } from "@/app/acciones/autenticacion";
 import { cn } from "@/lib/utilidades";
 
-const ENLACES = [
+const ENLACES_PRINCIPALES = [
   { href: "/panel", etiqueta: "Panel", icono: LayoutDashboard },
   { href: "/tablon", etiqueta: "Tablón", icono: Megaphone },
   { href: "/incidencias", etiqueta: "Avisos", icono: Wrench },
+];
+
+const ENLACES_SECUNDARIOS = [
   { href: "/vecinos", etiqueta: "Vecinos", icono: Users },
+  { href: "/documentos", etiqueta: "Documentos", icono: FolderOpen },
+  { href: "/juntas", etiqueta: "Juntas", icono: Gavel },
+  { href: "/servicios", etiqueta: "Servicios", icono: Briefcase },
 ];
 
 type Props = {
@@ -38,15 +44,20 @@ export function NavegacionMovil({
   puedeVerFinanzas = false,
 }: Props) {
   const ruta = usePathname();
-  const [abierto, setAbierto] = useState(false);
+  // Guardamos la ruta en la que se abrio el menu: si cambia (navegacion,
+  // atras/adelante), el menu se considera cerrado sin necesidad de un efecto.
+  const [rutaAbierta, setRutaAbierta] = useState<string | null>(null);
+  const abierto = rutaAbierta === ruta;
+
+  const enlacesPrincipales = puedeVerFinanzas
+    ? [
+        ...ENLACES_PRINCIPALES,
+        { href: "/finanzas", etiqueta: "Finanzas", icono: Wallet },
+      ]
+    : ENLACES_PRINCIPALES;
 
   const enlacesSecundarios = [
-    { href: "/documentos", etiqueta: "Documentos", icono: FolderOpen },
-    { href: "/juntas", etiqueta: "Juntas", icono: Gavel },
-    { href: "/servicios", etiqueta: "Servicios", icono: Briefcase },
-    ...(puedeVerFinanzas
-      ? [{ href: "/finanzas", etiqueta: "Finanzas", icono: Wallet }]
-      : []),
+    ...ENLACES_SECUNDARIOS,
     { href: "/ajustes", etiqueta: "Ajustes", icono: Settings },
     ...(esAdminPlataforma
       ? [{ href: "/plataforma", etiqueta: "Plataforma", icono: ShieldCheck }]
@@ -57,15 +68,11 @@ export function NavegacionMovil({
     (enlace) => ruta === enlace.href || ruta.startsWith(`${enlace.href}/`),
   );
 
-  // Cierra el menu al cambiar de pagina o al pulsar Escape.
-  useEffect(() => {
-    setAbierto(false);
-  }, [ruta]);
-
+  // Cierra el menu al pulsar Escape.
   useEffect(() => {
     if (!abierto) return;
     const alPulsar = (evento: KeyboardEvent) => {
-      if (evento.key === "Escape") setAbierto(false);
+      if (evento.key === "Escape") setRutaAbierta(null);
     };
     window.addEventListener("keydown", alPulsar);
     return () => window.removeEventListener("keydown", alPulsar);
@@ -77,7 +84,7 @@ export function NavegacionMovil({
         <button
           type="button"
           aria-label="Cerrar menú"
-          onClick={() => setAbierto(false)}
+          onClick={() => setRutaAbierta(null)}
           className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[1px] lg:hidden"
         />
       )}
@@ -94,7 +101,7 @@ export function NavegacionMovil({
             </p>
             <button
               type="button"
-              onClick={() => setAbierto(false)}
+              onClick={() => setRutaAbierta(null)}
               className="rounded-lg p-1 text-suave hover:bg-fondo"
               aria-label="Cerrar"
             >
@@ -109,7 +116,7 @@ export function NavegacionMovil({
                 <li key={href}>
                   <Link
                     href={href}
-                    onClick={() => setAbierto(false)}
+                    onClick={() => setRutaAbierta(null)}
                     className={cn(
                       "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
                       activo
@@ -143,8 +150,13 @@ export function NavegacionMovil({
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         aria-label="Navegación móvil"
       >
-        <ul className="mx-auto grid max-w-md grid-cols-5">
-          {ENLACES.map(({ href, etiqueta, icono: Icono }) => {
+        <ul
+          className={cn(
+            "mx-auto grid max-w-md",
+            enlacesPrincipales.length === 4 ? "grid-cols-5" : "grid-cols-4",
+          )}
+        >
+          {enlacesPrincipales.map(({ href, etiqueta, icono: Icono }) => {
             const activo = ruta === href || ruta.startsWith(`${href}/`);
             return (
               <li key={href}>
@@ -166,7 +178,7 @@ export function NavegacionMovil({
           <li>
             <button
               type="button"
-              onClick={() => setAbierto((valor) => !valor)}
+              onClick={() => setRutaAbierta(abierto ? null : ruta)}
               className={cn(
                 "flex w-full flex-col items-center gap-1 px-1 py-2.5 text-[11px] font-medium transition-colors",
                 abierto || seccionSecundariaActiva ? "text-principal" : "text-suave",

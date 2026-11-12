@@ -317,6 +317,7 @@ Archivos que forman la PWA:
 | `public/sw.js` | Service worker: caché de estáticos y pantalla offline |
 | `public/offline.html` | Pantalla «Sin conexión» (autocontenida) |
 | `src/components/pwa/` | Registro del SW, captura del evento de instalación y botón |
+| `src/app/api/version/route.ts` | Versión del despliegue para comprobar actualizaciones |
 
 El service worker **solo se registra en producción** (`npm run build && npm start`),
 no en `next dev`, para no cachear chunks de desarrollo. Si se cambia `sw.js`, hay
@@ -331,6 +332,25 @@ node scripts/generar-iconos.mjs
 Para comprobarlo en local: `npm run build && npm start`, abrir en Chrome y mirar
 **DevTools → Application → Manifest** y **Service Workers**. La instalación real
 requiere HTTPS (Vercel ya lo da) y, en localhost, Chrome también la permite.
+
+### Actualizaciones
+
+La app instalada carga siempre desde la URL desplegada: **los cambios locales no
+llegan al móvil hasta hacer `git push` y que Vercel despliegue**. Si se instala
+desde `localhost`, el icono seguirá apuntando a localhost y solo funcionará
+mientras el servidor local esté arrancado.
+
+Cada build lleva su identificador (`NEXT_PUBLIC_VERSION`, tomado del commit o del
+deployment de Vercel) y `GET /api/version` devuelve el del servidor. En
+**Ajustes → Actualizaciones** hay un botón **Comprobar actualizaciones** que:
+
+1. pide al navegador que busque un service worker nuevo (`registration.update()`),
+2. compara la versión incrustada en la app con la del servidor,
+3. si no coinciden, muestra **Actualizar ahora**, que recarga con el build nuevo.
+
+Las navegaciones del service worker van siempre a red (no cachea HTML), así que
+una recarga normal ya trae los cambios; el botón sirve para forzarlo cuando el
+móvil mantiene la app abierta en segundo plano.
 
 ## Fases
 

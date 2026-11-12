@@ -1,4 +1,11 @@
-import { Building2, LogOut, ShieldCheck, Smartphone, UserCircle } from "lucide-react";
+import {
+  Building2,
+  LogOut,
+  RefreshCw,
+  ShieldCheck,
+  Smartphone,
+  UserCircle,
+} from "lucide-react";
 import { cerrarSesion } from "@/app/acciones/autenticacion";
 import { requerirContexto } from "@/lib/auth";
 import { esAdministrador, etiquetaRol, etiquetaRolPersona } from "@/lib/permisos";
@@ -7,6 +14,7 @@ import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { CabeceraPagina } from "@/components/ui/CabeceraPagina";
 import { InstalarApp } from "@/components/pwa/InstalarApp";
 import { CambiarContrasena } from "./CambiarContrasena";
+import { ComprobarActualizacion } from "./ComprobarActualizacion";
 import { ConfigurarFincas } from "./ConfigurarFincas";
 import { EditarComunidad } from "./EditarComunidad";
 
@@ -165,6 +173,20 @@ export default async function PaginaAjustes() {
         </p>
         <div className="mt-4">
           <InstalarApp />
+        </div>
+      </section>
+
+      <section className="tarjeta mt-5">
+        <h2 className="flex items-center gap-2 text-base font-bold">
+          <RefreshCw className="size-4.5 text-principal" aria-hidden />
+          Actualizaciones
+        </h2>
+        <p className="mt-2 text-sm leading-relaxed text-suave">
+          La app busca cambios sola al abrirla. Si acabas de desplegar una
+          versión nueva y no la ves, fuerza aquí la comprobación.
+        </p>
+        <div className="mt-4">
+          <ComprobarActualizacion />
         </div>
       </section>
 
