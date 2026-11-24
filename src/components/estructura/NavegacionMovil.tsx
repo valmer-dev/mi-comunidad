@@ -85,31 +85,33 @@ export function NavegacionMovil({
           type="button"
           aria-label="Cerrar menú"
           onClick={() => setRutaAbierta(null)}
-          className="fixed inset-0 z-40 bg-black/30 backdrop-blur-[1px] lg:hidden"
+          className="fixed inset-0 z-40 bg-black/40 backdrop-blur-[2px] motion-safe:animate-[aparecer_150ms_ease-out] lg:hidden"
         />
       )}
 
       {abierto && (
         <div
           id="menu-mas"
-          className="fixed inset-x-0 z-50 mx-auto w-[calc(100%-1.5rem)] max-w-md rounded-2xl border border-borde bg-superficie p-2 shadow-xl lg:hidden"
-          style={{ bottom: "calc(4.25rem + env(safe-area-inset-bottom))" }}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Más secciones"
+          className="fixed inset-x-0 bottom-0 z-50 mx-auto w-full max-w-lg rounded-t-3xl border border-b-0 border-borde bg-superficie px-3 pt-2 shadow-flotante motion-safe:animate-[subir-hoja_220ms_cubic-bezier(0.2,0.8,0.2,1)] lg:hidden"
+          style={{ paddingBottom: "calc(5rem + env(safe-area-inset-bottom))" }}
         >
-          <div className="flex items-center justify-between px-3 pb-1 pt-2">
-            <p className="text-xs font-semibold uppercase tracking-wide text-suave">
-              Más secciones
-            </p>
+          <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-borde-fuerte" aria-hidden />
+          <div className="flex items-center justify-between px-2 pb-2">
+            <p className="sobretitulo">Más secciones</p>
             <button
               type="button"
               onClick={() => setRutaAbierta(null)}
-              className="rounded-lg p-1 text-suave hover:bg-fondo"
+              className="grid size-11 place-items-center rounded-full text-suave transition-colors hover:bg-hundido hover:text-tinta"
               aria-label="Cerrar"
             >
-              <X className="size-4" aria-hidden />
+              <X className="size-5" aria-hidden />
             </button>
           </div>
 
-          <ul className="grid gap-0.5">
+          <ul className="grid grid-cols-3 gap-2">
             {enlacesSecundarios.map(({ href, etiqueta, icono: Icono }) => {
               const activo = ruta === href || ruta.startsWith(`${href}/`);
               return (
@@ -118,14 +120,14 @@ export function NavegacionMovil({
                     href={href}
                     onClick={() => setRutaAbierta(null)}
                     className={cn(
-                      "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+                      "flex min-h-20 flex-col items-center justify-center gap-2 rounded-2xl border px-2 py-3 text-center text-sm font-medium transition-colors active:scale-[0.98]",
                       activo
-                        ? "bg-principal/10 text-principal-oscuro"
-                        : "text-tinta hover:bg-fondo",
+                        ? "border-principal/30 bg-principal/10 text-principal-oscuro"
+                        : "border-borde bg-hundido/60 text-tinta hover:bg-hundido",
                     )}
                     aria-current={activo ? "page" : undefined}
                   >
-                    <Icono className="size-[18px] shrink-0" aria-hidden />
+                    <Icono className="size-[22px] shrink-0" aria-hidden />
                     {etiqueta}
                   </Link>
                 </li>
@@ -133,10 +135,10 @@ export function NavegacionMovil({
             })}
           </ul>
 
-          <form action={cerrarSesion} className="mt-1 border-t border-borde pt-1">
+          <form action={cerrarSesion} className="mt-3 border-t border-borde pt-2">
             <button
               type="submit"
-              className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-suave transition-colors hover:bg-fondo hover:text-tinta"
+              className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold text-peligro transition-colors hover:bg-peligro-claro"
             >
               <LogOut className="size-[18px] shrink-0" aria-hidden />
               Cerrar sesión
@@ -146,13 +148,13 @@ export function NavegacionMovil({
       )}
 
       <nav
-        className="no-imprimir fixed inset-x-0 bottom-0 z-40 border-t border-borde bg-superficie/95 backdrop-blur lg:hidden"
+        className="no-imprimir fixed inset-x-0 bottom-0 z-50 border-t border-borde bg-superficie/90 backdrop-blur-xl lg:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
         aria-label="Navegación móvil"
       >
         <ul
           className={cn(
-            "mx-auto grid max-w-md",
+            "mx-auto grid max-w-lg px-1",
             enlacesPrincipales.length === 4 ? "grid-cols-5" : "grid-cols-4",
           )}
         >
@@ -163,13 +165,20 @@ export function NavegacionMovil({
                 <Link
                   href={href}
                   className={cn(
-                    "flex flex-col items-center gap-1 px-1 py-2.5 text-[11px] font-medium transition-colors",
-                    activo ? "text-principal" : "text-suave",
+                    "group flex min-h-16 flex-col items-center justify-center gap-1 px-1 py-2 text-xs font-medium transition-colors",
+                    activo ? "text-principal-oscuro" : "text-suave hover:text-tinta",
                   )}
                   aria-current={activo ? "page" : undefined}
                 >
-                  <Icono className="size-5" aria-hidden />
-                  {etiqueta}
+                  <span
+                    className={cn(
+                      "grid h-8 w-14 place-items-center rounded-full transition-colors duration-200",
+                      activo ? "bg-principal/15" : "group-active:bg-hundido",
+                    )}
+                  >
+                    <Icono className="size-[22px]" strokeWidth={activo ? 2.25 : 1.9} aria-hidden />
+                  </span>
+                  <span className={activo ? "font-semibold" : undefined}>{etiqueta}</span>
                 </Link>
               </li>
             );
@@ -180,18 +189,27 @@ export function NavegacionMovil({
               type="button"
               onClick={() => setRutaAbierta(abierto ? null : ruta)}
               className={cn(
-                "flex w-full flex-col items-center gap-1 px-1 py-2.5 text-[11px] font-medium transition-colors",
-                abierto || seccionSecundariaActiva ? "text-principal" : "text-suave",
+                "group flex min-h-16 w-full flex-col items-center justify-center gap-1 px-1 py-2 text-xs font-medium transition-colors",
+                abierto || seccionSecundariaActiva ? "text-principal-oscuro" : "text-suave hover:text-tinta",
               )}
               aria-expanded={abierto}
               aria-controls="menu-mas"
             >
-              {abierto ? (
-                <X className="size-5" aria-hidden />
-              ) : (
-                <Menu className="size-5" aria-hidden />
-              )}
-              Más
+              <span
+                className={cn(
+                  "grid h-8 w-14 place-items-center rounded-full transition-colors duration-200",
+                  abierto || seccionSecundariaActiva ? "bg-principal/15" : "group-active:bg-hundido",
+                )}
+              >
+                {abierto ? (
+                  <X className="size-[22px]" aria-hidden />
+                ) : (
+                  <Menu className="size-[22px]" aria-hidden />
+                )}
+              </span>
+              <span className={abierto || seccionSecundariaActiva ? "font-semibold" : undefined}>
+                Más
+              </span>
             </button>
           </li>
         </ul>

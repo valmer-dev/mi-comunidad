@@ -54,7 +54,7 @@ export function InstalarApp() {
 
   if (instalada) {
     return (
-      <p className="flex items-center gap-2 rounded-xl bg-emerald-50 px-3.5 py-2.5 text-sm font-medium text-emerald-800">
+      <p className="flex items-center gap-2 aviso aviso-exito">
         <CheckCircle2 className="size-4 shrink-0" aria-hidden />
         Ya está instalada en este dispositivo.
       </p>
@@ -77,7 +77,7 @@ export function InstalarApp() {
   }
 
   return (
-    <div className="flex items-start gap-2.5 rounded-xl bg-fondo px-3.5 py-3 text-sm leading-relaxed text-suave">
+    <div className="flex items-start gap-2.5 rounded-xl bg-hundido px-3.5 py-3 text-[15px] leading-relaxed text-suave">
       <Smartphone className="mt-0.5 size-4 shrink-0 text-principal" aria-hidden />
       <div>
         <p>

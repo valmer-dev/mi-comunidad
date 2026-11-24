@@ -42,14 +42,14 @@ function FormularioEditar({
     <form action={accion}>
       <input type="hidden" name="id" value={servicio.id} />
       <div className="flex items-start justify-between gap-3">
-        <h2 className="flex items-center gap-2 text-base font-bold">
+        <h2 className="flex items-center gap-2 text-lg font-semibold">
           <Pencil className="size-4.5 text-principal" aria-hidden />
           Editar servicio
         </h2>
         <button
           type="button"
           onClick={alCerrar}
-          className="rounded-lg p-1.5 text-suave hover:bg-fondo"
+          className="grid size-11 place-items-center rounded-full text-suave hover:bg-hundido hover:text-tinta"
           aria-label="Cerrar"
         >
           <X className="size-5" aria-hidden />
@@ -98,7 +98,7 @@ function FormularioEditar({
         </div>
 
         {estado.error && (
-          <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-700 sm:col-span-2">
+          <p className="aviso aviso-error sm:col-span-2">
             {estado.error}
           </p>
         )}
@@ -147,7 +147,7 @@ export function ServicioItem({
             <Briefcase className="size-4" aria-hidden />
           </span>
           <div className="min-w-0">
-            <h2 className="text-base font-bold leading-snug">
+            <h2 className="text-[17px] font-semibold leading-snug">
               {servicio.categoria || "Servicio sin especificar"}
             </h2>
             <p className="mt-0.5 text-sm font-medium text-tinta/90">{servicio.nombre}</p>

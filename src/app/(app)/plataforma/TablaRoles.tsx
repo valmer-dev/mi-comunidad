@@ -59,7 +59,7 @@ function FormularioRol({
   }, [estado, alGuardar]);
 
   return (
-    <form action={accion} className="rounded-xl border border-borde bg-fondo/60 p-4">
+    <form action={accion} className="rounded-xl border border-borde bg-hundido/60 p-4">
       <input type="hidden" name="clave" value={rol.clave} />
 
       <div className="grid gap-3 sm:grid-cols-2">
@@ -110,7 +110,7 @@ function FormularioRol({
       </fieldset>
 
       {"error" in estado && estado.error && (
-        <p className="mt-3 rounded-xl bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-700">
+        <p className="mt-3 aviso aviso-error">
           {estado.error}
         </p>
       )}
@@ -139,7 +139,7 @@ export function TablaRoles({ roles }: { roles: RolSistema[] }) {
   return (
     <div className="overflow-x-auto rounded-2xl border border-borde bg-superficie">
       <table className="w-full min-w-[680px] text-sm">
-        <thead className="bg-fondo text-left text-xs uppercase tracking-wide text-suave">
+        <thead className="bg-hundido text-left text-xs uppercase tracking-wider text-suave">
           <tr>
             <th className="px-4 py-2.5 font-semibold">Rol</th>
             <th className="px-4 py-2.5 font-semibold">Descripción</th>

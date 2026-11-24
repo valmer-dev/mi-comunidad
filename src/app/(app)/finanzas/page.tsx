@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation";
-import { CalendarDays, TrendingDown } from "lucide-react";
+import { CalendarDays, TrendingDown, Wallet } from "lucide-react";
 import { requerirContexto } from "@/lib/auth";
 import { puedeEditarFinanzas, puedeVerFinanzas } from "@/lib/permisos";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
@@ -60,28 +60,29 @@ export default async function PaginaFinanzas() {
     <div>
       <CabeceraPagina
         titulo="Finanzas"
+        icono={Wallet}
         descripcion={`Gastos de la comunidad · Ejercicio ${ejercicio}`}
         accion={editaFinanzas ? <NuevoGasto categorias={categorias ?? []} /> : undefined}
       />
 
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-3">
         <div className="tarjeta p-4">
-          <span className="grid size-9 place-items-center rounded-xl bg-acento-claro text-acento">
+          <span className="icono-seccion bg-acento-claro text-acento">
             <TrendingDown className="size-[18px]" aria-hidden />
           </span>
           <p className="mt-3 text-xs text-suave">Gastado este año</p>
-          <p className="text-xl font-bold">{formatoMoneda(gastadoAnio)}</p>
+          <p className="font-titulo text-xl font-semibold tabular-nums">{formatoMoneda(gastadoAnio)}</p>
           <p className="mt-0.5 text-xs text-suave">
             {listaGastos.length} {listaGastos.length === 1 ? "gasto" : "gastos"} registrados
           </p>
         </div>
 
         <div className="tarjeta p-4">
-          <span className="grid size-9 place-items-center rounded-xl bg-emerald-100 text-emerald-700">
+          <span className="icono-seccion bg-exito-claro text-exito">
             <CalendarDays className="size-[18px]" aria-hidden />
           </span>
           <p className="mt-3 text-xs text-suave">Gastado este mes</p>
-          <p className="text-xl font-bold">{formatoMoneda(gastadoMes)}</p>
+          <p className="font-titulo text-xl font-semibold tabular-nums">{formatoMoneda(gastadoMes)}</p>
           <p className="mt-0.5 text-xs capitalize text-suave">{nombreMes(ahora)}</p>
         </div>
 
@@ -94,7 +95,7 @@ export default async function PaginaFinanzas() {
 
       <section className="mt-8">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-sm font-bold uppercase tracking-wide text-suave">
+          <h2 className="sobretitulo">
             Resumen mensual de gastos
           </h2>
           <span className="text-xs text-suave">Ejercicio {ejercicio}</span>
@@ -105,13 +106,13 @@ export default async function PaginaFinanzas() {
       </section>
 
       <section className="mt-8">
-        <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-suave">
+        <h2 className="sobretitulo mb-3">
           Últimos gastos ({listaGastos.length})
         </h2>
         {listaGastos.length > 0 ? (
           <div className="overflow-hidden rounded-2xl border border-borde bg-superficie">
             <table className="w-full text-sm">
-              <thead className="bg-fondo text-left text-xs uppercase tracking-wide text-suave">
+              <thead className="bg-hundido text-left text-xs uppercase tracking-wider text-suave">
                 <tr>
                   <th className="px-4 py-2.5 font-semibold">Concepto</th>
                   <th className="hidden px-4 py-2.5 font-semibold sm:table-cell">Categoría</th>

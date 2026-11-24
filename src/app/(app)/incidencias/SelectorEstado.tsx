@@ -73,7 +73,7 @@ export function SelectorEstado({ id, estado }: { id: string; estado: string }) {
           value={valor}
           disabled={pendiente}
           onChange={(evento) => alCambiar(evento.target.value)}
-          className="rounded-lg border border-borde bg-white px-2 py-1 text-xs font-medium"
+          className="rounded-lg border border-borde bg-superficie px-2 py-1 text-xs font-medium"
           aria-label="Cambiar estado"
         >
           {ESTADOS.map((opcion) => (
@@ -86,12 +86,12 @@ export function SelectorEstado({ id, estado }: { id: string; estado: string }) {
       </span>
 
       {error && !nuevoEstado && (
-        <span className="max-w-52 text-right text-[11px] font-medium text-red-700">{error}</span>
+        <span className="max-w-52 text-right text-xs font-medium text-peligro">{error}</span>
       )}
 
       {nuevoEstado && (
         <div
-          className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4"
+          className="fixed inset-0 z-50 grid place-items-center bg-black/45 p-4 backdrop-blur-[2px]"
           role="dialog"
           aria-modal="true"
           aria-labelledby={`titulo-estado-${id}`}
@@ -99,7 +99,7 @@ export function SelectorEstado({ id, estado }: { id: string; estado: string }) {
           <div className="w-full max-w-md rounded-2xl border border-borde bg-superficie p-5 shadow-xl">
             <div className="flex items-start justify-between gap-3">
               <div>
-                <h2 id={`titulo-estado-${id}`} className="text-base font-bold">
+                <h2 id={`titulo-estado-${id}`} className="text-lg font-semibold">
                   {textoEstado === "Resuelta" ? "Marcar como resuelta" : "Cerrar incidencia"}
                 </h2>
                 <p className="mt-1 text-sm text-suave">
@@ -110,7 +110,7 @@ export function SelectorEstado({ id, estado }: { id: string; estado: string }) {
                 type="button"
                 onClick={() => setNuevoEstado(null)}
                 disabled={pendiente}
-                className="rounded-lg p-1.5 text-suave hover:bg-fondo"
+                className="grid size-11 place-items-center rounded-full text-suave hover:bg-hundido hover:text-tinta"
                 aria-label="Cerrar"
               >
                 <X className="size-5" aria-hidden />
@@ -144,7 +144,7 @@ export function SelectorEstado({ id, estado }: { id: string; estado: string }) {
               <p className="mt-1 text-right text-xs text-suave">{comentario.length}/600</p>
 
               {error && (
-                <p className="mt-2 rounded-xl bg-red-50 px-3 py-2 text-sm font-medium text-red-700">
+                <p className="mt-2 aviso aviso-error">
                   {error}
                 </p>
               )}

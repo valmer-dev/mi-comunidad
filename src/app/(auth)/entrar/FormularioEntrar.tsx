@@ -45,7 +45,7 @@ export function FormularioEntrar({ destino = "/panel" }: { destino?: string }) {
       {estado.error && (
         <p
           role="alert"
-          className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-700"
+          className="aviso aviso-error"
         >
           {estado.error}
         </p>
@@ -54,7 +54,7 @@ export function FormularioEntrar({ destino = "/panel" }: { destino?: string }) {
       <button
         type="submit"
         disabled={pendiente}
-        className="boton boton-principal w-full py-3 text-base"
+        className="boton boton-principal min-h-12 w-full py-3 text-base"
       >
         {pendiente ? (
           <Loader2 className="size-5 animate-spin" aria-hidden />

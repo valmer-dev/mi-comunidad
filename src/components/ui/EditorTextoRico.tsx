@@ -119,7 +119,7 @@ export function EditorTextoRico({
       <div
         role="toolbar"
         aria-label="Formato del anuncio"
-        className="flex flex-wrap items-center gap-1 rounded-t-xl border border-b-0 border-borde bg-fondo/70 px-2 py-1.5"
+        className="flex flex-wrap items-center gap-1 rounded-t-xl border border-b-0 border-borde bg-hundido/70 px-2 py-1.5"
       >
         {BOTONES.map(({ comando, etiqueta, Icono }) => (
           <button

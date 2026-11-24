@@ -86,7 +86,7 @@ function TarjetaResultado({
     <div className="tarjeta w-full">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-base font-bold">
+          <h2 className="text-lg font-semibold">
             {resultado.cuentas.length === 0
               ? `${resultado.nombre} añadido a la comunidad`
               : resultado.cuentas.length === 1
@@ -102,7 +102,7 @@ function TarjetaResultado({
         <button
           type="button"
           onClick={onCerrar}
-          className="rounded-lg p-1.5 text-suave hover:bg-fondo"
+          className="grid size-11 place-items-center rounded-full text-suave hover:bg-hundido hover:text-tinta"
           aria-label="Cerrar"
         >
           <X className="size-5" aria-hidden />
@@ -118,7 +118,7 @@ function TarjetaResultado({
           });
           const enlace = enlaceWhatsApp(cuenta, mensaje);
           return (
-            <div key={cuenta.nombre + (cuenta.telefono ?? cuenta.correo)} className="rounded-lg bg-white p-3">
+            <div key={cuenta.nombre + (cuenta.telefono ?? cuenta.correo)} className="rounded-lg bg-superficie p-3">
               <p className="text-xs font-semibold uppercase tracking-wide text-suave">
                 {cuenta.nombre}
               </p>
@@ -144,7 +144,7 @@ function TarjetaResultado({
       </div>
 
       {resultado.aviso && (
-        <p className="mt-2 text-sm text-emerald-800">{resultado.aviso}</p>
+        <p className="mt-2 text-sm text-exito">{resultado.aviso}</p>
       )}
 
       <div className="mt-3 flex flex-wrap gap-2">
@@ -232,7 +232,7 @@ export function NuevoVecino({ fincas, roles, nombreComunidad, urlApp }: Props) {
     <div className="tarjeta w-full">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <h2 className="text-base font-bold">Nuevo vecino</h2>
+          <h2 className="text-lg font-semibold">Nuevo vecino</h2>
           <p className="mt-0.5 text-sm text-suave">
             Se crea la cuenta con el teléfono y se genera la invitación para WhatsApp.
           </p>
@@ -240,7 +240,7 @@ export function NuevoVecino({ fincas, roles, nombreComunidad, urlApp }: Props) {
         <button
           type="button"
           onClick={() => setAbierto(false)}
-          className="rounded-lg p-1.5 text-suave hover:bg-fondo"
+          className="grid size-11 place-items-center rounded-full text-suave hover:bg-hundido hover:text-tinta"
           aria-label="Cerrar"
         >
           <X className="size-5" aria-hidden />
@@ -392,7 +392,7 @@ export function NuevoVecino({ fincas, roles, nombreComunidad, urlApp }: Props) {
         </fieldset>
 
         {"error" in estado && estado.error && (
-          <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-700 sm:col-span-2">
+          <p className="aviso aviso-error sm:col-span-2">
             {estado.error}
           </p>
         )}

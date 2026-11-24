@@ -23,7 +23,7 @@ export default async function PaginaEntrar({
   return (
     <main className="flex min-h-dvh flex-col lg:flex-row">
       {/* Presentacion */}
-      <section className="relative flex flex-col justify-between overflow-hidden bg-principal px-6 py-10 text-white lg:w-1/2 lg:px-16 lg:py-16">
+      <section className="relative flex flex-col justify-between overflow-hidden bg-gradient-to-br from-marca to-marca-oscuro px-6 pb-14 pt-[calc(2.5rem+env(safe-area-inset-top))] text-white lg:w-1/2 lg:px-16 lg:py-16">
         <div
           className="pointer-events-none absolute -right-24 -top-24 size-96 rounded-full bg-white/10"
           aria-hidden
@@ -38,10 +38,10 @@ export default async function PaginaEntrar({
             <span className="grid size-11 place-items-center rounded-2xl bg-white/15">
               <Building2 className="size-6" aria-hidden />
             </span>
-            <span className="text-lg font-semibold tracking-tight">Mi Comunidad</span>
+            <span className="font-titulo text-lg font-semibold tracking-tight">Mi Comunidad</span>
           </div>
 
-          <h1 className="mt-10 max-w-md text-3xl font-bold leading-tight tracking-tight lg:mt-16 lg:text-5xl">
+          <h1 className="mt-10 max-w-md text-3xl font-semibold leading-tight tracking-tight lg:mt-16 lg:text-5xl">
             Todo lo de tu comunidad, en un solo sitio.
           </h1>
           <p className="mt-4 max-w-md text-base leading-relaxed text-white/80 lg:text-lg">
@@ -50,15 +50,17 @@ export default async function PaginaEntrar({
           </p>
         </div>
 
-        <ul className="relative mt-10 grid gap-3 text-sm text-white/90 sm:grid-cols-2 lg:mt-16">
+        <ul className="relative mt-8 hidden gap-3 text-[15px] text-white/90 sm:grid sm:grid-cols-2 lg:mt-16">
           {[
             { icono: Users, texto: "Vecinos y fincas" },
             { icono: Wallet, texto: "Cuotas y gastos" },
             { icono: Wrench, texto: "Incidencias" },
             { icono: Building2, texto: "Juntas y acuerdos" },
           ].map(({ icono: Icono, texto }) => (
-            <li key={texto} className="flex items-center gap-2.5">
-              <Icono className="size-4 shrink-0" aria-hidden />
+            <li key={texto} className="flex items-center gap-3">
+              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-white/15">
+                <Icono className="size-[18px]" aria-hidden />
+              </span>
               {texto}
             </li>
           ))}
@@ -66,10 +68,10 @@ export default async function PaginaEntrar({
       </section>
 
       {/* Formulario */}
-      <section className="flex flex-1 items-center justify-center px-5 py-10 lg:px-12">
-        <div className="w-full max-w-sm">
-          <h2 className="text-2xl font-bold tracking-tight">Accede a tu cuenta</h2>
-          <p className="mt-1.5 text-sm text-suave">
+      <section className="relative -mt-6 flex flex-1 items-start justify-center px-4 pb-10 lg:mt-0 lg:items-center lg:px-12 lg:py-10">
+        <div className="w-full max-w-md rounded-3xl border border-borde bg-superficie p-6 shadow-flotante sm:p-8 lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
+          <h2 className="text-2xl font-semibold tracking-tight">Accede a tu cuenta</h2>
+          <p className="mt-1.5 text-[15px] text-suave">
             Usa tu teléfono o tu correo y la contraseña que te dio la comunidad.
           </p>
           <div className="mt-7">

@@ -191,6 +191,7 @@ export default async function PaginaPlataforma() {
     <div>
       <CabeceraPagina
         titulo="Plataforma"
+        icono={ShieldCheck}
         descripcion="Todas las comunidades, roles y gestión de vecinos"
       />
 
@@ -202,7 +203,7 @@ export default async function PaginaPlataforma() {
 
       <div className="grid gap-5 lg:grid-cols-[1.4fr_1fr]">
         <section>
-          <h2 className="mb-3 flex items-center gap-2 text-base font-bold">
+          <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold">
             <Building2 className="size-4.5 text-principal" aria-hidden />
             Comunidades ({comunidades?.length ?? 0})
           </h2>
@@ -225,7 +226,7 @@ export default async function PaginaPlataforma() {
                       </p>
                     </div>
                     {esActual && (
-                      <span className="chip bg-emerald-100 text-emerald-800">En uso</span>
+                      <span className="chip bg-exito-claro text-exito">En uso</span>
                     )}
                   </div>
 
@@ -268,7 +269,7 @@ export default async function PaginaPlataforma() {
         </section>
 
         <section>
-          <h2 className="mb-3 flex items-center gap-2 text-base font-bold">
+          <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold">
             <Building2 className="size-4.5 text-principal" aria-hidden />
             Nueva comunidad
           </h2>
@@ -277,7 +278,7 @@ export default async function PaginaPlataforma() {
       </div>
 
       <section className="mt-8">
-        <h2 className="mb-1 flex items-center gap-2 text-base font-bold">
+        <h2 className="mb-1 flex items-center gap-2 text-lg font-semibold">
           <ShieldCheck className="size-4.5 text-principal" aria-hidden />
           Roles y permisos
         </h2>
@@ -301,7 +302,7 @@ export default async function PaginaPlataforma() {
           />
         ) : (
           <div>
-            <h2 className="mb-3 flex items-center gap-2 text-base font-bold">
+            <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold">
               <Users className="size-4.5 text-principal" aria-hidden />
               Vecinos
             </h2>

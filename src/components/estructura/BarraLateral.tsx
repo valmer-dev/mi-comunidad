@@ -52,27 +52,27 @@ export function BarraLateral({
   ];
 
   return (
-    <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-borde bg-superficie px-3 py-5 lg:flex">
+    <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-borde bg-superficie px-3 py-6 lg:flex">
       <Link href="/panel" className="flex items-center gap-3 px-3">
-        <span className="grid size-10 place-items-center rounded-xl bg-principal text-white">
+        <span className="grid size-10 place-items-center rounded-xl bg-gradient-to-br from-marca to-marca-oscuro text-white shadow-elevada">
           <Building2 className="size-5" aria-hidden />
         </span>
         <span className="min-w-0">
-          <span className="block text-sm font-bold leading-tight text-tinta">
+          <span className="block font-titulo text-[15px] font-semibold leading-tight text-tinta">
             Mi Comunidad
           </span>
           <span className="block truncate text-xs text-suave">{nombreComunidad}</span>
         </span>
       </Link>
 
-      <nav className="mt-7 flex flex-1 flex-col gap-1" aria-label="Navegación principal">
+      <nav className="mt-8 flex flex-1 flex-col gap-0.5 overflow-y-auto" aria-label="Navegación principal">
         {enlaces.map((enlace) => (
           <EnlaceLateral key={enlace.href} {...enlace} />
         ))}
       </nav>
 
-      <div className="mt-4 border-t border-borde pt-4">
-        <div className="flex items-center gap-3 px-3">
+      <div className="mt-4 rounded-2xl border border-borde bg-hundido/60 p-3">
+        <div className="flex items-center gap-3">
           <span className="grid size-9 shrink-0 place-items-center rounded-full bg-principal-claro text-sm font-bold text-principal-oscuro">
             {iniciales(nombreUsuario)}
           </span>
@@ -85,10 +85,10 @@ export function BarraLateral({
             </span>
           </span>
         </div>
-        <form action={cerrarSesion} className="mt-3 px-1">
+        <form action={cerrarSesion} className="mt-3">
           <button
             type="submit"
-            className="flex w-full items-center gap-2.5 rounded-xl px-3 py-2 text-sm font-medium text-suave transition-colors hover:bg-fondo hover:text-tinta"
+            className="flex min-h-10 w-full items-center gap-2.5 rounded-xl px-2 py-2 text-sm font-medium text-suave transition-colors hover:bg-superficie hover:text-peligro"
           >
             <LogOut className="size-4" aria-hidden />
             Cerrar sesión

@@ -157,7 +157,7 @@ function FormularioVecino({
   }
 
   return (
-    <form action={accion} className="rounded-xl border border-borde bg-fondo/60 p-4">
+    <form action={accion} className="rounded-xl border border-borde bg-hundido/60 p-4">
       <input type="hidden" name="miembroId" value={vecino.miembroId} />
       <input type="hidden" name="cotitularTitularId" value={cotitularTitularId} />
 
@@ -315,7 +315,7 @@ function FormularioVecino({
             </div>
           </div>
           {vecino.cotitular?.usuarioId && (
-            <p className="mt-2 text-xs font-medium text-emerald-700">
+            <p className="mt-2 text-xs font-medium text-exito">
               Este titular ya tiene cuenta de acceso.
             </p>
           )}
@@ -323,24 +323,24 @@ function FormularioVecino({
       )}
 
       {"error" in estado && estado.error && (
-        <p className="mt-3 rounded-xl bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-700">
+        <p className="mt-3 aviso aviso-error">
           {estado.error}
         </p>
       )}
 
       {"ok" in estado && estado.ok && Boolean(estado.cuentas?.length) && (
-        <div className="mt-3 rounded-xl bg-emerald-50 p-4">
-          <p className="text-sm font-semibold text-emerald-900">
+        <div className="mt-3 rounded-xl bg-exito-claro p-4">
+          <p className="text-sm font-semibold text-exito">
             Cuenta creada para el segundo titular
           </p>
-          <p className="mt-1 text-sm text-emerald-800">
+          <p className="mt-1 text-sm text-exito">
             Entrega estas credenciales. No se volverán a mostrar.
           </p>
           <div className="mt-2 space-y-2">
             {estado.cuentas?.map((cuenta) => (
               <div
                 key={cuenta.telefono ?? cuenta.correo ?? cuenta.nombre}
-                className="rounded-lg bg-white p-3 font-mono text-sm"
+                className="rounded-lg bg-superficie p-3 font-mono text-sm"
               >
                 <p className="font-sans font-semibold">{cuenta.nombre}</p>
                 {cuenta.telefono && (
@@ -413,7 +413,7 @@ function BotonEliminar({
       <button
         type="submit"
         disabled={pendiente}
-        className="boton px-3 py-1.5 text-red-700 hover:bg-red-50"
+        className="boton px-3 py-1.5 boton-peligro"
         title="Eliminar vecino"
       >
         {pendiente ? (
@@ -424,7 +424,7 @@ function BotonEliminar({
         Eliminar
       </button>
       {"error" in estado && estado.error && (
-        <p className="mt-1 max-w-[180px] text-xs text-red-700">{estado.error}</p>
+        <p className="mt-1 max-w-[180px] text-xs text-peligro">{estado.error}</p>
       )}
     </form>
   );
@@ -520,7 +520,7 @@ export function TablaVecinos({
   return (
     <div>
       <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="flex items-center gap-2 text-base font-bold">
+        <h2 className="flex items-center gap-2 text-lg font-semibold">
           <UserRound className="size-4.5 text-principal" aria-hidden />
           Vecinos de {nombreComunidad} ({vecinos.length})
         </h2>
@@ -540,7 +540,7 @@ export function TablaVecinos({
       ) : (
         <div className="overflow-x-auto rounded-2xl border border-borde bg-superficie">
           <table className="w-full min-w-[760px] text-sm">
-            <thead className="bg-fondo text-left text-xs uppercase tracking-wide text-suave">
+            <thead className="bg-hundido text-left text-xs uppercase tracking-wider text-suave">
               <tr>
                 <th className="px-4 py-2.5 font-semibold">Persona</th>
                 <th className="px-4 py-2.5 font-semibold">Rol</th>

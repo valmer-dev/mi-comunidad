@@ -28,21 +28,21 @@ export function ResumenMensual({
 
           return (
             <div key={indice} className="flex flex-1 flex-col items-center gap-1.5">
-              <span className="hidden h-4 text-[10px] font-medium tabular-nums text-suave sm:block">
+              <span className="hidden h-4 text-[11px] font-medium tabular-nums text-suave sm:block">
                 {total > 0 ? FORMATO_IMPORTE.format(total) : ""}
               </span>
               <div
-                className="flex h-40 w-full items-end rounded-lg bg-fondo"
+                className="flex h-40 w-full items-end rounded-lg bg-hundido"
                 role="img"
                 aria-label={`${etiqueta}: ${formatoMoneda(total)}`}
                 title={`${etiqueta}: ${formatoMoneda(total)}`}
               >
                 <div
-                  className="w-full rounded-lg bg-principal"
+                  className="w-full rounded-lg bg-gradient-to-t from-principal-oscuro to-principal transition-[height] duration-500"
                   style={{ height: total > 0 ? `${Math.max(porcentaje, 4)}%` : 0 }}
                 />
               </div>
-              <span className="text-[11px] capitalize text-suave">{etiqueta}</span>
+              <span className="text-xs capitalize text-suave">{etiqueta}</span>
             </div>
           );
         })}

@@ -50,7 +50,7 @@ export default async function PaginaJuntas() {
       <li className="tarjeta">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
-            <h3 className="text-base font-bold leading-snug">{junta.titulo}</h3>
+            <h3 className="text-[17px] font-semibold leading-snug">{junta.titulo}</h3>
             <p className="mt-0.5 flex items-center gap-1.5 text-sm text-suave">
               <CalendarDays className="size-3.5" aria-hidden />
               {formatoFechaHora(junta.fecha_hora)}
@@ -63,7 +63,7 @@ export default async function PaginaJuntas() {
             )}
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <span className="chip bg-slate-100 capitalize text-slate-600">{junta.tipo}</span>
+            <span className="chip bg-neutro-claro capitalize text-neutro">{junta.tipo}</span>
             <EtiquetaEstado estado={junta.estado} />
             {administrador && (
               <BotonEliminar
@@ -100,12 +100,13 @@ export default async function PaginaJuntas() {
     <div>
       <CabeceraPagina
         titulo="Juntas"
+        icono={Gavel}
         descripcion="Convocatorias, puntos del día y acuerdos"
         accion={administrador ? <NuevaJunta /> : undefined}
       />
 
       <section>
-        <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-suave">
+        <h2 className="sobretitulo mb-3">
           Próximas ({futuras.length})
         </h2>
         {futuras.length > 0 ? (
@@ -118,14 +119,14 @@ export default async function PaginaJuntas() {
           <EstadoVacio
             titulo="No hay juntas convocadas"
             descripcion="Cuando se convoque la próxima junta aparecerá aquí con su orden del día."
-            accion={<Gavel className="size-8 text-suave/50" aria-hidden />}
+            accion={<Gavel className="size-9 text-principal/40" aria-hidden />}
           />
         )}
       </section>
 
       {pasadas.length > 0 && (
         <section className="mt-8">
-          <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-suave">
+          <h2 className="sobretitulo mb-3">
             Historial ({pasadas.length})
           </h2>
           <ul className="space-y-3">

@@ -29,14 +29,14 @@ export function TarjetaCuota({
   return (
     <div className={cn("tarjeta p-4", className)}>
       <div className="flex items-start justify-between gap-2">
-        <span className="grid size-9 place-items-center rounded-xl bg-blue-100 text-blue-700">
+        <span className="icono-seccion bg-info-claro text-info">
           <Wallet className="size-[18px]" aria-hidden />
         </span>
         {puedeEditar && !editando && (
           <button
             type="button"
             onClick={() => setEditando(true)}
-            className="rounded-lg p-1.5 text-suave hover:bg-fondo"
+            className="grid size-11 place-items-center rounded-full text-suave hover:bg-hundido hover:text-tinta"
             aria-label="Editar cuota mensual"
             title="Editar cuota mensual"
           >
@@ -82,11 +82,11 @@ export function TarjetaCuota({
           </button>
         </form>
       ) : (
-        <p className="text-xl font-bold">{formatoMoneda(cuota)}</p>
+        <p className="font-titulo text-xl font-semibold tabular-nums">{formatoMoneda(cuota)}</p>
       )}
 
       {estado.error && (
-        <p className="mt-2 text-xs font-medium text-red-700">{estado.error}</p>
+        <p className="mt-2 text-xs font-medium text-peligro">{estado.error}</p>
       )}
 
       <p className="mt-0.5 text-xs text-suave">Total mensual de todos los vecinos</p>

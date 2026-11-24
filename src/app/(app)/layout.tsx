@@ -32,7 +32,7 @@ export default async function LayoutApp({
         >
           <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-3">
             <Link href="/plataforma" className="flex items-center gap-2.5">
-              <span className="grid size-9 place-items-center rounded-xl bg-principal text-white">
+              <span className="grid size-9 place-items-center rounded-xl bg-gradient-to-br from-marca to-marca-oscuro text-white">
                 <Building2 className="size-4.5" aria-hidden />
               </span>
               <span className="text-sm font-bold">Mi Comunidad · Plataforma</span>
