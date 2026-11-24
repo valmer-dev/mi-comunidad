@@ -134,31 +134,47 @@ export type Database = {
         Row: {
           coeficiente: number
           creado_en: string
+          finca_id: string
           id: string
           junta_id: string
           modo: Database["public"]["Enums"]["modo_asistencia"]
+          registrado_por: string | null
           representado_por: string | null
-          usuario_id: string
+          representante_nombre: string | null
+          usuario_id: string | null
         }
         Insert: {
           coeficiente?: number
           creado_en?: string
+          finca_id: string
           id?: string
           junta_id: string
           modo?: Database["public"]["Enums"]["modo_asistencia"]
+          registrado_por?: string | null
           representado_por?: string | null
-          usuario_id: string
+          representante_nombre?: string | null
+          usuario_id?: string | null
         }
         Update: {
           coeficiente?: number
           creado_en?: string
+          finca_id?: string
           id?: string
           junta_id?: string
           modo?: Database["public"]["Enums"]["modo_asistencia"]
+          registrado_por?: string | null
           representado_por?: string | null
-          usuario_id?: string
+          representante_nombre?: string | null
+          usuario_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "asistencias_finca_id_fkey"
+            columns: ["finca_id"]
+            isOneToOne: false
+            referencedRelation: "fincas"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "asistencias_junta_id_fkey"
             columns: ["junta_id"]
@@ -658,7 +674,10 @@ export type Database = {
       }
       juntas: {
         Row: {
-          acta_url: string | null
+          acta_aprobada_en: string | null
+          acta_documento_id: string | null
+          acta_texto: string | null
+          celebrada_en: string | null
           comunidad_id: string
           creada_por: string | null
           creado_en: string
@@ -672,7 +691,10 @@ export type Database = {
           titulo: string
         }
         Insert: {
-          acta_url?: string | null
+          acta_aprobada_en?: string | null
+          acta_documento_id?: string | null
+          acta_texto?: string | null
+          celebrada_en?: string | null
           comunidad_id: string
           creada_por?: string | null
           creado_en?: string
@@ -686,7 +708,10 @@ export type Database = {
           titulo: string
         }
         Update: {
-          acta_url?: string | null
+          acta_aprobada_en?: string | null
+          acta_documento_id?: string | null
+          acta_texto?: string | null
+          celebrada_en?: string | null
           comunidad_id?: string
           creada_por?: string | null
           creado_en?: string
@@ -700,6 +725,13 @@ export type Database = {
           titulo?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "juntas_acta_documento_id_fkey"
+            columns: ["acta_documento_id"]
+            isOneToOne: false
+            referencedRelation: "documentos"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "juntas_comunidad_id_fkey"
             columns: ["comunidad_id"]
@@ -1089,7 +1121,10 @@ export type Database = {
           junta_id: string
           mayoria_requerida: Database["public"]["Enums"]["mayoria_requerida"]
           posicion: number
+          abstenciones: number | null
           resultado: string | null
+          votos_contra: number | null
+          votos_favor: number | null
           tipo: Database["public"]["Enums"]["tipo_punto"]
           titulo: string
         }
@@ -1100,7 +1135,10 @@ export type Database = {
           junta_id: string
           mayoria_requerida?: Database["public"]["Enums"]["mayoria_requerida"]
           posicion?: number
+          abstenciones?: number | null
           resultado?: string | null
+          votos_contra?: number | null
+          votos_favor?: number | null
           tipo?: Database["public"]["Enums"]["tipo_punto"]
           titulo: string
         }
@@ -1111,7 +1149,10 @@ export type Database = {
           junta_id?: string
           mayoria_requerida?: Database["public"]["Enums"]["mayoria_requerida"]
           posicion?: number
+          abstenciones?: number | null
           resultado?: string | null
+          votos_contra?: number | null
+          votos_favor?: number | null
           tipo?: Database["public"]["Enums"]["tipo_punto"]
           titulo?: string
         }
