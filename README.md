@@ -287,12 +287,13 @@ completar después desde la ficha del vecino en `/plataforma`.
 
 ## Despliegue
 
-1. Subir el repositorio a GitHub.
-2. Importar el proyecto en Vercel.
-3. Configurar las variables de entorno de producción.
-4. Desplegar.
+- Repositorio: `https://github.com/valmer-dev/mi-comunidad`
+- Producción: `https://mi-comunidad-one.vercel.app`
 
-No hace falta dominio propio: `https://<proyecto>.vercel.app` es suficiente y gratuito.
+Cada `git push` a `main` despliega automáticamente en Vercel. Las variables de
+entorno (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
+`SUPABASE_SERVICE_ROLE_KEY` y `NEXT_PUBLIC_URL_APP`) se configuran en el proyecto
+de Vercel.
 
 ## App en el móvil (PWA)
 

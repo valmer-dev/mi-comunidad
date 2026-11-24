@@ -92,7 +92,7 @@ export default async function PaginaVecinos() {
               roles={roles}
               nombreComunidad={comunidad.nombre}
               urlApp={
-                process.env.NEXT_PUBLIC_URL_APP ?? "https://comunidad-nine.vercel.app"
+                process.env.NEXT_PUBLIC_URL_APP ?? "https://mi-comunidad-one.vercel.app"
               }
             />
           ) : undefined
