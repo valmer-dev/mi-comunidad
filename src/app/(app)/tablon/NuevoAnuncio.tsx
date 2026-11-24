@@ -30,14 +30,14 @@ export function NuevoAnuncio() {
   return (
     <div className="tarjeta w-full">
       <div className="flex items-start justify-between gap-3">
-        <h2 className="flex items-center gap-2 text-base font-bold">
+        <h2 className="flex items-center gap-2 text-lg font-semibold">
           <Megaphone className="size-4.5 text-principal" aria-hidden />
           Nuevo anuncio
         </h2>
         <button
           type="button"
           onClick={() => setAbierto(false)}
-          className="rounded-lg p-1.5 text-suave hover:bg-fondo"
+          className="grid size-11 place-items-center rounded-full text-suave hover:bg-hundido hover:text-tinta"
           aria-label="Cerrar"
         >
           <X className="size-5" aria-hidden />
@@ -74,7 +74,7 @@ export function NuevoAnuncio() {
         </label>
 
         {estado.error && (
-          <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-700">
+          <p className="aviso aviso-error">
             {estado.error}
           </p>
         )}

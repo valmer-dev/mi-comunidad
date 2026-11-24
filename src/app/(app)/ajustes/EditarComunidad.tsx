@@ -50,7 +50,7 @@ export function EditarComunidad({ datos }: { datos: Datos }) {
         <button
           type="button"
           onClick={() => setAbierto(false)}
-          className="rounded-lg p-1 text-suave hover:bg-fondo"
+          className="rounded-lg p-1 text-suave hover:bg-hundido"
           aria-label="Cerrar"
         >
           <X className="size-4" aria-hidden />
@@ -172,7 +172,7 @@ export function EditarComunidad({ datos }: { datos: Datos }) {
       </div>
 
       {estado.error && (
-        <p className="mt-3 rounded-xl bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-700">
+        <p className="mt-3 aviso aviso-error">
           {estado.error}
         </p>
       )}

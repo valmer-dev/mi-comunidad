@@ -43,7 +43,7 @@ export function ComprobarActualizacion() {
   if (estado === "disponible") {
     return (
       <div className="space-y-2">
-        <p className="rounded-xl bg-amber-50 px-3.5 py-2.5 text-sm font-medium text-amber-900">
+        <p className="aviso aviso-atencion">
           Hay una versión nueva ({corta(VERSION_ACTUAL)} →{" "}
           {corta(versionServidor ?? "")}).
         </p>
@@ -78,14 +78,14 @@ export function ComprobarActualizacion() {
       </button>
 
       {estado === "al-dia" && (
-        <p className="flex items-center gap-2 text-xs font-medium text-emerald-800">
+        <p className="flex items-center gap-2 text-xs font-medium text-exito">
           <CheckCircle2 className="size-3.5 shrink-0" aria-hidden />
           Estás al día (versión {corta(VERSION_ACTUAL)}).
         </p>
       )}
 
       {estado === "error" && (
-        <p className="text-xs font-medium text-red-700">
+        <p className="text-xs font-medium text-peligro">
           No se pudo comprobar. Revisa tu conexión e inténtalo de nuevo.
         </p>
       )}

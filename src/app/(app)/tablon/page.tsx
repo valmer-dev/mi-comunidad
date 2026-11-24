@@ -33,6 +33,7 @@ export default async function PaginaTablón() {
     <div>
       <CabeceraPagina
         titulo="Tablón"
+        icono={Megaphone}
         descripcion="Avisos y comunicados de la comunidad"
         accion={administrador ? <NuevoAnuncio /> : undefined}
       />
@@ -42,7 +43,7 @@ export default async function PaginaTablón() {
           {anuncios.map((anuncio) => (
             <li key={anuncio.id} className="tarjeta">
               <div className="flex flex-wrap items-start justify-between gap-2">
-                <h2 className="text-base font-bold leading-snug">{anuncio.titulo}</h2>
+                <h2 className="text-[17px] font-semibold leading-snug">{anuncio.titulo}</h2>
                 <div className="flex flex-wrap items-center gap-2">
                   {anuncio.fijado && (
                     <span className="chip bg-acento-claro text-acento">
@@ -63,7 +64,7 @@ export default async function PaginaTablón() {
               </div>
               <ContenidoAnuncio
                 contenido={anuncio.contenido}
-                className="mt-2 text-sm leading-relaxed text-tinta/90"
+                className="mt-2 text-[15px] leading-relaxed text-tinta/90"
               />
               <p className="mt-3 text-xs text-suave">
                 {formatoFecha(anuncio.publicado_en)}
@@ -77,7 +78,7 @@ export default async function PaginaTablón() {
           titulo="El tablón está vacío"
           descripcion="Cuando la junta publique un aviso aparecerá aquí."
           accion={
-            <Megaphone className="size-8 text-suave/50" aria-hidden />
+            <Megaphone className="size-9 text-principal/40" aria-hidden />
           }
         />
       )}

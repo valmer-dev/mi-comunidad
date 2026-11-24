@@ -131,7 +131,7 @@ export default async function PaginaIncidencias() {
       <li className="tarjeta">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="min-w-0">
-            <h3 className="text-base font-bold leading-snug">{incidencia.titulo}</h3>
+            <h3 className="text-[17px] font-semibold leading-snug">{incidencia.titulo}</h3>
             <p className="mt-0.5 text-xs text-suave">
               {ETIQUETAS_TIPO[incidencia.tipo] ?? incidencia.tipo} ·{" "}
               {formatoFecha(incidencia.creado_en)}
@@ -156,7 +156,7 @@ export default async function PaginaIncidencias() {
           </div>
         </div>
 
-        <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-tinta/90">
+        <p className="mt-2 whitespace-pre-line text-[15px] leading-relaxed text-tinta/90">
           {incidencia.descripcion}
         </p>
 
@@ -167,7 +167,7 @@ export default async function PaginaIncidencias() {
               ? "La registraste tú"
               : `La registró ${quien.nombre}`}
             {quien.finca && (
-              <span className="rounded-full bg-fondo px-2 py-0.5 font-medium text-tinta/80">
+              <span className="rounded-full bg-hundido px-2 py-0.5 font-medium text-tinta/80">
                 {quien.finca}
               </span>
             )}
@@ -181,8 +181,8 @@ export default async function PaginaIncidencias() {
         </div>
 
         {historial.length > 0 && (
-          <div className="mt-3 rounded-xl bg-fondo/70 px-3 py-2">
-            <p className="text-[11px] font-semibold uppercase tracking-wide text-suave">
+          <div className="mt-3 rounded-xl bg-hundido/70 px-3 py-2">
+            <p className="sobretitulo">
               Seguimiento
             </p>
             <ul className="mt-1 space-y-1.5 text-xs">
@@ -219,12 +219,13 @@ export default async function PaginaIncidencias() {
     <div>
       <CabeceraPagina
         titulo="Incidencias"
+        icono={Wrench}
         descripcion="Averías y problemas del edificio"
         accion={<NuevaIncidencia />}
       />
 
       <section>
-        <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-suave">
+        <h2 className="sobretitulo mb-3">
           Abiertas ({abiertas.length})
         </h2>
         {abiertas.length > 0 ? (
@@ -237,14 +238,14 @@ export default async function PaginaIncidencias() {
           <EstadoVacio
             titulo="No hay incidencias abiertas"
             descripcion="Todo en orden. Si ves algo raro, regístralo aquí."
-            accion={<Wrench className="size-8 text-suave/50" aria-hidden />}
+            accion={<Wrench className="size-9 text-principal/40" aria-hidden />}
           />
         )}
       </section>
 
       {cerradas.length > 0 && (
         <section className="mt-8">
-          <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-suave">
+          <h2 className="sobretitulo mb-3">
             Historial ({cerradas.length})
           </h2>
           <ul className="space-y-3">

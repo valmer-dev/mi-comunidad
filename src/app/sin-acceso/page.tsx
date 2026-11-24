@@ -9,8 +9,8 @@ export default function SinAcceso() {
         <span className="mx-auto grid size-12 place-items-center rounded-2xl bg-acento-claro text-acento">
           <ShieldAlert className="size-6" aria-hidden />
         </span>
-        <h1 className="mt-4 text-xl font-bold">Tu cuenta aún no está activa</h1>
-        <p className="mt-2 text-sm leading-relaxed text-suave">
+        <h1 className="mt-4 text-xl font-semibold">Tu cuenta aún no está activa</h1>
+        <p className="mt-2 text-[15px] leading-relaxed text-suave">
           Has iniciado sesión, pero todavía no perteneces a ninguna comunidad.
           Pide al presidente o al secretario que active tu cuenta.
         </p>

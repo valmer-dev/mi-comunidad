@@ -1,57 +1,198 @@
 @import "tailwindcss";
 
+/*
+ * Sistema de diseño de Mi Comunidad.
+ * Los colores se definen como variables que cambian con el modo oscuro del
+ * dispositivo; los componentes solo usan los nombres semanticos de @theme.
+ */
+:root {
+  color-scheme: light;
+  --fondo: #f4f7f6;
+  --superficie: #ffffff;
+  --hundido: #eef3f2;
+  --tinta: #0f172a;
+  --suave: #4f5d6b;
+  --borde: #e1e8e6;
+  --borde-fuerte: #cbd6d3;
+  --principal: #0f766e;
+  --principal-oscuro: #115e59;
+  --principal-claro: #ccfbf1;
+  --sobre-principal: #ffffff;
+  --acento: #c2410c;
+  --acento-claro: #ffedd5;
+  --peligro: #b91c1c;
+  --peligro-claro: #fee2e2;
+  --exito: #047857;
+  --exito-claro: #d1fae5;
+  --atencion: #a16207;
+  --atencion-claro: #fef3c7;
+  --info: #1d4ed8;
+  --info-claro: #dbeafe;
+  --neutro: #475569;
+  --neutro-claro: #eef2f6;
+  --sombra: 15 23 42;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --fondo: #0a1113;
+    --superficie: #121b1e;
+    --hundido: #0e1719;
+    --tinta: #e7eeed;
+    --suave: #9aa9ae;
+    --borde: #223033;
+    --borde-fuerte: #31443f;
+    --principal: #2dd4bf;
+    --principal-oscuro: #5eead4;
+    --principal-claro: #123c39;
+    --sobre-principal: #042f2e;
+    --acento: #fb923c;
+    --acento-claro: #3d1f0d;
+    --peligro: #f87171;
+    --peligro-claro: #3b1416;
+    --exito: #34d399;
+    --exito-claro: #0d3327;
+    --atencion: #fbbf24;
+    --atencion-claro: #3a2c08;
+    --info: #60a5fa;
+    --info-claro: #142849;
+    --neutro: #a8b4bf;
+    --neutro-claro: #1c272b;
+    --sombra: 0 0 0;
+  }
+}
+
 @theme inline {
-  --color-fondo: #f7f5f0;
-  --color-superficie: #ffffff;
-  --color-tinta: #172033;
-  --color-suave: #5c6575;
-  --color-borde: #e4dfd6;
-  --color-principal: #0f766e;
-  --color-principal-oscuro: #115e59;
-  --color-principal-claro: #ccfbf1;
-  --color-acento: #c2410c;
-  --color-acento-claro: #ffedd5;
-  --font-sans: var(--font-geist-sans);
+  --color-fondo: var(--fondo);
+  --color-superficie: var(--superficie);
+  --color-hundido: var(--hundido);
+  --color-tinta: var(--tinta);
+  --color-suave: var(--suave);
+  --color-borde: var(--borde);
+  --color-borde-fuerte: var(--borde-fuerte);
+  --color-principal: var(--principal);
+  --color-principal-oscuro: var(--principal-oscuro);
+  --color-principal-claro: var(--principal-claro);
+  --color-sobre-principal: var(--sobre-principal);
+  --color-acento: var(--acento);
+  --color-acento-claro: var(--acento-claro);
+  --color-peligro: var(--peligro);
+  --color-peligro-claro: var(--peligro-claro);
+  --color-exito: var(--exito);
+  --color-exito-claro: var(--exito-claro);
+  --color-atencion: var(--atencion);
+  --color-atencion-claro: var(--atencion-claro);
+  --color-info: var(--info);
+  --color-info-claro: var(--info-claro);
+  --color-neutro: var(--neutro);
+  --color-neutro-claro: var(--neutro-claro);
+  /* Color de marca fijo (logo, portada): igual en claro y oscuro. */
+  --color-marca: #0f766e;
+  --color-marca-oscuro: #134e4a;
+  --font-sans: var(--font-texto);
+  --font-titulo: var(--font-titulos);
+  --shadow-suave: 0 1px 2px rgb(var(--sombra) / 0.04), 0 1px 3px rgb(var(--sombra) / 0.06);
+  --shadow-elevada: 0 4px 12px -2px rgb(var(--sombra) / 0.08), 0 2px 4px -2px rgb(var(--sombra) / 0.06);
+  --shadow-flotante: 0 16px 40px -12px rgb(var(--sombra) / 0.25), 0 4px 12px -4px rgb(var(--sombra) / 0.12);
 }
 
 html {
   -webkit-text-size-adjust: 100%;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
-  background-color: var(--color-fondo);
-  color: var(--color-tinta);
+  background-color: var(--fondo);
+  color: var(--tinta);
   font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-titulo), var(--font-sans), system-ui, sans-serif;
+  letter-spacing: -0.01em;
+  text-wrap: balance;
 }
 
 *:focus-visible {
-  outline: 2px solid var(--color-principal);
+  outline: 2px solid var(--principal);
   outline-offset: 2px;
+}
+
+button:not(:disabled),
+[role="button"]:not(:disabled),
+summary,
+label[for] {
+  cursor: pointer;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@keyframes subir-hoja {
+  from {
+    transform: translateY(16px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @layer components {
   .tarjeta {
-    @apply rounded-2xl border border-borde bg-superficie p-5 shadow-sm;
+    @apply rounded-2xl border border-borde bg-superficie p-5 shadow-suave;
+  }
+
+  .tarjeta-enlace {
+    @apply transition-[box-shadow,border-color,transform] duration-200 hover:border-borde-fuerte hover:shadow-elevada active:scale-[0.99];
   }
 
   .boton {
-    @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-60;
+    @apply inline-flex min-h-11 select-none items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-[background-color,color,border-color,transform] duration-150 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-60;
   }
 
   .boton-principal {
-    @apply bg-principal text-white hover:bg-principal-oscuro;
+    @apply bg-principal text-sobre-principal shadow-suave hover:bg-principal-oscuro;
   }
 
   .boton-suave {
-    @apply bg-principal/10 text-principal hover:bg-principal/20;
+    @apply bg-principal/10 text-principal-oscuro hover:bg-principal/20;
   }
 
   .boton-borde {
-    @apply border border-borde bg-superficie text-tinta hover:bg-fondo;
+    @apply border border-borde bg-superficie text-tinta hover:border-borde-fuerte hover:bg-hundido;
+  }
+
+  .boton-peligro {
+    @apply text-peligro hover:bg-peligro-claro;
   }
 
   .campo {
-    @apply w-full rounded-xl border border-borde bg-white px-3.5 py-2.5 text-base text-tinta outline-none transition-colors placeholder:text-suave/60 focus:border-principal;
+    @apply min-h-11 w-full rounded-xl border border-borde-fuerte bg-superficie px-3.5 py-2.5 text-base text-tinta outline-none transition-[border-color,box-shadow] duration-150 placeholder:text-suave/70 focus:border-principal focus:ring-4 focus:ring-principal/15;
   }
 
   .etiqueta {
@@ -59,7 +200,31 @@ body {
   }
 
   .chip {
-    @apply inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold;
+    @apply inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold;
+  }
+
+  .sobretitulo {
+    @apply text-xs font-semibold uppercase tracking-wider text-suave;
+  }
+
+  .aviso {
+    @apply flex items-start gap-2 rounded-xl px-3.5 py-2.5 text-sm font-medium;
+  }
+
+  .aviso-error {
+    @apply bg-peligro-claro text-peligro;
+  }
+
+  .aviso-exito {
+    @apply bg-exito-claro text-exito;
+  }
+
+  .aviso-atencion {
+    @apply bg-atencion-claro text-atencion;
+  }
+
+  .icono-seccion {
+    @apply grid size-10 shrink-0 place-items-center rounded-xl;
   }
 }
 

@@ -19,10 +19,10 @@ export function EnlaceLateral({ href, etiqueta, icono: Icono }: Props) {
     <Link
       href={href}
       className={cn(
-        "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
+        "relative flex min-h-11 items-center gap-3 rounded-xl px-3 py-2.5 text-[15px] font-medium transition-colors",
         activo
-          ? "bg-principal/10 text-principal-oscuro"
-          : "text-suave hover:bg-fondo hover:text-tinta",
+          ? "bg-principal/10 font-semibold text-principal-oscuro before:absolute before:inset-y-2 before:left-0 before:w-1 before:rounded-full before:bg-principal"
+          : "text-suave hover:bg-hundido hover:text-tinta",
       )}
       aria-current={activo ? "page" : undefined}
     >

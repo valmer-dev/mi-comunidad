@@ -82,6 +82,7 @@ export default async function PaginaVecinos() {
     <div>
       <CabeceraPagina
         titulo="Vecinos"
+        icono={Users}
         descripcion={`${miembros?.length ?? 0} personas en la comunidad · ${
           fincas?.length ?? 0
         } casas y pisos`}
@@ -100,7 +101,7 @@ export default async function PaginaVecinos() {
       />
 
       {admin && sinTitular > 0 && (
-        <p className="mb-4 rounded-xl bg-fondo px-4 py-3 text-sm text-suave">
+        <p className="mb-4 rounded-xl bg-hundido px-4 py-3 text-sm text-suave">
           {sinTitular === 1
             ? "Hay 1 casa o piso sin titular asignado."
             : `Hay ${sinTitular} casas o pisos sin titular asignado.`}{" "}
@@ -171,13 +172,13 @@ export default async function PaginaVecinos() {
 
       {(fincas ?? []).length > 0 && (
         <section className="mt-8">
-          <h2 className="mb-3 flex items-center gap-2 text-base font-bold">
+          <h2 className="mb-3 flex items-center gap-2 text-lg font-semibold">
             <Users className="size-4.5 text-principal" aria-hidden />
             Casas y pisos ({fincas?.length})
           </h2>
           <div className="overflow-x-auto rounded-2xl border border-borde bg-superficie">
             <table className="w-full text-sm">
-              <thead className="bg-fondo text-left text-xs uppercase tracking-wide text-suave">
+              <thead className="bg-hundido text-left text-xs uppercase tracking-wider text-suave">
                 <tr>
                   <th className="px-4 py-2.5 font-semibold">Finca</th>
                   <th className="px-4 py-2.5 font-semibold">Titulares</th>

@@ -1,12 +1,22 @@
 import type { Metadata, Viewport } from "next";
-import { Geist } from "next/font/google";
+import { Lexend, Source_Sans_3 } from "next/font/google";
 import { CapturarInstalacion } from "@/components/pwa/CapturarInstalacion";
 import { RegistrarServiceWorker } from "@/components/pwa/RegistrarServiceWorker";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Pareja tipografica pensada para leerse bien a cualquier edad:
+// Lexend en titulos y Source Sans 3 en el texto.
+const fuenteTitulos = Lexend({
+  variable: "--font-titulos",
   subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  display: "swap",
+});
+
+const fuenteTexto = Source_Sans_3({
+  variable: "--font-texto",
+  subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -37,7 +47,11 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#0f766e",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#f4f7f6" },
+    { media: "(prefers-color-scheme: dark)", color: "#0a1113" },
+  ],
+  colorScheme: "light dark",
   width: "device-width",
   initialScale: 1,
   // Android 15+ dibuja de borde a borde: sin esto la barra inferior
@@ -47,7 +61,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" className={`${geistSans.variable} h-full antialiased`}>
+    <html lang="es" className={`${fuenteTitulos.variable} ${fuenteTexto.variable} h-full antialiased`}>
       <body className="min-h-full">
         {children}
         <RegistrarServiceWorker />

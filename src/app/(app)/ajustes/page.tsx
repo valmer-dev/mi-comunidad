@@ -1,11 +1,4 @@
-import {
-  Building2,
-  LogOut,
-  RefreshCw,
-  ShieldCheck,
-  Smartphone,
-  UserCircle,
-} from "lucide-react";
+import { Building2, LogOut, RefreshCw, Settings, ShieldCheck, Smartphone, UserCircle } from "lucide-react";
 import { cerrarSesion } from "@/app/acciones/autenticacion";
 import { requerirContexto } from "@/lib/auth";
 import { esAdministrador, etiquetaRol, etiquetaRolPersona } from "@/lib/permisos";
@@ -34,11 +27,11 @@ export default async function PaginaAjustes() {
 
   return (
     <div>
-      <CabeceraPagina titulo="Ajustes" descripcion="Datos de la comunidad y de tu cuenta" />
+      <CabeceraPagina titulo="Ajustes" icono={Settings} descripcion="Datos de la comunidad y de tu cuenta" />
 
       <div className="grid gap-5 lg:grid-cols-2">
         <section className="tarjeta">
-          <h2 className="flex items-center gap-2 text-base font-bold">
+          <h2 className="flex items-center gap-2 text-lg font-semibold">
             <Building2 className="size-4.5 text-principal" aria-hidden />
             La comunidad
           </h2>
@@ -77,7 +70,7 @@ export default async function PaginaAjustes() {
               </dd>
             </div>
           </dl>
-          <p className="mt-4 rounded-xl bg-fondo px-3.5 py-2.5 text-xs leading-relaxed text-suave">
+          <p className="mt-4 rounded-xl bg-hundido px-3.5 py-2.5 text-xs leading-relaxed text-suave">
             Estos datos aparecen en la cabecera y en los documentos de la comunidad.
           </p>
           {puedeConfigurar && (
@@ -99,7 +92,7 @@ export default async function PaginaAjustes() {
         </section>
 
         <section className="tarjeta">
-          <h2 className="flex items-center gap-2 text-base font-bold">
+          <h2 className="flex items-center gap-2 text-lg font-semibold">
             <UserCircle className="size-4.5 text-principal" aria-hidden />
             Mi cuenta
           </h2>
@@ -162,11 +155,11 @@ export default async function PaginaAjustes() {
       )}
 
       <section className="tarjeta mt-5">
-        <h2 className="flex items-center gap-2 text-base font-bold">
+        <h2 className="flex items-center gap-2 text-lg font-semibold">
           <Smartphone className="size-4.5 text-principal" aria-hidden />
           Llévala en el móvil
         </h2>
-        <p className="mt-2 text-sm leading-relaxed text-suave">
+        <p className="mt-2 text-[15px] leading-relaxed text-suave">
           Instala Mi Comunidad como app: tendrás su icono en la pantalla de
           inicio, se abrirá a pantalla completa y se actualizará sola, sin pasar
           por la tienda.
@@ -177,11 +170,11 @@ export default async function PaginaAjustes() {
       </section>
 
       <section className="tarjeta mt-5">
-        <h2 className="flex items-center gap-2 text-base font-bold">
+        <h2 className="flex items-center gap-2 text-lg font-semibold">
           <RefreshCw className="size-4.5 text-principal" aria-hidden />
           Actualizaciones
         </h2>
-        <p className="mt-2 text-sm leading-relaxed text-suave">
+        <p className="mt-2 text-[15px] leading-relaxed text-suave">
           La app busca cambios sola al abrirla. Si acabas de desplegar una
           versión nueva y no la ves, fuerza aquí la comprobación.
         </p>
@@ -191,17 +184,17 @@ export default async function PaginaAjustes() {
       </section>
 
       <section className="tarjeta mt-5">
-        <h2 className="flex items-center gap-2 text-base font-bold">
+        <h2 className="flex items-center gap-2 text-lg font-semibold">
           <ShieldCheck className="size-4.5 text-principal" aria-hidden />
           Privacidad y datos
         </h2>
-        <p className="mt-2 text-sm leading-relaxed text-suave">
+        <p className="mt-2 text-[15px] leading-relaxed text-suave">
           Solo los miembros de la comunidad pueden acceder a la aplicación. Los datos
           económicos globales los consulta la junta directiva; solo el presidente y el
           administrador de plataforma pueden editarlos. Los datos se alojan en la Unión
           Europea.
         </p>
-        <p className="mt-2 text-sm leading-relaxed text-suave">
+        <p className="mt-2 text-[15px] leading-relaxed text-suave">
           Para darte de baja o corregir tus datos, habla con el presidente o el
           secretario de la comunidad.
         </p>

@@ -1,12 +1,4 @@
-import {
-  BadgeCheck,
-  Calculator,
-  Download,
-  FileSignature,
-  FileText,
-  Scale,
-  ScrollText,
-} from "lucide-react";
+import { BadgeCheck, Calculator, Download, FileSignature, FileText, FolderOpen, Scale, ScrollText } from "lucide-react";
 import { eliminarDocumento } from "@/app/acciones/documentos";
 import { requerirContexto } from "@/lib/auth";
 import {
@@ -111,6 +103,7 @@ export default async function PaginaDocumentos() {
     <div>
       <CabeceraPagina
         titulo="Documentos"
+        icono={FolderOpen}
         descripcion="Estatutos, actas, contratos, certificados y presupuestos"
         accion={puedeGestionar ? <SubirDocumento comunidadId={comunidad.id} /> : undefined}
       />
@@ -123,12 +116,12 @@ export default async function PaginaDocumentos() {
           return (
             <section key={categoria}>
               <div className="mb-2 flex items-center justify-between gap-3">
-                <h2 className="flex items-center gap-2 text-base font-bold">
+                <h2 className="flex items-center gap-2 text-lg font-semibold">
                   <span className="grid size-8 place-items-center rounded-lg bg-principal/10 text-principal">
                     <Icono className="size-4" aria-hidden />
                   </span>
                   {categoria}
-                  <span className="rounded-full bg-fondo px-2 py-0.5 text-xs font-semibold text-suave">
+                  <span className="rounded-full bg-hundido px-2 py-0.5 text-xs font-semibold text-suave">
                     {lista.length}
                   </span>
                 </h2>

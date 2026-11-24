@@ -46,7 +46,7 @@ export function BotonEliminar({
         type="submit"
         disabled={pendiente}
         title={titulo ?? etiqueta}
-        className="boton px-3 py-1.5 text-xs text-red-700 hover:bg-red-50"
+        className="boton px-3 py-1.5 text-xs boton-peligro"
       >
         {pendiente ? (
           <Loader2 className="size-3.5 animate-spin" aria-hidden />
@@ -56,7 +56,7 @@ export function BotonEliminar({
         {etiqueta}
       </button>
       {estado.error && (
-        <p className="max-w-[240px] text-xs text-red-700">{estado.error}</p>
+        <p className="max-w-[240px] text-xs text-peligro">{estado.error}</p>
       )}
     </form>
   );

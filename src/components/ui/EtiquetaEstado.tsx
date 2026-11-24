@@ -1,30 +1,38 @@
 import { cn } from "@/lib/utilidades";
 
+const ATENCION = "bg-atencion-claro text-atencion";
+const INFO = "bg-info-claro text-info";
+const EXITO = "bg-exito-claro text-exito";
+const PELIGRO = "bg-peligro-claro text-peligro";
+const ACENTO = "bg-acento-claro text-acento";
+const NEUTRO = "bg-neutro-claro text-neutro";
+
 const COLORES: Record<string, string> = {
-  abierta: "bg-amber-100 text-amber-800",
-  en_curso: "bg-blue-100 text-blue-800",
-  resuelta: "bg-emerald-100 text-emerald-800",
-  cerrada: "bg-slate-100 text-slate-600",
-  pendiente: "bg-amber-100 text-amber-800",
-  pagado: "bg-emerald-100 text-emerald-800",
-  devuelto: "bg-red-100 text-red-700",
-  aplazado: "bg-orange-100 text-orange-800",
-  anulado: "bg-slate-100 text-slate-500",
-  borrador: "bg-slate-100 text-slate-600",
-  convocada: "bg-blue-100 text-blue-800",
-  celebrada: "bg-emerald-100 text-emerald-800",
-  aprobada: "bg-emerald-100 text-emerald-800",
-  rechazada: "bg-red-100 text-red-700",
-  cancelada: "bg-slate-100 text-slate-500",
-  urgente: "bg-red-100 text-red-700",
-  alta: "bg-orange-100 text-orange-800",
-  media: "bg-amber-100 text-amber-800",
-  baja: "bg-slate-100 text-slate-600",
-  activo: "bg-emerald-100 text-emerald-800",
-  inactivo: "bg-slate-100 text-slate-600",
-  invitado: "bg-blue-100 text-blue-800",
+  abierta: ATENCION,
+  en_curso: INFO,
+  resuelta: EXITO,
+  cerrada: NEUTRO,
+  pendiente: ATENCION,
+  pagado: EXITO,
+  devuelto: PELIGRO,
+  aplazado: ACENTO,
+  anulado: NEUTRO,
+  borrador: NEUTRO,
+  convocada: INFO,
+  celebrada: EXITO,
+  aprobada: EXITO,
+  rechazada: PELIGRO,
+  cancelada: NEUTRO,
+  urgente: PELIGRO,
+  alta: ACENTO,
+  media: ATENCION,
+  baja: NEUTRO,
+  activo: EXITO,
+  inactivo: NEUTRO,
+  invitado: INFO,
 };
 
+/** Estados que muestran un punto de color para no depender solo del fondo. */
 export function EtiquetaEstado({
   estado,
   className,
@@ -34,7 +42,8 @@ export function EtiquetaEstado({
 }) {
   const texto = estado.replaceAll("_", " ");
   return (
-    <span className={cn("chip", COLORES[estado] ?? "bg-slate-100 text-slate-600", className)}>
+    <span className={cn("chip", COLORES[estado] ?? NEUTRO, className)}>
+      <span className="size-1.5 rounded-full bg-current" aria-hidden />
       {texto.charAt(0).toUpperCase() + texto.slice(1)}
     </span>
   );

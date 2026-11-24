@@ -26,6 +26,7 @@ export default async function PaginaServicios() {
     <div>
       <CabeceraPagina
         titulo="Servicios"
+        icono={Briefcase}
         descripcion="Empresas contratadas por la comunidad y sus teléfonos de contacto"
         accion={puedeGestionar ? <NuevoServicio /> : undefined}
       />
@@ -48,7 +49,7 @@ export default async function PaginaServicios() {
               ? "Añade las empresas de mantenimiento, administración, limpieza y demás servicios contratados."
               : "La junta todavía no ha registrado las empresas de mantenimiento y administración."
           }
-          accion={<Briefcase className="size-8 text-suave/50" aria-hidden />}
+          accion={<Briefcase className="size-9 text-principal/40" aria-hidden />}
         />
       )}
     </div>

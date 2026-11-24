@@ -94,14 +94,14 @@ export function NuevaComunidad() {
         </div>
       </div>
 
-      <p className="rounded-xl bg-fondo px-3.5 py-2.5 text-xs leading-relaxed text-suave">
+      <p className="rounded-xl bg-hundido px-3.5 py-2.5 text-xs leading-relaxed text-suave">
         {total > 0
           ? `Se crearán ${total} fincas (${casas} casas y ${pisos} pisos).`
           : "Indica cuántas casas y pisos tiene la comunidad para generarlas automáticamente."}
       </p>
 
       {estado.error && (
-        <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-700">
+        <p className="aviso aviso-error">
           {estado.error}
         </p>
       )}

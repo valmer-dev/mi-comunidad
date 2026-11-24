@@ -21,21 +21,21 @@ export function ConfigurarFincas({
 
   return (
     <section className="tarjeta">
-      <h2 className="flex items-center gap-2 text-base font-bold">
+      <h2 className="flex items-center gap-2 text-lg font-semibold">
         <Home className="size-4.5 text-principal" aria-hidden />
         Casas y pisos
       </h2>
-      <p className="mt-2 text-sm leading-relaxed text-suave">
+      <p className="mt-2 text-[15px] leading-relaxed text-suave">
         Indica cuántas casas y pisos tiene la comunidad. Se crean automáticamente
         con su número (Casa 1, 1ºA, 1ºB, 1ºC, 1ºD…).
       </p>
 
       <dl className="mt-4 grid grid-cols-2 gap-3 text-center">
-        <div className="rounded-xl bg-fondo px-3 py-2.5">
+        <div className="rounded-xl bg-hundido px-3 py-2.5">
           <dt className="text-xs text-suave">Casas</dt>
           <dd className="text-lg font-bold tabular-nums">{numeroCasas}</dd>
         </div>
-        <div className="rounded-xl bg-fondo px-3 py-2.5">
+        <div className="rounded-xl bg-hundido px-3 py-2.5">
           <dt className="text-xs text-suave">Pisos</dt>
           <dd className="text-lg font-bold tabular-nums">{numeroPisos}</dd>
         </div>
@@ -79,18 +79,18 @@ export function ConfigurarFincas({
           </p>
         </div>
 
-        <p className="rounded-xl bg-fondo px-3.5 py-2.5 text-xs leading-relaxed text-suave sm:col-span-2">
+        <p className="rounded-xl bg-hundido px-3.5 py-2.5 text-xs leading-relaxed text-suave sm:col-span-2">
           Ahora hay {totalFincas} fincas. Si reduces el número, solo se eliminarán las
           que no tengan ningún titular asignado.
         </p>
 
         {"error" in estado && estado.error && (
-          <p className="rounded-xl bg-red-50 px-3.5 py-2.5 text-sm font-medium text-red-700 sm:col-span-2">
+          <p className="aviso aviso-error sm:col-span-2">
             {estado.error}
           </p>
         )}
         {"ok" in estado && estado.ok && (
-          <p className="rounded-xl bg-emerald-50 px-3.5 py-2.5 text-sm font-medium text-emerald-800 sm:col-span-2">
+          <p className="aviso aviso-exito sm:col-span-2">
             {estado.mensaje}
           </p>
         )}
