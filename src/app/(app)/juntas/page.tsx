@@ -1,4 +1,5 @@
-import { CalendarDays, Gavel, MapPin } from "lucide-react";
+import Link from "next/link";
+import { CalendarDays, ChevronRight, FileText, Gavel, MapPin } from "lucide-react";
 import { eliminarJunta } from "@/app/acciones/juntas";
 import { requerirContexto } from "@/lib/auth";
 import { esAdministrador } from "@/lib/permisos";
@@ -18,7 +19,7 @@ export default async function PaginaJuntas() {
 
   const { data: juntas } = await supabase
     .from("juntas")
-    .select("id, titulo, tipo, fecha_hora, lugar, estado")
+    .select("id, titulo, tipo, fecha_hora, lugar, estado, acta_documento_id")
     .eq("comunidad_id", comunidad.id)
     .order("fecha_hora", { ascending: false });
 
@@ -50,7 +51,11 @@ export default async function PaginaJuntas() {
       <li className="tarjeta">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div>
-            <h3 className="text-[17px] font-semibold leading-snug">{junta.titulo}</h3>
+            <h3 className="text-[17px] font-semibold leading-snug">
+              <Link href={`/juntas/${junta.id}`} className="hover:text-principal">
+                {junta.titulo}
+              </Link>
+            </h3>
             <p className="mt-0.5 flex items-center gap-1.5 text-sm text-suave">
               <CalendarDays className="size-3.5" aria-hidden />
               {formatoFechaHora(junta.fecha_hora)}
@@ -65,13 +70,19 @@ export default async function PaginaJuntas() {
           <div className="flex flex-wrap items-center gap-2">
             <span className="chip bg-neutro-claro capitalize text-neutro">{junta.tipo}</span>
             <EtiquetaEstado estado={junta.estado} />
+            {junta.acta_documento_id && (
+              <span className="chip bg-exito-claro text-exito">
+                <FileText className="size-3" aria-hidden />
+                Acta
+              </span>
+            )}
             {administrador && (
               <BotonEliminar
                 accion={eliminarJunta}
                 id={junta.id}
                 etiqueta="Eliminar"
                 titulo="Eliminar junta"
-                mensaje={`¿Eliminar la junta «${junta.titulo}»? Se borrarán también sus puntos del día y asistencias.`}
+                mensaje={`¿Eliminar la junta «${junta.titulo}»? Se borrarán también sus puntos del día y asistencias. El acta en PDF se conserva en Documentos.`}
               />
             )}
           </div>
@@ -92,6 +103,14 @@ export default async function PaginaJuntas() {
             </ol>
           </details>
         )}
+
+        <Link
+          href={`/juntas/${junta.id}`}
+          className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-principal"
+        >
+          {administrador ? "Gestionar junta" : "Ver detalle"}
+          <ChevronRight className="size-4" aria-hidden />
+        </Link>
       </li>
     );
   }
@@ -101,7 +120,7 @@ export default async function PaginaJuntas() {
       <CabeceraPagina
         titulo="Juntas"
         icono={Gavel}
-        descripcion="Convocatorias, puntos del día y acuerdos"
+        descripcion="Convocatorias, asistencia, acuerdos y actas"
         accion={administrador ? <NuevaJunta /> : undefined}
       />
 
