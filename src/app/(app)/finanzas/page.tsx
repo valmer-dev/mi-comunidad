@@ -4,7 +4,8 @@ import { Calculator, CalendarDays, ChevronRight, Hammer, PiggyBank, ReceiptText,
 import { requerirContexto } from "@/lib/auth";
 import { esAdministrador, puedeEditarFinanzas, puedeVerFinanzas } from "@/lib/permisos";
 import { hoyISO, resumirRecibos } from "@/lib/recibos";
-import { calcularSaldo, minimoFondo, PORCENTAJE_MINIMO_FONDO, saldoFondo } from "@/lib/tesoreria";
+import { cargarTesoreria } from "@/lib/datos-tesoreria";
+import { PORCENTAJE_MINIMO_FONDO } from "@/lib/tesoreria";
 import { eliminarIngreso, eliminarMovimientoFondo } from "@/app/acciones/tesoreria";
 import { BotonEliminar } from "@/components/ui/BotonEliminar";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
@@ -98,73 +99,32 @@ export default async function PaginaFinanzas() {
   const hoy = hoyISO();
   const resumenRecibos = resumirRecibos(normalizarRecibos(filasRecibos), hoy);
 
-  // Tesoreria: saldo desde el saldo inicial, ingresos del ejercicio y fondo
-  // de reserva. Las cuotas cobradas llegan agregadas por mes.
-  const desdeSaldo = comunidad.saldo_inicial_fecha ?? "2000-01-01";
+  // Tesoreria: saldo y fondo de reserva (los mismos que ve el Panel) e
+  // ingresos del ejercicio. Las cuotas cobradas llegan agregadas por mes.
   const [
+    { saldo, fondo, minimo, fondoBajo, presupuestoOrdinario, ultimoPresupuesto, movimientosFondo },
     { data: cobrosAnio },
-    { data: cobrosSaldo },
-    { data: ingresosSaldo },
-    { data: gastosSaldo },
-    { data: movimientosFondo },
+    { data: ingresosAnioFilas },
   ] = await Promise.all([
+    cargarTesoreria(supabase, comunidad),
     supabase.rpc("cobros_por_mes", {
       p_comunidad_id: comunidad.id,
       p_desde: `${ejercicio}-01-01`,
       p_hasta: `${ejercicio}-12-31`,
     }),
-    supabase.rpc("cobros_por_mes", {
-      p_comunidad_id: comunidad.id,
-      p_desde: desdeSaldo,
-      p_hasta: "2999-12-31",
-    }),
     supabase
       .from("ingresos")
       .select("id, concepto, importe, fecha")
       .eq("comunidad_id", comunidad.id)
-      .gte("fecha", desdeSaldo < `${ejercicio}-01-01` ? desdeSaldo : `${ejercicio}-01-01`)
+      .gte("fecha", `${ejercicio}-01-01`)
+      .lte("fecha", `${ejercicio}-12-31`)
       .order("fecha", { ascending: false }),
-    supabase
-      .from("gastos")
-      .select("total, fecha")
-      .eq("comunidad_id", comunidad.id)
-      .gte("fecha", desdeSaldo),
-    supabase
-      .from("movimientos_fondo")
-      .select("id, tipo, concepto, importe, fecha")
-      .eq("comunidad_id", comunidad.id)
-      .order("fecha", { ascending: false })
-      .order("creado_en", { ascending: false }),
   ]);
 
-  const listaIngresos = ingresosSaldo ?? [];
-  const { saldo } = calcularSaldo({
-    saldoInicial: comunidad.saldo_inicial,
-    cobros: cobrosSaldo ?? [],
-    ingresos: listaIngresos.filter((ingreso) => ingreso.fecha >= desdeSaldo),
-    gastos: gastosSaldo ?? [],
-  });
-  const ingresosAnio = listaIngresos.filter((ingreso) => ingreso.fecha.startsWith(`${ejercicio}-`));
+  const ingresosAnio = ingresosAnioFilas ?? [];
   const cobradoAnio = (cobrosAnio ?? []).reduce((total, fila) => total + Number(fila.total), 0);
   const ingresadoAnio =
     cobradoAnio + ingresosAnio.reduce((total, ingreso) => total + Number(ingreso.importe), 0);
-
-  const fondo = saldoFondo(movimientosFondo ?? []);
-  // Minimo legal: 10 % del ultimo presupuesto ordinario aprobado. Si aun no
-  // hay ninguno, se estima con la cuota mensual por 12.
-  const { data: ultimoPresupuesto } = await supabase
-    .from("presupuestos")
-    .select("ejercicio, total_gastos")
-    .eq("comunidad_id", comunidad.id)
-    .in("estado", ["aprobado", "cerrado"])
-    .order("ejercicio", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  const presupuestoOrdinario = ultimoPresupuesto
-    ? Number(ultimoPresupuesto.total_gastos)
-    : Number(comunidad.cuota_mensual ?? 0) * 12;
-  const minimo = minimoFondo(presupuestoOrdinario);
-  const fondoBajo = presupuestoOrdinario > 0 && fondo < minimo;
 
   // Un gasto cuenta desde que se registra, aunque todavia no se haya marcado
   // como pagado: antes se filtraba por pagado = true y los gastos nuevos no
