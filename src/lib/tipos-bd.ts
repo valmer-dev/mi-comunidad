@@ -344,6 +344,51 @@ export type Database = {
         }
         Relationships: []
       }
+      derramas: {
+        Row: {
+          anulada_en: string | null
+          comunidad_id: string
+          creado_en: string
+          creado_por: string | null
+          descripcion: string | null
+          id: string
+          importe_total: number
+          meses_entre_plazos: number
+          plazos: number
+          primer_vencimiento: string
+          punto_id: string | null
+          titulo: string
+        }
+        Insert: {
+          anulada_en?: string | null
+          comunidad_id: string
+          creado_en?: string
+          creado_por?: string | null
+          descripcion?: string | null
+          id?: string
+          importe_total: number
+          meses_entre_plazos?: number
+          plazos: number
+          primer_vencimiento: string
+          punto_id?: string | null
+          titulo: string
+        }
+        Update: {
+          anulada_en?: string | null
+          comunidad_id?: string
+          creado_en?: string
+          creado_por?: string | null
+          descripcion?: string | null
+          id?: string
+          importe_total?: number
+          meses_entre_plazos?: number
+          plazos?: number
+          primer_vencimiento?: string
+          punto_id?: string | null
+          titulo?: string
+        }
+        Relationships: []
+      }
       documentos: {
         Row: {
           caduca_en: string | null
@@ -1273,6 +1318,7 @@ export type Database = {
           comunidad_id: string
           concepto: string
           creado_en: string
+          derrama_id: string | null
           estado: Database["public"]["Enums"]["estado_recibo"]
           finca_id: string
           id: string
@@ -1286,6 +1332,7 @@ export type Database = {
           comunidad_id: string
           concepto?: string
           creado_en?: string
+          derrama_id?: string | null
           estado?: Database["public"]["Enums"]["estado_recibo"]
           finca_id: string
           id?: string
@@ -1299,6 +1346,7 @@ export type Database = {
           comunidad_id?: string
           concepto?: string
           creado_en?: string
+          derrama_id?: string | null
           estado?: Database["public"]["Enums"]["estado_recibo"]
           finca_id?: string
           id?: string
@@ -1633,6 +1681,10 @@ export type Database = {
     }
     Functions: {
       comparte_comunidad: { Args: { p_usuario_id: string }; Returns: boolean }
+      anular_derrama: {
+        Args: { p_derrama_id: string }
+        Returns: number
+      }
       cobros_por_mes: {
         Args: { p_comunidad_id: string; p_desde: string; p_hasta: string }
         Returns: { mes: string; total: number }[]
@@ -1645,6 +1697,19 @@ export type Database = {
           p_repartir?: boolean
         }
         Returns: Json
+      }
+      crear_derrama: {
+        Args: {
+          p_comunidad_id: string
+          p_descripcion: string | null
+          p_importe_total: number
+          p_meses_entre_plazos?: number
+          p_plazos: number
+          p_primer_vencimiento: string
+          p_punto_id?: string | null
+          p_titulo: string
+        }
+        Returns: string
       }
       devolver_recibo: {
         Args: { p_nota?: string; p_recibo_id: string }

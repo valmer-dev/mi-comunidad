@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Calculator, CalendarDays, ChevronRight, PiggyBank, ReceiptText, TrendingDown, TrendingUp, Wallet } from "lucide-react";
+import { Calculator, CalendarDays, ChevronRight, Hammer, PiggyBank, ReceiptText, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import { requerirContexto } from "@/lib/auth";
 import { esAdministrador, puedeEditarFinanzas, puedeVerFinanzas } from "@/lib/permisos";
 import { hoyISO, resumirRecibos } from "@/lib/recibos";
@@ -259,6 +259,20 @@ export default async function PaginaFinanzas() {
           <p className="text-xs text-suave">
             Previsto frente a gastado y liquidación para la junta ordinaria
           </p>
+        </div>
+        <ChevronRight className="size-5 text-suave" aria-hidden />
+      </Link>
+
+      <Link
+        href="/finanzas/derramas"
+        className="tarjeta mt-3 flex items-center gap-3 p-4 transition-colors hover:bg-hundido"
+      >
+        <span className="icono-seccion bg-peligro-claro text-peligro">
+          <Hammer className="size-[18px]" aria-hidden />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold">Derramas</p>
+          <p className="text-xs text-suave">Obras y gastos extraordinarios cobrados en plazos</p>
         </div>
         <ChevronRight className="size-5 text-suave" aria-hidden />
       </Link>
