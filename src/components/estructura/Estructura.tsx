@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Building2 } from "lucide-react";
+import { Bell, Building2 } from "lucide-react";
 import { BarraLateral } from "./BarraLateral";
 import { NavegacionMovil } from "./NavegacionMovil";
 import { iniciales } from "@/lib/utilidades";
@@ -12,6 +12,7 @@ type Props = {
   esAdmin: boolean;
   puedeVerFinanzas: boolean;
   esAdminPlataforma: boolean;
+  notificacionesSinLeer: number;
 };
 
 export function Estructura({
@@ -22,6 +23,7 @@ export function Estructura({
   esAdmin,
   puedeVerFinanzas,
   esAdminPlataforma,
+  notificacionesSinLeer,
 }: Props) {
   return (
     <div className="min-h-dvh lg:flex">
@@ -31,6 +33,7 @@ export function Estructura({
         etiquetaRol={etiquetaRol}
         puedeVerFinanzas={puedeVerFinanzas}
         esAdminPlataforma={esAdminPlataforma}
+        notificacionesSinLeer={notificacionesSinLeer}
       />
 
       <div className="flex min-w-0 flex-1 flex-col">
@@ -55,6 +58,22 @@ export function Estructura({
                 Administración
               </span>
             )}
+            <Link
+              href="/notificaciones"
+              aria-label={
+                notificacionesSinLeer > 0
+                  ? `Notificaciones: ${notificacionesSinLeer} sin leer`
+                  : "Notificaciones"
+              }
+              className="relative grid size-11 shrink-0 place-items-center rounded-full text-suave hover:text-tinta"
+            >
+              <Bell className="size-5" aria-hidden />
+              {notificacionesSinLeer > 0 && (
+                <span className="absolute right-1 top-1 grid min-w-5 place-items-center rounded-full bg-peligro px-1 text-[11px] font-bold leading-5 text-white">
+                  {notificacionesSinLeer > 99 ? "99+" : notificacionesSinLeer}
+                </span>
+              )}
+            </Link>
             <Link
               href="/ajustes"
               aria-label={`Tu cuenta: ${nombreUsuario}`}

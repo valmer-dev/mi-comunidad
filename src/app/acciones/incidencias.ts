@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requerirContexto } from "@/lib/auth";
+import { enviarAvisosDespues } from "@/lib/correo";
 import { esAdministrador, puedeGestionarIncidencias } from "@/lib/permisos";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 
@@ -138,6 +139,7 @@ export async function cambiarEstadoIncidencia(
     }
   }
 
+  enviarAvisosDespues(comunidad.id);
   revalidatePath("/incidencias");
   revalidatePath("/panel");
   return { ok: true };

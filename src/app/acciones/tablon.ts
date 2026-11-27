@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { limpiarContenidoAnuncio, textoPlanoAnuncio } from "@/lib/anuncios";
 import { requerirContexto } from "@/lib/auth";
+import { enviarAvisosDespues } from "@/lib/correo";
 import { esAdministrador } from "@/lib/permisos";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 
@@ -52,6 +53,7 @@ export async function publicarAnuncio(
 
   if (error) return { error: "No se pudo publicar el anuncio." };
 
+  enviarAvisosDespues(comunidad.id);
   revalidatePath("/tablon");
   revalidatePath("/panel");
   return { ok: true };

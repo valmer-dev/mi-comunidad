@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requerirContexto } from "@/lib/auth";
+import { enviarAvisosDespues } from "@/lib/correo";
 import { escaparHtml, MEDIOS_CONVOCATORIA, type MedioConvocatoria } from "@/lib/convocatoria";
 import { cargarConvocatoria } from "@/lib/datos-convocatoria";
 import { esAdministrador } from "@/lib/permisos";
@@ -92,6 +93,7 @@ export async function registrarEnvioConvocatoria(
     .eq("id", junta.id);
   if (error) return { error: "No se pudo registrar el envío." };
 
+  enviarAvisosDespues(comunidad.id);
   revalidatePath(`/juntas/${junta.id}`);
   revalidatePath("/juntas");
   revalidatePath("/tablon");
