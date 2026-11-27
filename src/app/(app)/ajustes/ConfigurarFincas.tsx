@@ -81,8 +81,20 @@ export function ConfigurarFincas({
 
         <p className="rounded-xl bg-hundido px-3.5 py-2.5 text-xs leading-relaxed text-suave sm:col-span-2">
           Ahora hay {totalFincas} fincas. Si reduces el número, solo se eliminarán las
-          que no tengan ningún titular asignado.
+          que no tengan ningún titular asignado. Los coeficientes que ya tengas se
+          conservan y las fincas nuevas empiezan con 0 %.
         </p>
+
+        <label className="flex items-start gap-2.5 text-sm sm:col-span-2">
+          <input type="checkbox" name="repartir" className="mt-0.5 size-4 accent-principal" />
+          <span>
+            Repartir el coeficiente a partes iguales
+            <span className="block text-xs text-suave">
+              Sustituye los coeficientes actuales. Úsalo solo si todavía no tienes los
+              de la escritura.
+            </span>
+          </span>
+        </label>
 
         {"error" in estado && estado.error && (
           <p className="aviso aviso-error sm:col-span-2">

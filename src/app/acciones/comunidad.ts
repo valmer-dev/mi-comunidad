@@ -3,6 +3,11 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requerirContexto } from "@/lib/auth";
+import {
+  aDiezmilesimas,
+  deDiezmilesimas,
+  formatoCoeficiente,
+} from "@/lib/coeficientes";
 import { esAdministrador } from "@/lib/permisos";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 
@@ -90,8 +95,9 @@ export type EstadoFincas =
   | { ok: true; mensaje: string };
 
 /**
- * Crea o ajusta las casas y los pisos de la comunidad y reparte el coeficiente
- * a partes iguales. Las fincas que ya tienen titulares nunca se eliminan.
+ * Crea o ajusta las casas y los pisos de la comunidad. Las fincas que ya
+ * tienen titulares nunca se eliminan. Los coeficientes se conservan: solo se
+ * reparten a partes iguales si se marca la casilla o si aun no hay ninguno.
  */
 export async function configurarFincas(
   _estado: EstadoFincas,
@@ -121,6 +127,7 @@ export async function configurarFincas(
     p_comunidad_id: comunidad.id,
     p_casas: numeroCasas,
     p_pisos: numeroPisos,
+    p_repartir: datos.get("repartir") === "on",
   });
 
   if (error) {
@@ -131,12 +138,15 @@ export async function configurarFincas(
     creadas?: number;
     eliminadas?: number;
     total?: number;
+    repartido?: boolean;
   };
   const partes: string[] = [
     `${resumen.total ?? numeroCasas + numeroPisos} fincas en total`,
   ];
   if (resumen.creadas) partes.push(`${resumen.creadas} creadas`);
   if (resumen.eliminadas) partes.push(`${resumen.eliminadas} eliminadas sin titulares`);
+  if (resumen.repartido) partes.push("coeficiente repartido a partes iguales");
+  else if (resumen.creadas) partes.push("pon el coeficiente de las nuevas en Coeficientes");
 
   revalidatePath("/ajustes");
   revalidatePath("/vecinos");
@@ -144,4 +154,75 @@ export async function configurarFincas(
   revalidatePath("/", "layout");
 
   return { ok: true, mensaje: `Hecho: ${partes.join(", ")}.` };
+}
+
+export type EstadoCoeficientes =
+  | { error?: string }
+  | { ok: true; mensaje: string };
+
+/**
+ * Guarda el coeficiente de participacion de todas las fincas de una vez.
+ * El formulario envia un campo `coef_<id de finca>` por finca. La base de
+ * datos vuelve a comprobar que estan todas y que suman el total.
+ */
+export async function guardarCoeficientes(
+  _estado: EstadoCoeficientes,
+  datos: FormData,
+): Promise<EstadoCoeficientes> {
+  const { comunidad, permisos } = await requerirContexto();
+  if (!esAdministrador(permisos)) {
+    return { error: "Solo quien administra la comunidad puede cambiar los coeficientes." };
+  }
+
+  const coeficientes: { id: string; coeficiente: number }[] = [];
+  let suma = 0;
+  for (const [clave, valor] of datos.entries()) {
+    if (!clave.startsWith("coef_")) continue;
+    const id = clave.slice(5);
+    if (!z.string().uuid().safeParse(id).success) {
+      return { error: "Hay una finca no válida." };
+    }
+    const diezmilesimas = aDiezmilesimas(typeof valor === "string" ? valor : null);
+    if (diezmilesimas === null || diezmilesimas > 100 * 10_000) {
+      return {
+        error: "Cada coeficiente debe ser un número entre 0 y 100, con cuatro decimales como mucho.",
+      };
+    }
+    suma += diezmilesimas;
+    coeficientes.push({ id, coeficiente: deDiezmilesimas(diezmilesimas) });
+  }
+
+  if (coeficientes.length === 0) {
+    return { error: "No hay fincas que guardar." };
+  }
+
+  const total = aDiezmilesimas(String(comunidad.coeficiente_total ?? 100)) ?? 100 * 10_000;
+  if (suma !== total) {
+    return {
+      error: `Los coeficientes suman ${formatoCoeficiente(deDiezmilesimas(suma))} % y deben sumar ${formatoCoeficiente(deDiezmilesimas(total))} %.`,
+    };
+  }
+
+  const supabase = await crearClienteServidor();
+  const { data, error } = await supabase.rpc("guardar_coeficientes", {
+    p_comunidad_id: comunidad.id,
+    p_coeficientes: coeficientes,
+  });
+
+  if (error) {
+    if (error.message.includes("Faltan fincas")) {
+      return { error: "Las fincas han cambiado mientras editabas. Recarga la página e inténtalo de nuevo." };
+    }
+    return { error: "No se pudieron guardar los coeficientes." };
+  }
+
+  const resumen = (data ?? {}) as { asistencias_actualizadas?: number };
+
+  revalidatePath("/ajustes");
+  revalidatePath("/juntas", "layout");
+
+  const extra = resumen.asistencias_actualizadas
+    ? " Se han actualizado también las juntas que aún no se han celebrado."
+    : "";
+  return { ok: true, mensaje: `Coeficientes guardados.${extra}` };
 }

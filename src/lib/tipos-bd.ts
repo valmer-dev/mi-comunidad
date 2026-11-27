@@ -1529,13 +1529,22 @@ export type Database = {
     Functions: {
       comparte_comunidad: { Args: { p_usuario_id: string }; Returns: boolean }
       configurar_fincas: {
-        Args: { p_casas: number; p_comunidad_id: string; p_pisos: number }
+        Args: {
+          p_casas: number
+          p_comunidad_id: string
+          p_pisos: number
+          p_repartir?: boolean
+        }
         Returns: Json
       }
       es_admin_plataforma: { Args: never; Returns: boolean }
       es_administrador: { Args: { p_comunidad_id: string }; Returns: boolean }
       es_miembro: { Args: { p_comunidad_id: string }; Returns: boolean }
       es_titular_de: { Args: { p_finca_id: string }; Returns: boolean }
+      guardar_coeficientes: {
+        Args: { p_coeficientes: Json; p_comunidad_id: string }
+        Returns: Json
+      }
       puede_editar_finanzas: { Args: { p_comunidad_id: string }; Returns: boolean }
       puede_gestionar_documentos: {
         Args: { p_comunidad_id: string }

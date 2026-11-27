@@ -8,6 +8,7 @@ import { CabeceraPagina } from "@/components/ui/CabeceraPagina";
 import { InstalarApp } from "@/components/pwa/InstalarApp";
 import { CambiarContrasena } from "./CambiarContrasena";
 import { ComprobarActualizacion } from "./ComprobarActualizacion";
+import { CoeficientesFincas } from "./CoeficientesFincas";
 import { ConfigurarFincas } from "./ConfigurarFincas";
 import { EditarComunidad } from "./EditarComunidad";
 
@@ -18,12 +19,37 @@ export default async function PaginaAjustes() {
     await requerirContexto();
   const supabase = await crearClienteServidor();
 
+  const puedeConfigurar = esAdminPlataforma || esAdministrador(permisos);
+
   const { data: fincas } = await supabase
     .from("fincas")
-    .select("id")
-    .eq("comunidad_id", comunidad.id);
+    .select("id, codigo, tipo, numero, coeficiente")
+    .eq("comunidad_id", comunidad.id)
+    .order("tipo")
+    .order("numero")
+    .order("codigo");
 
-  const puedeConfigurar = esAdminPlataforma || esAdministrador(permisos);
+  const idsFincas = (fincas ?? []).map((finca) => finca.id);
+  const { data: titulares } =
+    puedeConfigurar && idsFincas.length
+      ? await supabase
+          .from("titulares")
+          .select("finca_id, nombre, perfiles(nombre, apellidos)")
+          .in("finca_id", idsFincas)
+          .order("creado_en", { ascending: true })
+      : { data: [] };
+
+  const titularesPorFinca = new Map<string, string[]>();
+  for (const titular of titulares ?? []) {
+    const perfil = titular.perfiles;
+    const nombre =
+      titular.nombre?.trim() ||
+      [perfil?.nombre, perfil?.apellidos].filter(Boolean).join(" ") ||
+      "Titular";
+    const lista = titularesPorFinca.get(titular.finca_id) ?? [];
+    lista.push(nombre);
+    titularesPorFinca.set(titular.finca_id, lista);
+  }
 
   return (
     <div>
@@ -150,6 +176,22 @@ export default async function PaginaAjustes() {
             numeroCasas={comunidad.numero_casas}
             numeroPisos={comunidad.numero_pisos}
             totalFincas={fincas?.length ?? 0}
+          />
+        </div>
+      )}
+
+      {puedeConfigurar && (
+        <div className="mt-5">
+          <CoeficientesFincas
+            key={(fincas ?? []).map((finca) => `${finca.id}:${finca.coeficiente}`).join("|")}
+            coeficienteTotal={Number(comunidad.coeficiente_total) || 100}
+            fincas={(fincas ?? []).map((finca) => ({
+              id: finca.id,
+              codigo: finca.codigo,
+              tipo: finca.tipo,
+              coeficiente: Number(finca.coeficiente),
+              titulares: titularesPorFinca.get(finca.id) ?? [],
+            }))}
           />
         </div>
       )}
