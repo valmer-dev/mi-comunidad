@@ -21,10 +21,10 @@ export async function crearGasto(
   _estado: EstadoGasto,
   datos: FormData,
 ): Promise<EstadoGasto> {
-  const { usuario, miembro, esAdminPlataforma, comunidad } = await requerirContexto();
-  if (!puedeEditarFinanzas(miembro.rol, esAdminPlataforma)) {
+  const { usuario, permisos, comunidad } = await requerirContexto();
+  if (!puedeEditarFinanzas(permisos)) {
     return {
-      error: "Solo el presidente o el administrador de plataforma pueden registrar gastos.",
+      error: "No tienes permiso para registrar gastos.",
     };
   }
 
@@ -76,10 +76,10 @@ export async function actualizarCuotaMensual(
   _estado: EstadoCuota,
   datos: FormData,
 ): Promise<EstadoCuota> {
-  const { miembro, esAdminPlataforma, comunidad } = await requerirContexto();
-  if (!puedeEditarFinanzas(miembro.rol, esAdminPlataforma)) {
+  const { permisos, comunidad } = await requerirContexto();
+  if (!puedeEditarFinanzas(permisos)) {
     return {
-      error: "Solo el presidente o el administrador de plataforma pueden editar la cuota.",
+      error: "No tienes permiso para editar la cuota.",
     };
   }
 

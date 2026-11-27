@@ -19,8 +19,8 @@ function desplazarMes(mes: string, delta: number) {
 }
 
 export default async function PaginaRecibos(props: PageProps<"/finanzas/recibos">) {
-  const { comunidad, miembro, usuario, esAdminPlataforma, permisos } = await requerirContexto();
-  const editor = puedeEditarFinanzas(miembro.rol, esAdminPlataforma);
+  const { comunidad, usuario, permisos } = await requerirContexto();
+  const editor = puedeEditarFinanzas(permisos);
   const junta = editor || esAdministrador(permisos);
   const supabase = await crearClienteServidor();
   const hoy = hoyISO();

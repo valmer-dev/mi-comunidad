@@ -30,9 +30,9 @@ const pendienteDe = (r: ReciboDerrama) =>
  * cuota y repartidos por coeficiente en uno o varios plazos.
  */
 export default async function PaginaDerramas() {
-  const { miembro, comunidad, esAdminPlataforma, permisos } = await requerirContexto();
+  const { comunidad, permisos } = await requerirContexto();
   if (!puedeVerFinanzas(permisos)) redirect("/panel");
-  const editor = puedeEditarFinanzas(miembro.rol, esAdminPlataforma);
+  const editor = puedeEditarFinanzas(permisos);
   const junta = editor || esAdministrador(permisos);
   const supabase = await crearClienteServidor();
   const hoy = hoyISO();

@@ -132,7 +132,7 @@ function columnas(d: z.infer<typeof esquema>) {
 function puedeGestionar(contexto: Awaited<ReturnType<typeof requerirContexto>>) {
   return (
     esAdministrador(contexto.permisos) ||
-    puedeEditarFinanzas(contexto.miembro.rol, contexto.esAdminPlataforma)
+    puedeEditarFinanzas(contexto.permisos)
   );
 }
 

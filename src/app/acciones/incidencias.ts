@@ -277,7 +277,7 @@ export async function guardarGestionIncidencia(
   _estado: EstadoIncidencia,
   datos: FormData,
 ): Promise<EstadoIncidencia> {
-  const { usuario, comunidad, permisos, miembro, esAdminPlataforma } = await requerirContexto();
+  const { usuario, comunidad, permisos } = await requerirContexto();
   if (!puedeGestionarIncidencias(permisos)) {
     return { error: "Solo la junta directiva puede gestionar las incidencias." };
   }
@@ -349,7 +349,7 @@ export async function guardarGestionIncidencia(
 
   let mensaje = "Guardado.";
   if (d.apuntarGasto && !actual.gasto_id) {
-    if (!puedeEditarFinanzas(miembro.rol, esAdminPlataforma)) {
+    if (!puedeEditarFinanzas(permisos)) {
       mensaje = "Guardado. Para apuntar el gasto hace falta poder editar las finanzas.";
     } else if (d.responsable !== "comunidad") {
       mensaje = "Guardado. El coste no se apunta como gasto porque no lo paga la comunidad.";

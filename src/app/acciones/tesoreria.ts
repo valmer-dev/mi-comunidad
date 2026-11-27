@@ -14,7 +14,7 @@ import { crearClienteServidor } from "@/lib/supabase/servidor";
 export type EstadoTesoreria = { error?: string; ok?: boolean };
 
 const SIN_PERMISO = {
-  error: "Solo el presidente o el administrador de plataforma pueden editar las finanzas.",
+  error: "No tienes permiso para editar las finanzas.",
 };
 
 const fecha = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Indica la fecha.");
@@ -33,7 +33,7 @@ function euros(mensaje: string, { permitirCero = false } = {}) {
 
 async function contextoEditor() {
   const contexto = await requerirContexto();
-  if (!puedeEditarFinanzas(contexto.miembro.rol, contexto.esAdminPlataforma)) return null;
+  if (!puedeEditarFinanzas(contexto.permisos)) return null;
   return contexto;
 }
 

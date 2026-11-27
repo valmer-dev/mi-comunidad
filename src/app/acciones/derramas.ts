@@ -16,7 +16,7 @@ import { formatoMoneda } from "@/lib/utilidades";
 export type EstadoDerrama = { error?: string; ok?: boolean; mensaje?: string };
 
 const SIN_PERMISO = {
-  error: "Solo el presidente o el administrador pueden gestionar las derramas.",
+  error: "No tienes permiso para gestionar las derramas.",
 };
 
 const esquema = z.object({
@@ -48,7 +48,7 @@ function refrescar() {
 
 export async function crearDerrama(_estado: EstadoDerrama, datos: FormData): Promise<EstadoDerrama> {
   const contexto = await requerirContexto();
-  if (!puedeEditarFinanzas(contexto.miembro.rol, contexto.esAdminPlataforma)) return SIN_PERMISO;
+  if (!puedeEditarFinanzas(contexto.permisos)) return SIN_PERMISO;
 
   const resultado = esquema.safeParse({
     titulo: datos.get("titulo"),
@@ -96,7 +96,7 @@ export async function crearDerrama(_estado: EstadoDerrama, datos: FormData): Pro
 
 export async function anularDerrama(_estado: EstadoDerrama, datos: FormData): Promise<EstadoDerrama> {
   const contexto = await requerirContexto();
-  if (!puedeEditarFinanzas(contexto.miembro.rol, contexto.esAdminPlataforma)) return SIN_PERMISO;
+  if (!puedeEditarFinanzas(contexto.permisos)) return SIN_PERMISO;
 
   const id = z.uuid().safeParse(datos.get("derramaId"));
   if (!id.success) return { error: "La derrama no es válida." };

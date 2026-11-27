@@ -24,7 +24,7 @@ async function contextoEditor() {
   const contexto = await requerirContexto();
   const puede =
     esAdministrador(contexto.permisos) ||
-    puedeEditarFinanzas(contexto.miembro.rol, contexto.esAdminPlataforma);
+    puedeEditarFinanzas(contexto.permisos);
   return puede ? contexto : null;
 }
 

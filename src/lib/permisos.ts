@@ -10,6 +10,7 @@ export type PermisosRol = {
   gestiona_documentos: boolean;
   gestiona_incidencias: boolean;
   ver_finanzas: boolean;
+  edita_finanzas: boolean;
 };
 
 export const SIN_PERMISOS: PermisosRol = {
@@ -18,6 +19,7 @@ export const SIN_PERMISOS: PermisosRol = {
   gestiona_documentos: false,
   gestiona_incidencias: false,
   ver_finanzas: false,
+  edita_finanzas: false,
 };
 
 export const TODOS_LOS_PERMISOS: PermisosRol = {
@@ -26,6 +28,7 @@ export const TODOS_LOS_PERMISOS: PermisosRol = {
   gestiona_documentos: true,
   gestiona_incidencias: true,
   ver_finanzas: true,
+  edita_finanzas: true,
 };
 
 /**
@@ -34,7 +37,7 @@ export const TODOS_LOS_PERMISOS: PermisosRol = {
  */
 export const PERMISOS_POR_DEFECTO: Record<RolMiembro, PermisosRol> = {
   presidente: TODOS_LOS_PERMISOS,
-  vicepresidente: TODOS_LOS_PERMISOS,
+  vicepresidente: { ...TODOS_LOS_PERMISOS, edita_finanzas: false },
   secretario: {
     ...SIN_PERMISOS,
     administra_comunidad: true,
@@ -53,10 +56,7 @@ export const PERMISOS_POR_DEFECTO: Record<RolMiembro, PermisosRol> = {
   },
   propietario: SIN_PERMISOS,
   inquilino: SIN_PERMISOS,
-  administrador_fincas: {
-    ...SIN_PERMISOS,
-    ver_finanzas: true,
-  },
+  administrador_fincas: TODOS_LOS_PERMISOS,
 };
 
 /** Permisos efectivos de un rol, leyendo primero la tabla roles. */
@@ -75,6 +75,7 @@ export function permisosDeRol(
     gestiona_documentos: fila.gestiona_documentos,
     gestiona_incidencias: fila.gestiona_incidencias,
     ver_finanzas: fila.ver_finanzas,
+    edita_finanzas: fila.edita_finanzas,
   };
 }
 
@@ -91,14 +92,12 @@ export function puedeVerFinanzas(permisos: PermisosRol | null | undefined) {
 }
 
 /**
- * Editar la parte economica: gastos, cuota mensual, presupuestos y proveedores.
- * Solo el presidente de la comunidad y el administrador de plataforma.
+ * Editar la parte economica: gastos, cuota, recibos, presupuestos, derramas y
+ * proveedores. Se configura por rol en la tabla roles; por defecto lo tienen el
+ * presidente, el administrador de fincas y el administrador de plataforma.
  */
-export function puedeEditarFinanzas(
-  rol: RolMiembro | null | undefined,
-  esAdminPlataforma: boolean | null | undefined,
-) {
-  return Boolean(esAdminPlataforma) || rol === "presidente";
+export function puedeEditarFinanzas(permisos: PermisosRol | null | undefined) {
+  return Boolean(permisos?.edita_finanzas);
 }
 
 export function puedeGestionarIncidencias(permisos: PermisosRol | null | undefined) {
@@ -162,7 +161,7 @@ const AYUDA_ROL: Record<RolMiembro, string> = {
   secretario: "Administra la comunidad y los vecinos",
   propietario: "Solo consulta sus datos",
   inquilino: "Solo consulta sus datos",
-  administrador_fincas: "Consulta las finanzas",
+  administrador_fincas: "Lleva las finanzas, las juntas y la gestión diaria",
 };
 
 const ROLES_COMUNIDAD: RolMiembro[] = [
@@ -170,10 +169,11 @@ const ROLES_COMUNIDAD: RolMiembro[] = [
   "vicepresidente",
   "vocal",
   "vecino",
+  "administrador_fincas",
 ];
 
 /**
- * Opciones del selector de rol. Los cuatro roles de la comunidad y, al final,
+ * Opciones del selector de rol. Los roles de la comunidad y, al final,
  * el acceso de administrador de la plataforma.
  */
 export function opcionesDeRol(roles?: RolSistema[] | null): OpcionRol[] {

@@ -21,13 +21,13 @@ import { TarjetaSaldo } from "./TarjetaSaldo";
 export const metadata = { title: "Finanzas" };
 
 export default async function PaginaFinanzas() {
-  const { miembro, comunidad, esAdminPlataforma, permisos } = await requerirContexto();
+  const { comunidad, permisos } = await requerirContexto();
   const supabase = await crearClienteServidor();
 
   const verFinanzas = puedeVerFinanzas(permisos);
   if (!verFinanzas) redirect("/panel");
 
-  const editaFinanzas = puedeEditarFinanzas(miembro.rol, esAdminPlataforma);
+  const editaFinanzas = puedeEditarFinanzas(permisos);
   const ahora = new Date();
   const ejercicio = ahora.getFullYear();
 
