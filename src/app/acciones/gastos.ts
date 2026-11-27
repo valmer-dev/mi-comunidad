@@ -11,6 +11,8 @@ const esquema = z.object({
   fecha: z.string().min(1, "Indica la fecha."),
   importe: z.coerce.number().positive("El importe debe ser mayor que cero."),
   categoriaId: z.string().uuid().optional().or(z.literal("")),
+  proveedorId: z.uuid().optional().or(z.literal("")),
+  facturaDocumentoId: z.uuid().optional().or(z.literal("")),
 });
 
 export type EstadoGasto = { error?: string; ok?: boolean };
@@ -31,6 +33,8 @@ export async function crearGasto(
     fecha: datos.get("fecha"),
     importe: datos.get("importe"),
     categoriaId: datos.get("categoriaId") || "",
+    proveedorId: datos.get("proveedorId") || "",
+    facturaDocumentoId: datos.get("facturaDocumentoId") || "",
   });
 
   if (!resultado.success) {
@@ -46,12 +50,18 @@ export async function crearGasto(
     iva: 0,
     total: resultado.data.importe,
     categoria_id: resultado.data.categoriaId || null,
+    proveedor_id: resultado.data.proveedorId || null,
+    factura_documento_id: resultado.data.facturaDocumentoId || null,
     creado_por: usuario.id,
   });
 
-  if (error) return { error: "No se pudo registrar el gasto." };
+  if (error) {
+    if (error.code === "22023") return { error: `${error.message}.` };
+    return { error: "No se pudo registrar el gasto." };
+  }
 
   revalidatePath("/finanzas");
+  revalidatePath("/servicios");
   revalidatePath("/panel");
   return { ok: true };
 }

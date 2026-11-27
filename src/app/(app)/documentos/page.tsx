@@ -1,4 +1,4 @@
-import { BadgeCheck, Calculator, Download, FileSignature, FileText, FolderOpen, Scale, ScrollText } from "lucide-react";
+import { BadgeCheck, Calculator, Download, Receipt, FileSignature, FileText, FolderOpen, Scale, ScrollText } from "lucide-react";
 import { eliminarDocumento } from "@/app/acciones/documentos";
 import { requerirContexto } from "@/lib/auth";
 import {
@@ -23,6 +23,7 @@ const ICONOS = {
   Contratos: FileSignature,
   Certificados: BadgeCheck,
   Presupuestos: Calculator,
+  Facturas: Receipt,
 } satisfies Record<CategoriaDocumento, typeof FileText>;
 
 export default async function PaginaDocumentos() {
@@ -45,6 +46,7 @@ export default async function PaginaDocumentos() {
     Contratos: [],
     Certificados: [],
     Presupuestos: [],
+    Facturas: [],
   };
 
   for (const documento of documentos ?? []) {

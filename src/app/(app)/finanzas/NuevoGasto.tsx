@@ -5,10 +5,19 @@ import { Loader2, Plus, ReceiptText, X } from "lucide-react";
 import { crearGasto, type EstadoGasto } from "@/app/acciones/gastos";
 
 type Categoria = { id: string; nombre: string };
+type Opcion = { id: string; nombre: string };
 
 const ESTADO_INICIAL: EstadoGasto = {};
 
-export function NuevoGasto({ categorias }: { categorias: Categoria[] }) {
+export function NuevoGasto({
+  categorias,
+  proveedores = [],
+  facturas = [],
+}: {
+  categorias: Categoria[];
+  proveedores?: Opcion[];
+  facturas?: Opcion[];
+}) {
   const [abierto, setAbierto] = useState(false);
   const [estado, accion, pendiente] = useActionState(
     async (anterior: EstadoGasto, datos: FormData) => {
@@ -101,6 +110,35 @@ export function NuevoGasto({ categorias }: { categorias: Categoria[] }) {
               </option>
             ))}
           </select>
+        </div>
+
+        <div>
+          <label htmlFor="proveedorId" className="etiqueta">
+            Proveedor (opcional)
+          </label>
+          <select id="proveedorId" name="proveedorId" className="campo" defaultValue="">
+            <option value="">Sin proveedor</option>
+            {proveedores.map((p) => (
+              <option key={p.id} value={p.id}>
+                {p.nombre}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div>
+          <label htmlFor="facturaDocumentoId" className="etiqueta">
+            Factura (opcional)
+          </label>
+          <select id="facturaDocumentoId" name="facturaDocumentoId" className="campo" defaultValue="">
+            <option value="">Sin factura</option>
+            {facturas.map((f) => (
+              <option key={f.id} value={f.id}>
+                {f.nombre}
+              </option>
+            ))}
+          </select>
+          <p className="mt-1 text-xs text-suave">Sube el PDF en Documentos, carpeta Facturas.</p>
         </div>
 
         {estado.error && (

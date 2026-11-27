@@ -518,6 +518,7 @@ export type Database = {
           pagado_en: string | null
           proveedor_id: string | null
           total: number
+          factura_documento_id: string | null
         }
         Insert: {
           base_imponible?: number
@@ -534,6 +535,7 @@ export type Database = {
           pagado_en?: string | null
           proveedor_id?: string | null
           total?: number
+          factura_documento_id?: string | null
         }
         Update: {
           base_imponible?: number
@@ -550,6 +552,7 @@ export type Database = {
           pagado_en?: string | null
           proveedor_id?: string | null
           total?: number
+          factura_documento_id?: string | null
         }
         Relationships: [
           {
@@ -1219,6 +1222,10 @@ export type Database = {
           persona_contacto: string | null
           seguro_hasta: string | null
           telefono: string | null
+          contrato_documento_id: string | null
+          importe_anual: number | null
+          renovacion_automatica: boolean
+          preaviso_dias: number | null
         }
         Insert: {
           categoria?: string | null
@@ -1234,6 +1241,10 @@ export type Database = {
           persona_contacto?: string | null
           seguro_hasta?: string | null
           telefono?: string | null
+          contrato_documento_id?: string | null
+          importe_anual?: number | null
+          renovacion_automatica?: boolean
+          preaviso_dias?: number | null
         }
         Update: {
           categoria?: string | null
@@ -1249,6 +1260,10 @@ export type Database = {
           persona_contacto?: string | null
           seguro_hasta?: string | null
           telefono?: string | null
+          contrato_documento_id?: string | null
+          importe_anual?: number | null
+          renovacion_automatica?: boolean
+          preaviso_dias?: number | null
         }
         Relationships: [
           {

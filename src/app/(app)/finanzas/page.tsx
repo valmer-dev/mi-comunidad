@@ -7,6 +7,7 @@ import { hoyISO, resumirRecibos } from "@/lib/recibos";
 import { calcularSaldo, minimoFondo, PORCENTAJE_MINIMO_FONDO, saldoFondo } from "@/lib/tesoreria";
 import { eliminarIngreso, eliminarMovimientoFondo } from "@/app/acciones/tesoreria";
 import { BotonEliminar } from "@/components/ui/BotonEliminar";
+import { crearClienteAdmin } from "@/lib/supabase/admin";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { formatoFechaCorta, formatoMoneda, nombreMes } from "@/lib/utilidades";
 import { CabeceraPagina } from "@/components/ui/CabeceraPagina";
@@ -30,10 +31,10 @@ export default async function PaginaFinanzas() {
   const ahora = new Date();
   const ejercicio = ahora.getFullYear();
 
-  const [{ data: gastos }, { data: categorias }] = await Promise.all([
+  const [{ data: gastos }, { data: categorias }, { data: proveedores }, { data: facturas }] = await Promise.all([
     supabase
       .from("gastos")
-      .select("id, concepto, total, fecha, categoria_id")
+      .select("id, concepto, total, fecha, categoria_id, proveedor_id, factura_documento_id")
       .eq("comunidad_id", comunidad.id)
       .gte("fecha", `${ejercicio}-01-01`)
       .lte("fecha", `${ejercicio}-12-31`)
@@ -44,9 +45,48 @@ export default async function PaginaFinanzas() {
       .eq("comunidad_id", comunidad.id)
       .eq("tipo", "gasto")
       .order("nombre"),
+    supabase
+      .from("proveedores")
+      .select("id, nombre, categoria")
+      .eq("comunidad_id", comunidad.id)
+      .order("nombre"),
+    editaFinanzas
+      ? supabase
+          .from("documentos")
+          .select("id, nombre")
+          .eq("comunidad_id", comunidad.id)
+          .eq("carpeta", "Facturas")
+          .order("creado_en", { ascending: false })
+          .limit(100)
+      : Promise.resolve({ data: [] as { id: string; nombre: string }[] }),
   ]);
 
+  const mapaProveedores = new Map((proveedores ?? []).map((p) => [p.id, p.nombre]));
+
   const listaGastos = gastos ?? [];
+
+  // Enlaces a las facturas de los gastos que se muestran.
+  const enlacesFactura = new Map<string, string>();
+  const idsFactura = listaGastos
+    .slice(0, 24)
+    .map((g) => g.factura_documento_id)
+    .filter((id): id is string => !!id);
+  if (idsFactura.length) {
+    const { data: filas } = await supabase
+      .from("documentos")
+      .select("id, ruta_almacenamiento")
+      .in("id", idsFactura);
+    const rutas = (filas ?? []).filter((f) => f.ruta_almacenamiento);
+    if (rutas.length) {
+      const { data: firmadas } = await crearClienteAdmin()
+        .storage.from("documentos")
+        .createSignedUrls(rutas.map((f) => f.ruta_almacenamiento!), 60 * 60);
+      rutas.forEach((f, i) => {
+        const url = firmadas?.[i]?.signedUrl;
+        if (url) enlacesFactura.set(f.id, url);
+      });
+    }
+  }
 
   // Resumen de recibos: la junta ve el total pendiente de la comunidad; un
   // vecino, por las politicas de la base de datos, solo los suyos.
@@ -148,7 +188,14 @@ export default async function PaginaFinanzas() {
         titulo="Finanzas"
         icono={Wallet}
         descripcion={`Gastos de la comunidad · Ejercicio ${ejercicio}`}
-        accion={editaFinanzas ? <NuevoGasto categorias={categorias ?? []} /> : undefined}
+        accion={editaFinanzas ? <NuevoGasto
+              categorias={categorias ?? []}
+              proveedores={(proveedores ?? []).map((p) => ({
+                id: p.id,
+                nombre: p.categoria ? `${p.nombre} (${p.categoria})` : p.nombre,
+              }))}
+              facturas={facturas ?? []}
+            /> : undefined}
       />
 
       <section className="grid grid-cols-2 gap-3 lg:grid-cols-3">
@@ -387,7 +434,29 @@ export default async function PaginaFinanzas() {
               <tbody className="divide-y divide-borde">
                 {listaGastos.slice(0, 24).map((gasto) => (
                   <tr key={gasto.id}>
-                    <td className="px-4 py-2.5 font-medium">{gasto.concepto}</td>
+                    <td className="px-4 py-2.5">
+                      <p className="font-medium">{gasto.concepto}</p>
+                      {(gasto.proveedor_id || gasto.factura_documento_id) && (
+                        <p className="text-xs text-suave">
+                          {gasto.proveedor_id && mapaProveedores.has(gasto.proveedor_id) && (
+                            <Link href={`/servicios#servicio-${gasto.proveedor_id}`} className="hover:underline">
+                              {mapaProveedores.get(gasto.proveedor_id)}
+                            </Link>
+                          )}
+                          {gasto.proveedor_id && gasto.factura_documento_id && enlacesFactura.has(gasto.factura_documento_id) && " · "}
+                          {gasto.factura_documento_id && enlacesFactura.has(gasto.factura_documento_id) && (
+                            <a
+                              href={enlacesFactura.get(gasto.factura_documento_id)}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-principal hover:underline"
+                            >
+                              Factura
+                            </a>
+                          )}
+                        </p>
+                      )}
+                    </td>
                     <td className="hidden px-4 py-2.5 text-suave sm:table-cell">
                       {gasto.categoria_id ? mapaCategorias.get(gasto.categoria_id) ?? "—" : "—"}
                     </td>
