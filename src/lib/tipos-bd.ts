@@ -715,6 +715,8 @@ export type Database = {
         Row: {
           acta_aprobada_en: string | null
           acta_documento_id: string | null
+          acta_firmada_en: string | null
+          convocatoria_celebrada: number | null
           acta_notificada_en: string | null
           acta_texto: string | null
           celebrada_en: string | null
@@ -736,6 +738,8 @@ export type Database = {
         Insert: {
           acta_aprobada_en?: string | null
           acta_documento_id?: string | null
+          acta_firmada_en?: string | null
+          convocatoria_celebrada?: number | null
           acta_notificada_en?: string | null
           acta_texto?: string | null
           celebrada_en?: string | null
@@ -757,6 +761,8 @@ export type Database = {
         Update: {
           acta_aprobada_en?: string | null
           acta_documento_id?: string | null
+          acta_firmada_en?: string | null
+          convocatoria_celebrada?: number | null
           acta_notificada_en?: string | null
           acta_texto?: string | null
           celebrada_en?: string | null
