@@ -1,4 +1,5 @@
-import { Building2, LogOut, RefreshCw, Settings, ShieldCheck, Smartphone, UserCircle } from "lucide-react";
+import Link from "next/link";
+import { Building2, Download, LogOut, RefreshCw, Settings, ShieldCheck, Smartphone, UserCircle } from "lucide-react";
 import { cerrarSesion } from "@/app/acciones/autenticacion";
 import { requerirContexto } from "@/lib/auth";
 import { esAdministrador, etiquetaRol, etiquetaRolPersona } from "@/lib/permisos";
@@ -240,15 +241,23 @@ export default async function PaginaAjustes() {
           Privacidad y datos
         </h2>
         <p className="mt-2 text-[15px] leading-relaxed text-suave">
-          Solo los miembros de la comunidad pueden acceder a la aplicación. Los datos
-          económicos globales los consulta la junta directiva; solo el presidente y el
-          administrador de plataforma pueden editarlos. Los datos se alojan en la Unión
-          Europea.
+          La responsable de tus datos es la propia comunidad. Solo los miembros entran en la
+          aplicación; los recibos de cada vivienda solo los ven sus titulares y la junta, y
+          los datos se alojan en la Unión Europea.
         </p>
         <p className="mt-2 text-[15px] leading-relaxed text-suave">
-          Para darte de baja o corregir tus datos, habla con el presidente o el
-          secretario de la comunidad.
+          Para darte de baja o borrar tus datos, habla con el presidente o el secretario.
         </p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Link href="/privacidad" className="boton boton-borde">
+            <ShieldCheck className="size-4" aria-hidden />
+            Información de privacidad
+          </Link>
+          <a href="/ajustes/mis-datos" className="boton boton-borde" download>
+            <Download className="size-4" aria-hidden />
+            Descargar mis datos
+          </a>
+        </div>
       </section>
     </div>
   );

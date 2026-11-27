@@ -1282,6 +1282,7 @@ export type Database = {
           es_admin_plataforma: boolean
           id: string
           nombre: string
+          privacidad_vista_en: string | null
           telefono: string | null
         }
         Insert: {
@@ -1295,6 +1296,7 @@ export type Database = {
           es_admin_plataforma?: boolean
           id: string
           nombre?: string
+          privacidad_vista_en?: string | null
           telefono?: string | null
         }
         Update: {
@@ -1308,6 +1310,7 @@ export type Database = {
           es_admin_plataforma?: boolean
           id?: string
           nombre?: string
+          privacidad_vista_en?: string | null
           telefono?: string | null
         }
         Relationships: []
@@ -1913,7 +1916,7 @@ export type Database = {
       }
       morosos_junta: {
         Args: { p_junta_id: string }
-        Returns: { codigo: string; desde: string; deuda: number; finca_id: string }[]
+        Returns: { codigo: string; desde: string | null; deuda: number | null; finca_id: string }[]
       }
       puede_editar_finanzas: { Args: { p_comunidad_id: string }; Returns: boolean }
       puede_anadir_fotos: {

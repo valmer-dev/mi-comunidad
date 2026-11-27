@@ -78,9 +78,12 @@ export async function crearVecino(
   _estado: EstadoVecino,
   datos: FormData,
 ): Promise<EstadoVecino> {
-  const { comunidad, permisos } = await requerirContexto();
+  const { comunidad, permisos, esAdminPlataforma } = await requerirContexto();
   if (!puedeGestionarVecinos(permisos)) {
     return { error: "No tienes permiso para añadir vecinos." };
+  }
+  if (datos.get("rol") === "administrador_plataforma" && !esAdminPlataforma) {
+    return { error: "Solo un administrador de la plataforma puede dar ese acceso." };
   }
 
   const resultado = esquema.safeParse({

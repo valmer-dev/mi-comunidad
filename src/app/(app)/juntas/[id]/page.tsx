@@ -479,7 +479,7 @@ export default async function PaginaJunta(props: PageProps<"/juntas/[id]">) {
                     <span className="text-suave"> · {nombresPorFinca.get(moroso.finca_id)?.join(", ")}</span>
                   ) : null}
                 </span>
-                {administrador && (
+                {administrador && moroso.deuda != null && (
                   <span className="tabular-nums text-peligro">
                     {formatoMoneda(moroso.deuda)}
                   </span>

@@ -173,10 +173,13 @@ const ROLES_COMUNIDAD: RolMiembro[] = [
 ];
 
 /**
- * Opciones del selector de rol. Los roles de la comunidad y, al final,
- * el acceso de administrador de la plataforma.
+ * Opciones del selector de rol. Los roles de la comunidad y, al final, el
+ * acceso de administrador de la plataforma (solo si quien asigna ya lo es).
  */
-export function opcionesDeRol(roles?: RolSistema[] | null): OpcionRol[] {
+export function opcionesDeRol(
+  roles?: RolSistema[] | null,
+  { conPlataforma = true }: { conPlataforma?: boolean } = {},
+): OpcionRol[] {
   const opciones: OpcionRol[] = ROLES_COMUNIDAD.map((clave) => {
     const fila = roles?.find((rol) => rol.clave === clave);
     return {
@@ -185,6 +188,8 @@ export function opcionesDeRol(roles?: RolSistema[] | null): OpcionRol[] {
       ayuda: fila?.descripcion ?? AYUDA_ROL[clave],
     };
   });
+
+  if (!conPlataforma) return opciones;
 
   const plataforma = roles?.find((rol) => rol.clave === "administrador_plataforma");
   opciones.push({

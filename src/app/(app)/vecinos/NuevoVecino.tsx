@@ -18,6 +18,8 @@ type Finca = { id: string; codigo: string; tipo: string };
 type Props = {
   fincas: Finca[];
   roles?: RolSistema[];
+  /** Solo un administrador de plataforma puede dar ese acceso. */
+  conPlataforma?: boolean;
   nombreComunidad: string;
   urlApp: string;
 };
@@ -167,7 +169,7 @@ function TarjetaResultado({
   );
 }
 
-export function NuevoVecino({ fincas, roles, nombreComunidad, urlApp }: Props) {
+export function NuevoVecino({ fincas, roles, conPlataforma = false, nombreComunidad, urlApp }: Props) {
   const [abierto, setAbierto] = useState(false);
   const [rol, setRol] = useState("vecino");
   const [resultado, setResultado] = useState<ResultadoAlta | null>(null);
@@ -185,7 +187,7 @@ export function NuevoVecino({ fincas, roles, nombreComunidad, urlApp }: Props) {
     ESTADO_INICIAL,
   );
 
-  const opciones = opcionesDeRol(roles);
+  const opciones = opcionesDeRol(roles, { conPlataforma });
   const ayudaRol = opciones.find((opcion) => opcion.valor === rol)?.ayuda;
   const casas = fincas.filter((finca) => finca.tipo === "casa");
   const pisos = fincas.filter((finca) => finca.tipo === "piso");
