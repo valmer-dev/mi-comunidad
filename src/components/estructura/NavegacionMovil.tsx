@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Briefcase,
+  CalendarClock,
   FolderOpen,
   Gavel,
   LayoutDashboard,
@@ -58,6 +59,7 @@ export function NavegacionMovil({
 
   const enlacesSecundarios = [
     ...ENLACES_SECUNDARIOS,
+    ...(puedeVerFinanzas ? [{ href: "/calendario", etiqueta: "Calendario", icono: CalendarClock }] : []),
     { href: "/ajustes", etiqueta: "Ajustes", icono: Settings },
     ...(esAdminPlataforma
       ? [{ href: "/plataforma", etiqueta: "Plataforma", icono: ShieldCheck }]
