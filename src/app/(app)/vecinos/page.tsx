@@ -11,7 +11,7 @@ import { NuevoVecino } from "./NuevoVecino";
 export const metadata = { title: "Vecinos" };
 
 export default async function PaginaVecinos() {
-  const { comunidad, permisos, roles } = await requerirContexto();
+  const { comunidad, permisos, roles, esAdminPlataforma } = await requerirContexto();
   const supabase = await crearClienteServidor();
   const admin = puedeGestionarVecinos(permisos);
 
@@ -91,6 +91,7 @@ export default async function PaginaVecinos() {
             <NuevoVecino
               fincas={(fincas ?? []).map((f) => ({ id: f.id, codigo: f.codigo, tipo: f.tipo }))}
               roles={roles}
+              conPlataforma={esAdminPlataforma}
               nombreComunidad={comunidad.nombre}
               urlApp={
                 process.env.NEXT_PUBLIC_URL_APP ?? "https://mi-comunidad-one.vercel.app"

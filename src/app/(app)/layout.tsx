@@ -8,6 +8,7 @@ import {
   puedeVerFinanzas,
 } from "@/lib/permisos";
 import { Estructura } from "@/components/estructura/Estructura";
+import { AvisoPrivacidad } from "@/components/privacidad/AvisoPrivacidad";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { iniciales } from "@/lib/utilidades";
 
@@ -72,6 +73,7 @@ export default async function LayoutApp({
       puedeVerFinanzas={puedeVerFinanzas(permisos)}
       esAdminPlataforma={esAdminPlataforma}
     >
+      {!perfil?.privacidad_vista_en && <AvisoPrivacidad nombreComunidad={comunidad.nombre} />}
       {children}
     </Estructura>
   );
