@@ -5,6 +5,7 @@ export const CATEGORIAS_DOCUMENTOS = [
   "Contratos",
   "Certificados",
   "Presupuestos",
+  "Facturas",
 ] as const;
 
 export type CategoriaDocumento = (typeof CATEGORIAS_DOCUMENTOS)[number];
@@ -15,6 +16,7 @@ export const DESCRIPCION_CATEGORIA: Record<CategoriaDocumento, string> = {
   Contratos: "Contratos de servicios y mantenimiento",
   Certificados: "Certificados y documentos oficiales",
   Presupuestos: "Presupuestos y ofertas de proveedores",
+  Facturas: "Facturas de proveedores y justificantes de gasto",
 };
 
 export function esCategoriaDocumento(valor: unknown): valor is CategoriaDocumento {

@@ -3,10 +3,11 @@
 import { useActionState, useState } from "react";
 import { Briefcase, Loader2, Plus, X } from "lucide-react";
 import { crearServicio, type EstadoServicio } from "@/app/acciones/servicios";
+import { CamposServicio, type DocumentoContrato } from "./CamposServicio";
 
 const ESTADO_INICIAL: EstadoServicio = {};
 
-export function NuevoServicio() {
+export function NuevoServicio({ documentos }: { documentos: DocumentoContrato[] }) {
   const [abierto, setAbierto] = useState(false);
   const [estado, accion, pendiente] = useActionState(
     async (anterior: EstadoServicio, datos: FormData) => {
@@ -35,7 +36,7 @@ export function NuevoServicio() {
             Nuevo servicio
           </h2>
           <p className="mt-0.5 text-sm text-suave">
-            Empresa y teléfono de contacto que verán todos los vecinos.
+            Los vecinos ven el servicio, la empresa y el teléfono; los datos del contrato se muestran a la junta.
           </p>
         </div>
         <button
@@ -49,45 +50,7 @@ export function NuevoServicio() {
       </div>
 
       <form action={accion} className="mt-4 grid gap-4 sm:grid-cols-2">
-        <div className="sm:col-span-2">
-          <label htmlFor="servicio" className="etiqueta">
-            Servicio
-          </label>
-          <input
-            id="servicio"
-            name="servicio"
-            required
-            className="campo"
-            placeholder="Mantenimiento de los ascensores"
-          />
-        </div>
-
-        <div>
-          <label htmlFor="empresa" className="etiqueta">
-            Empresa
-          </label>
-          <input
-            id="empresa"
-            name="empresa"
-            required
-            className="campo"
-            placeholder="Ascensores García, S.L."
-          />
-        </div>
-
-        <div>
-          <label htmlFor="telefono" className="etiqueta">
-            Teléfono de contacto
-          </label>
-          <input
-            id="telefono"
-            name="telefono"
-            type="tel"
-            required
-            className="campo"
-            placeholder="912 345 678"
-          />
-        </div>
+        <CamposServicio documentos={documentos} />
 
         {estado.error && (
           <p className="aviso aviso-error sm:col-span-2">
