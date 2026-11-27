@@ -13,6 +13,8 @@ export type ViviendaAsistencia = {
   coeficiente: number;
   modo: ModoAsistencia;
   representante: string;
+  /** Tiene deudas vencidas el dia de la junta: asiste pero no vota. */
+  sinVoto?: boolean;
 };
 
 /** Pasar lista: una fila por vivienda con su modo de asistencia y el quórum en vivo. */
@@ -60,6 +62,9 @@ export function ListaAsistencia({
                   </span>
                 </p>
                 <p className="truncate text-sm text-suave">{vivienda.titulares || "Sin titular"}</p>
+                {vivienda.sinVoto && (
+                  <span className="chip mt-1 bg-peligro-claro text-peligro">Sin voto: deuda vencida</span>
+                )}
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <select
@@ -102,6 +107,8 @@ export function ResumenQuorum({
   representadas,
   total,
   porcentaje,
+  sinVoto,
+  porcentajeVoto,
 }: ReturnType<typeof calcularQuorum>) {
   const asistentes = presentes + representadas;
   const mayoria = total > 0 && asistentes * 2 > total && porcentaje > 50;
@@ -121,6 +128,12 @@ export function ResumenQuorum({
         <p className="text-lg font-semibold">
           {porcentaje.toLocaleString("es-ES", { maximumFractionDigits: 2 })} %
         </p>
+        {sinVoto > 0 && (
+          <p className="text-xs text-peligro">
+            Votan {porcentajeVoto.toLocaleString("es-ES", { maximumFractionDigits: 2 })} %:{" "}
+            {sinVoto} sin voto por deudas
+          </p>
+        )}
       </div>
       <div className="col-span-2 sm:col-span-1">
         <p className="text-suave">Primera convocatoria</p>
