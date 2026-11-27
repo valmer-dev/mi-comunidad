@@ -16,6 +16,7 @@ import {
   Plus,
   RotateCcw,
   Save,
+  Send,
   Trash2,
   Users,
 } from "lucide-react";
@@ -29,13 +30,21 @@ import {
   quitarActaPdf,
 } from "@/app/acciones/juntas";
 import { requerirContexto } from "@/lib/auth";
+import {
+  antelacion,
+  DIAS_MINIMOS_ORDINARIA,
+  MEDIOS_CONVOCATORIA,
+  type MedioConvocatoria,
+} from "@/lib/convocatoria";
 import { calcularQuorum, type ModoAsistencia } from "@/lib/juntas";
+import { esCorreoInterno } from "@/lib/telefono";
 import { esAdministrador } from "@/lib/permisos";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { formatoFecha, formatoFechaHora, formatoMoneda, formatoTamano } from "@/lib/utilidades";
 import { EtiquetaEstado } from "@/components/ui/EtiquetaEstado";
 import { BotonEnviar, FormularioJunta } from "./FormularioJunta";
+import { EnviarConvocatoria } from "./EnviarConvocatoria";
 import { ListaAsistencia, ResumenQuorum, type ViviendaAsistencia } from "./ListaAsistencia";
 import { SubirActa } from "./SubirActa";
 
@@ -68,7 +77,7 @@ export default async function PaginaJunta(props: PageProps<"/juntas/[id]">) {
   const { data: junta } = await supabase
     .from("juntas")
     .select(
-      "id, titulo, tipo, fecha_hora, lugar, estado, segunda_convocatoria_minutos, acta_texto, acta_documento_id, acta_aprobada_en, celebrada_en",
+      "id, titulo, tipo, fecha_hora, lugar, estado, segunda_convocatoria_minutos, acta_texto, acta_documento_id, acta_aprobada_en, celebrada_en, convocatoria_enviada_en, convocatoria_medios",
     )
     .eq("id", id)
     .eq("comunidad_id", comunidad.id)
@@ -164,6 +173,28 @@ export default async function PaginaJunta(props: PageProps<"/juntas/[id]">) {
     enlaceActa = data?.signedUrl ?? null;
   }
 
+  // Convocatoria: plazo y destinatarios del correo (solo correos reales)
+  const plazo = antelacion({
+    tipo: junta.tipo,
+    fechaJunta: junta.fecha_hora,
+    enviadaEn: junta.convocatoria_enviada_en,
+  });
+  let correos: string[] = [];
+  if (administrador && junta.estado === "convocada") {
+    const { data: miembros } = await supabase
+      .from("miembros")
+      .select("perfiles(correo)")
+      .eq("comunidad_id", comunidad.id)
+      .eq("estado", "activo");
+    correos = [
+      ...new Set(
+        (miembros ?? [])
+          .map((fila) => fila.perfiles?.correo?.trim().toLowerCase() ?? "")
+          .filter((correo) => correo && !esCorreoInterno(correo)),
+      ),
+    ];
+  }
+
   const listaPuntos = puntos ?? [];
   const cerrada = junta.estado === "cerrada";
   const editarOrden = administrador && !cerrada;
@@ -241,6 +272,60 @@ export default async function PaginaJunta(props: PageProps<"/juntas/[id]">) {
           </div>
         )}
       </div>
+
+      {/* Convocatoria */}
+      <section className="tarjeta">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <h2 className="flex items-center gap-2 text-lg font-semibold">
+            <Send className="size-4.5 text-principal" aria-hidden />
+            Convocatoria
+          </h2>
+          <Link href={`/juntas/${junta.id}/convocatoria`} className="boton boton-borde px-3 py-1.5 text-sm">
+            <FileText className="size-4" aria-hidden />
+            Ver convocatoria y PDF
+          </Link>
+        </div>
+
+        {junta.convocatoria_enviada_en ? (
+          <p className="mt-2 text-sm">
+            Enviada el {formatoFecha(junta.convocatoria_enviada_en)}
+            {junta.convocatoria_medios.length > 0 &&
+              ` (${junta.convocatoria_medios
+                .map((medio) => MEDIOS_CONVOCATORIA[medio as MedioConvocatoria]?.toLowerCase() ?? medio)
+                .join(", ")})`}
+            , {plazo.dias === 1 ? "1 día" : `${plazo.dias} días`} antes de la junta.
+          </p>
+        ) : (
+          <p className="mt-2 text-sm text-suave">Todavía no se ha enviado.</p>
+        )}
+
+        {junta.estado === "convocada" && !plazo.cumple && (
+          <p className="aviso aviso-atencion mt-3">
+            {plazo.ordinaria
+              ? `La junta ordinaria debe convocarse con al menos ${DIAS_MINIMOS_ORDINARIA} días de antelación (art. 16.3 LPH). ${
+                  plazo.enviada ? "Se envió" : "Si la envías hoy, llegaría"
+                } con ${plazo.dias === 1 ? "1 día" : `${plazo.dias} días`}: conviene cambiar la fecha para evitar que se impugnen los acuerdos.`
+              : "La junta es hoy o ya ha pasado: la convocatoria no llegaría con antelación suficiente."}
+          </p>
+        )}
+        {junta.estado === "convocada" && plazo.cumple && !plazo.enviada && plazo.ordinaria && (
+          <p className="mt-2 text-xs text-suave">
+            Si la envías hoy, llega con {plazo.dias} días de antelación (mínimo {DIAS_MINIMOS_ORDINARIA}).
+          </p>
+        )}
+
+        {administrador && junta.estado === "convocada" && (
+          <div className="mt-4">
+            <EnviarConvocatoria
+              juntaId={junta.id}
+              medios={junta.convocatoria_medios}
+              correos={correos}
+              asunto={`Convocatoria: ${junta.titulo}`}
+              cuerpo={`Hola:\n\nOs convocamos a la junta ${junta.tipo} de la comunidad el ${formatoFechaHora(junta.fecha_hora)}${junta.lugar ? ` en ${junta.lugar}` : ""}.\n\nLa convocatoria completa, con el orden del día y el modelo de representación, está en la app:\n${(process.env.NEXT_PUBLIC_URL_APP ?? "").replace(/\/$/, "")}/juntas/${junta.id}/convocatoria\n\nUn saludo.`}
+            />
+          </div>
+        )}
+      </section>
 
       {/* Orden del día */}
       <section className="tarjeta">

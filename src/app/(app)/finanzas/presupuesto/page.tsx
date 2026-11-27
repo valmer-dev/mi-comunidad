@@ -11,7 +11,8 @@ import { formatoFecha, formatoMoneda } from "@/lib/utilidades";
 import { CabeceraPagina } from "@/components/ui/CabeceraPagina";
 import { EtiquetaEstado } from "@/components/ui/EtiquetaEstado";
 import { cargarFincas, COLUMNAS_RECIBO, normalizarRecibos } from "../recibos/datos";
-import { AccionesPresupuesto, BotonImprimir, CrearPresupuesto } from "./Acciones";
+import { BotonImprimir } from "@/components/ui/BotonImprimir";
+import { AccionesPresupuesto, CrearPresupuesto } from "./Acciones";
 import { FilaPartida, NuevaPartida, type Partida } from "./Partidas";
 
 export const metadata = { title: "Presupuesto y cuentas" };

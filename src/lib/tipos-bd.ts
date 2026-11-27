@@ -718,6 +718,9 @@ export type Database = {
           acta_texto: string | null
           celebrada_en: string | null
           comunidad_id: string
+          convocatoria_anuncio_id: string | null
+          convocatoria_enviada_en: string | null
+          convocatoria_medios: string[]
           creada_por: string | null
           creado_en: string
           estado: Database["public"]["Enums"]["estado_junta"]
@@ -735,6 +738,9 @@ export type Database = {
           acta_texto?: string | null
           celebrada_en?: string | null
           comunidad_id: string
+          convocatoria_anuncio_id?: string | null
+          convocatoria_enviada_en?: string | null
+          convocatoria_medios?: string[]
           creada_por?: string | null
           creado_en?: string
           estado?: Database["public"]["Enums"]["estado_junta"]
@@ -752,6 +758,9 @@ export type Database = {
           acta_texto?: string | null
           celebrada_en?: string | null
           comunidad_id?: string
+          convocatoria_anuncio_id?: string | null
+          convocatoria_enviada_en?: string | null
+          convocatoria_medios?: string[]
           creada_por?: string | null
           creado_en?: string
           estado?: Database["public"]["Enums"]["estado_junta"]

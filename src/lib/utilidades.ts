@@ -41,6 +41,9 @@ export function formatoFechaHora(valor: string | Date | null | undefined) {
     year: "numeric",
     hour: "2-digit",
     minute: "2-digit",
+    // El servidor (Vercel) funciona en UTC: sin esto las horas salen una o
+    // dos horas antes de la hora de Espana.
+    timeZone: "Europe/Madrid",
   }).format(fecha);
 }
 
