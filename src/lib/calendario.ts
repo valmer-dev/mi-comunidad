@@ -1,3 +1,4 @@
+import { limiteCertificado } from "@/lib/certificados";
 import { diaJunta, limiteFirmaActa } from "@/lib/datos-acta";
 import { estadoContrato } from "@/lib/proveedores";
 import type { crearClienteServidor } from "@/lib/supabase/servidor";
@@ -54,6 +55,7 @@ export async function cargarCalendario(supabase: Cliente, comunidadId: string, h
     { data: plazos },
     { data: juntas },
     { data: presupuestos },
+    { data: certificados },
   ] = await Promise.all([
     supabase
       .from("obligaciones")
@@ -83,6 +85,11 @@ export async function cargarCalendario(supabase: Cliente, comunidadId: string, h
       .eq("comunidad_id", comunidadId)
       .order("fecha_hora", { ascending: false }),
     supabase.from("presupuestos").select("ejercicio, estado").eq("comunidad_id", comunidadId),
+    supabase
+      .from("certificados_deuda")
+      .select("id, finca_id, solicitante, solicitado_en, fincas(codigo)")
+      .eq("comunidad_id", comunidadId)
+      .is("emitido_en", null),
   ]);
 
   const eventos: Evento[] = [];
@@ -223,6 +230,19 @@ export async function cargarCalendario(supabase: Cliente, comunidadId: string, h
         obligacion: null,
       });
     }
+  }
+
+  for (const c of certificados ?? []) {
+    eventos.push({
+      id: `certificado-${c.id}`,
+      fecha: limiteCertificado(c.solicitado_en),
+      titulo: `Emitir el certificado de deuda de ${c.fincas?.codigo ?? "la vivienda"}`,
+      detalle: `Lo pidió ${c.solicitante}. Siete días naturales desde la solicitud (art. 9.1.e LPH).`,
+      categoria: "cobro",
+      href: `/finanzas/recibos/${c.finca_id}`,
+      avisoDias: 7,
+      obligacion: null,
+    });
   }
 
   // Junta ordinaria anual para aprobar presupuesto y cuentas (art. 16.1 LPH).

@@ -275,6 +275,65 @@ export type Database = {
           },
         ]
       }
+      certificados_deuda: {
+        Row: {
+          comunidad_id: string
+          creado_en: string
+          creado_por: string | null
+          detalle: Json
+          deuda_afecta: number | null
+          deuda_total: number | null
+          deuda_vencida: number | null
+          emitido_en: string | null
+          finca_id: string
+          id: string
+          motivo: string
+          numero: number | null
+          solicitado_en: string
+          solicitante: string
+        }
+        Insert: {
+          comunidad_id: string
+          creado_en?: string
+          creado_por?: string | null
+          detalle?: Json
+          deuda_afecta?: number | null
+          deuda_total?: number | null
+          deuda_vencida?: number | null
+          emitido_en?: string | null
+          finca_id: string
+          id?: string
+          motivo?: string
+          numero?: number | null
+          solicitado_en?: string
+          solicitante: string
+        }
+        Update: {
+          comunidad_id?: string
+          creado_en?: string
+          creado_por?: string | null
+          detalle?: Json
+          deuda_afecta?: number | null
+          deuda_total?: number | null
+          deuda_vencida?: number | null
+          emitido_en?: string | null
+          finca_id?: string
+          id?: string
+          motivo?: string
+          numero?: number | null
+          solicitado_en?: string
+          solicitante?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "certificados_deuda_finca_id_fkey"
+            columns: ["finca_id"]
+            isOneToOne: false
+            referencedRelation: "fincas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       comunidades: {
         Row: {
           actualizado_en: string

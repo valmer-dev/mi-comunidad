@@ -10,6 +10,8 @@ import { formatoMoneda } from "@/lib/utilidades";
 import { CabeceraPagina } from "@/components/ui/CabeceraPagina";
 import { cargarFincas, COLUMNAS_RECIBO, normalizarRecibos } from "../datos";
 import { ListaRecibos } from "../ListaRecibos";
+import { limiteCertificado } from "@/lib/certificados";
+import { CertificadosDeuda } from "./CertificadosDeuda";
 
 export const metadata = { title: "Estado de cuentas" };
 
@@ -40,12 +42,19 @@ export default async function PaginaCuentaVivienda(props: PageProps<"/finanzas/r
     if (!titular) notFound();
   }
 
-  const { data: filas } = await supabase
-    .from("recibos")
-    .select(COLUMNAS_RECIBO)
-    .eq("finca_id", finca.id)
-    .order("periodo", { ascending: false })
-    .order("concepto");
+  const [{ data: filas }, { data: certificados }] = await Promise.all([
+    supabase
+      .from("recibos")
+      .select(COLUMNAS_RECIBO)
+      .eq("finca_id", finca.id)
+      .order("periodo", { ascending: false })
+      .order("concepto"),
+    supabase
+      .from("certificados_deuda")
+      .select("id, numero, solicitante, solicitado_en, emitido_en, deuda_total")
+      .eq("finca_id", finca.id)
+      .order("creado_en", { ascending: false }),
+  ]);
   const recibos = normalizarRecibos(filas);
   const resumen = resumirRecibos(recibos, hoy);
 
@@ -100,6 +109,18 @@ export default async function PaginaCuentaVivienda(props: PageProps<"/finanzas/r
         <h2 className="sobretitulo mb-3">Recibos ({recibos.length})</h2>
         <ListaRecibos recibos={recibos} editable={editor} hoy={hoy} mostrarPagos />
       </section>
+
+      <CertificadosDeuda
+        fincaId={finca.id}
+        titulares={finca.titulares.join(", ")}
+        editor={junta}
+        hoy={hoy}
+        certificados={(certificados ?? []).map((c) => ({
+          ...c,
+          deuda_total: c.deuda_total == null ? null : Number(c.deuda_total),
+          limite: limiteCertificado(c.solicitado_en),
+        }))}
+      />
     </div>
   );
 }
