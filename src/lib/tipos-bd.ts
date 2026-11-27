@@ -288,6 +288,8 @@ export type Database = {
           coeficiente_total: number
           creado_en: string
           cuota_mensual: number
+          saldo_inicial: number
+          saldo_inicial_fecha: string | null
           direccion: string | null
           iban: string | null
           id: string
@@ -308,6 +310,8 @@ export type Database = {
           coeficiente_total?: number
           creado_en?: string
           cuota_mensual?: number
+          saldo_inicial?: number
+          saldo_inicial_fecha?: string | null
           direccion?: string | null
           iban?: string | null
           id?: string
@@ -328,6 +332,8 @@ export type Database = {
           coeficiente_total?: number
           creado_en?: string
           cuota_mensual?: number
+          saldo_inicial?: number
+          saldo_inicial_fecha?: string | null
           direccion?: string | null
           iban?: string | null
           id?: string
@@ -611,6 +617,39 @@ export type Database = {
           },
         ]
       }
+      ingresos: {
+        Row: {
+          categoria_id: string | null
+          comunidad_id: string
+          concepto: string
+          creado_en: string
+          creado_por: string | null
+          fecha: string
+          id: string
+          importe: number
+        }
+        Insert: {
+          categoria_id?: string | null
+          comunidad_id: string
+          concepto: string
+          creado_en?: string
+          creado_por?: string | null
+          fecha?: string
+          id?: string
+          importe: number
+        }
+        Update: {
+          categoria_id?: string | null
+          comunidad_id?: string
+          concepto?: string
+          creado_en?: string
+          creado_por?: string | null
+          fecha?: string
+          id?: string
+          importe?: number
+        }
+        Relationships: []
+      }
       invitaciones: {
         Row: {
           aceptada_en: string | null
@@ -832,6 +871,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      movimientos_fondo: {
+        Row: {
+          comunidad_id: string
+          concepto: string
+          creado_en: string
+          creado_por: string | null
+          fecha: string
+          id: string
+          importe: number
+          tipo: Database["public"]["Enums"]["tipo_movimiento_fondo"]
+        }
+        Insert: {
+          comunidad_id: string
+          concepto: string
+          creado_en?: string
+          creado_por?: string | null
+          fecha?: string
+          id?: string
+          importe: number
+          tipo: Database["public"]["Enums"]["tipo_movimiento_fondo"]
+        }
+        Update: {
+          comunidad_id?: string
+          concepto?: string
+          creado_en?: string
+          creado_por?: string | null
+          fecha?: string
+          id?: string
+          importe?: number
+          tipo?: Database["public"]["Enums"]["tipo_movimiento_fondo"]
+        }
+        Relationships: []
       }
       notificaciones: {
         Row: {
@@ -1528,6 +1600,10 @@ export type Database = {
     }
     Functions: {
       comparte_comunidad: { Args: { p_usuario_id: string }; Returns: boolean }
+      cobros_por_mes: {
+        Args: { p_comunidad_id: string; p_desde: string; p_hasta: string }
+        Returns: { mes: string; total: number }[]
+      }
       configurar_fincas: {
         Args: {
           p_casas: number
@@ -1626,6 +1702,7 @@ export type Database = {
         | "otro"
       tipo_junta: "ordinaria" | "extraordinaria"
       tipo_movimiento: "ingreso" | "gasto"
+      tipo_movimiento_fondo: "dotacion" | "disposicion"
       tipo_punto: "informativo" | "acuerdo" | "votacion"
       tipo_titular: "propietario" | "inquilino" | "familiar"
     }
@@ -1797,6 +1874,7 @@ export const Constants = {
       ],
       tipo_junta: ["ordinaria", "extraordinaria"],
       tipo_movimiento: ["ingreso", "gasto"],
+      tipo_movimiento_fondo: ["dotacion", "disposicion"],
       tipo_punto: ["informativo", "acuerdo", "votacion"],
       tipo_titular: ["propietario", "inquilino", "familiar"],
     },
