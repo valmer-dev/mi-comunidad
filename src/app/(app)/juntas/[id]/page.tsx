@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
+  AlertTriangle,
   ArrowDown,
   ArrowLeft,
   ArrowUp,
@@ -32,7 +33,7 @@ import { calcularQuorum, type ModoAsistencia } from "@/lib/juntas";
 import { esAdministrador } from "@/lib/permisos";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
-import { formatoFecha, formatoFechaHora, formatoTamano } from "@/lib/utilidades";
+import { formatoFecha, formatoFechaHora, formatoMoneda, formatoTamano } from "@/lib/utilidades";
 import { EtiquetaEstado } from "@/components/ui/EtiquetaEstado";
 import { BotonEnviar, FormularioJunta } from "./FormularioJunta";
 import { ListaAsistencia, ResumenQuorum, type ViviendaAsistencia } from "./ListaAsistencia";
@@ -104,6 +105,10 @@ export default async function PaginaJunta(props: PageProps<"/juntas/[id]">) {
         : Promise.resolve({ data: null }),
     ]);
 
+  // Art. 15.2 y 16.2 LPH: viviendas con deudas vencidas el dia de la junta
+  const { data: morosos } = await supabase.rpc("morosos_junta", { p_junta_id: junta.id });
+  const deudaPorFinca = new Map((morosos ?? []).map((m) => [m.finca_id, m]));
+
   const idsFincas = (fincas ?? []).map((f) => f.id);
   const { data: titulares } = idsFincas.length
     ? await supabase
@@ -141,6 +146,7 @@ export default async function PaginaJunta(props: PageProps<"/juntas/[id]">) {
       coeficiente: Number(asistencia?.coeficiente ?? finca.coeficiente),
       modo: (asistencia?.modo ?? "ausente") as ModoAsistencia,
       representante: asistencia?.representante_nombre ?? "",
+      sinVoto: deudaPorFinca.has(finca.id),
     };
   });
   const coeficienteTotal = Number(comunidad.coeficiente_total) || 100;
@@ -319,6 +325,42 @@ export default async function PaginaJunta(props: PageProps<"/juntas/[id]">) {
         )}
       </section>
 
+      {/* Propietarios que no estan al corriente */}
+      <section className="tarjeta">
+        <h2 className="flex items-center gap-2 text-lg font-semibold">
+          <AlertTriangle className="size-4.5 text-principal" aria-hidden />
+          Propietarios que no están al corriente
+        </h2>
+        <p className="mt-1 text-sm text-suave">
+          Viviendas con recibos vencidos y sin pagar el día de la junta. Pueden asistir y
+          hablar, pero no votar (art. 15.2 LPH). Esta relación debe figurar en la
+          convocatoria (art. 16.2).
+        </p>
+        {(morosos ?? []).length === 0 ? (
+          <p className="mt-3 rounded-xl bg-exito-claro px-3.5 py-2.5 text-sm text-exito">
+            Todas las viviendas están al corriente de pago.
+          </p>
+        ) : (
+          <ul className="mt-3 divide-y divide-borde text-sm">
+            {(morosos ?? []).map((moroso) => (
+              <li key={moroso.finca_id} className="flex flex-wrap justify-between gap-x-3 gap-y-0.5 py-2">
+                <span>
+                  <span className="font-medium">{moroso.codigo}</span>
+                  {nombresPorFinca.get(moroso.finca_id)?.length ? (
+                    <span className="text-suave"> · {nombresPorFinca.get(moroso.finca_id)?.join(", ")}</span>
+                  ) : null}
+                </span>
+                {administrador && (
+                  <span className="tabular-nums text-peligro">
+                    {formatoMoneda(moroso.deuda)}
+                  </span>
+                )}
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
       {/* Asistencia */}
       <section className="tarjeta">
         <h2 className="flex items-center gap-2 text-lg font-semibold">
@@ -375,6 +417,8 @@ export default async function PaginaJunta(props: PageProps<"/juntas/[id]">) {
             >
               <p className="text-sm text-suave">
                 Los votos se anotan como suma de coeficientes (%) de las viviendas.
+                {quorum.sinVoto > 0 &&
+                  ` No cuentes ${quorum.sinVoto === 1 ? "la vivienda" : `las ${quorum.sinVoto} viviendas`} con deudas vencidas: pueden votar como máximo el ${quorum.porcentajeVoto.toLocaleString("es-ES", { maximumFractionDigits: 2 })} %.`}
               </p>
               <ol className="mt-3 space-y-4">
                 {listaPuntos.map((punto, indice) => (

@@ -1635,6 +1635,10 @@ export type Database = {
         Args: { p_coeficientes: Json; p_comunidad_id: string }
         Returns: Json
       }
+      morosos_junta: {
+        Args: { p_junta_id: string }
+        Returns: { codigo: string; desde: string; deuda: number; finca_id: string }[]
+      }
       puede_editar_finanzas: { Args: { p_comunidad_id: string }; Returns: boolean }
       puede_gestionar_documentos: {
         Args: { p_comunidad_id: string }
