@@ -52,7 +52,7 @@ export function BarraLateral({
   ];
 
   return (
-    <aside className="sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-borde bg-superficie px-3 py-6 lg:flex">
+    <aside className="no-imprimir sticky top-0 hidden h-dvh w-64 shrink-0 flex-col border-r border-borde bg-superficie px-3 py-6 lg:flex">
       <Link href="/panel" className="flex items-center gap-3 px-3">
         <span className="grid size-10 place-items-center rounded-xl bg-gradient-to-br from-marca to-marca-oscuro text-white shadow-elevada">
           <Building2 className="size-5" aria-hidden />

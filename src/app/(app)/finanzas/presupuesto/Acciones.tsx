@@ -1,6 +1,6 @@
 "use client";
 
-import { CheckCircle2, Lock, Printer, RotateCcw, Trash2, Wallet } from "lucide-react";
+import { CheckCircle2, Lock, RotateCcw, Trash2, Wallet } from "lucide-react";
 import {
   aplicarCuotaPresupuesto,
   cambiarEstadoPresupuesto,
@@ -133,14 +133,5 @@ export function AccionesPresupuesto({
         </FormularioAccion>
       )}
     </div>
-  );
-}
-
-export function BotonImprimir() {
-  return (
-    <button type="button" onClick={() => window.print()} className="boton boton-borde px-3 py-1.5 text-sm print:hidden">
-      <Printer className="size-4" aria-hidden />
-      Imprimir o guardar en PDF
-    </button>
   );
 }
