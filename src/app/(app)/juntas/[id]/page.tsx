@@ -26,6 +26,7 @@ import {
   guardarActa,
   guardarAcuerdos,
   guardarPunto,
+  guardarRespuestasAusentes,
   moverPunto,
   quitarActaPdf,
 } from "@/app/acciones/juntas";
@@ -37,6 +38,17 @@ import {
   type MedioConvocatoria,
 } from "@/lib/convocatoria";
 import { calcularQuorum, type ModoAsistencia } from "@/lib/juntas";
+import { hoyISO } from "@/lib/recibos";
+import {
+  calcularVotacion,
+  DIAS_AUSENTES,
+  finPlazoAusentes,
+  MAYORIAS,
+  MAYORIAS_CORTO,
+  plazoAusentesCumplido,
+  type Sentido,
+  type VotoVivienda,
+} from "@/lib/votaciones";
 import { esCorreoInterno } from "@/lib/telefono";
 import { esAdministrador } from "@/lib/permisos";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
@@ -46,7 +58,9 @@ import { EtiquetaEstado } from "@/components/ui/EtiquetaEstado";
 import { BotonEnviar, FormularioJunta } from "./FormularioJunta";
 import { EnviarConvocatoria } from "./EnviarConvocatoria";
 import { ListaAsistencia, ResumenQuorum, type ViviendaAsistencia } from "./ListaAsistencia";
+import { ResultadoVotacion } from "./ResultadoVotacion";
 import { SubirActa } from "./SubirActa";
+import { VotosPunto } from "./VotosPunto";
 
 export const metadata = { title: "Junta" };
 
@@ -55,16 +69,6 @@ const TIPOS_PUNTO = {
   acuerdo: "Acuerdo",
   votacion: "Votación",
 } as const;
-
-const MAYORIAS = {
-  simple: "Mayoría simple",
-  doble: "Doble mayoría",
-  unanimidad: "Unanimidad",
-} as const;
-
-function numero(valor: number | null) {
-  return valor === null ? "" : valor.toLocaleString("es-ES", { maximumFractionDigits: 4 });
-}
 
 export default async function PaginaJunta(props: PageProps<"/juntas/[id]">) {
   const { id } = await props.params;
@@ -77,7 +81,7 @@ export default async function PaginaJunta(props: PageProps<"/juntas/[id]">) {
   const { data: junta } = await supabase
     .from("juntas")
     .select(
-      "id, titulo, tipo, fecha_hora, lugar, estado, segunda_convocatoria_minutos, acta_texto, acta_documento_id, acta_aprobada_en, celebrada_en, convocatoria_enviada_en, convocatoria_medios",
+      "id, titulo, tipo, fecha_hora, lugar, estado, segunda_convocatoria_minutos, acta_texto, acta_documento_id, acta_aprobada_en, acta_notificada_en, celebrada_en, convocatoria_enviada_en, convocatoria_medios",
     )
     .eq("id", id)
     .eq("comunidad_id", comunidad.id)
@@ -196,6 +200,41 @@ export default async function PaginaJunta(props: PageProps<"/juntas/[id]">) {
   }
 
   const listaPuntos = puntos ?? [];
+
+  // Votaciones: voto de cada vivienda y resultado según la mayoría del punto
+  const idsPuntosVoto = listaPuntos.filter((p) => p.tipo !== "informativo").map((p) => p.id);
+  const { data: votos } = idsPuntosVoto.length
+    ? await supabase.from("votos").select("punto_id, finca_id, sentido, ausente").in("punto_id", idsPuntosVoto)
+    : { data: [] };
+  const votosPorPunto = new Map<string, Map<string, VotoVivienda>>();
+  for (const voto of votos ?? []) {
+    const mapa = votosPorPunto.get(voto.punto_id) ?? new Map<string, VotoVivienda>();
+    mapa.set(voto.finca_id, { sentido: voto.sentido as Sentido, ausente: voto.ausente });
+    votosPorPunto.set(voto.punto_id, mapa);
+  }
+  const viviendasVoto = viviendas.map((v) => ({
+    fincaId: v.fincaId,
+    coeficiente: v.coeficiente,
+    presente: v.modo !== "ausente",
+    sinVoto: Boolean(v.sinVoto),
+  }));
+  const finPlazo = finPlazoAusentes(junta.acta_notificada_en);
+  const plazoCumplido = plazoAusentesCumplido(junta.acta_notificada_en, hoyISO());
+  const votacion = (punto: (typeof listaPuntos)[number]) => {
+    const mapa = votosPorPunto.get(punto.id) ?? new Map<string, VotoVivienda>();
+    const contrarios = viviendas
+      .filter((v) => mapa.get(v.fincaId)?.sentido === "contra")
+      .map((v) => `${v.codigo}${v.titulares ? ` (${v.titulares})` : ""}${mapa.get(v.fincaId)?.ausente ? ", ausente" : ""}`);
+    return {
+      resultado: calcularVotacion(punto.mayoria_requerida, viviendasVoto, mapa, plazoCumplido),
+      contrarios,
+      mapa,
+    };
+  };
+  const viviendasAusentes = viviendas.filter((v) => v.modo === "ausente" && !v.sinVoto);
+  const puntosConAusentes = listaPuntos.filter(
+    (p) => p.tipo !== "informativo" && p.mayoria_requerida !== "simple",
+  );
   const cerrada = junta.estado === "cerrada";
   const editarOrden = administrador && !cerrada;
   const editarActa = administrador && junta.estado === "celebrada";
@@ -347,7 +386,7 @@ export default async function PaginaJunta(props: PageProps<"/juntas/[id]">) {
                     <p className="font-medium">{punto.titulo}</p>
                     <p className="text-xs text-suave">
                       {TIPOS_PUNTO[punto.tipo]}
-                      {punto.tipo !== "informativo" && ` · ${MAYORIAS[punto.mayoria_requerida]}`}
+                      {punto.tipo !== "informativo" && ` · ${MAYORIAS_CORTO[punto.mayoria_requerida]}`}
                     </p>
                     {punto.descripcion && (
                       <p className="mt-1 whitespace-pre-line text-sm text-tinta/90">{punto.descripcion}</p>
@@ -501,9 +540,10 @@ export default async function PaginaJunta(props: PageProps<"/juntas/[id]">) {
               }
             >
               <p className="text-sm text-suave">
-                Los votos se anotan como suma de coeficientes (%) de las viviendas.
+                Anota el voto de cada vivienda presente o representada. Al guardar, la app
+                calcula si el acuerdo sale con la mayoría del punto.
                 {quorum.sinVoto > 0 &&
-                  ` No cuentes ${quorum.sinVoto === 1 ? "la vivienda" : `las ${quorum.sinVoto} viviendas`} con deudas vencidas: pueden votar como máximo el ${quorum.porcentajeVoto.toLocaleString("es-ES", { maximumFractionDigits: 2 })} %.`}
+                  ` ${quorum.sinVoto === 1 ? "La vivienda" : `Las ${quorum.sinVoto} viviendas`} con deudas vencidas no ${quorum.sinVoto === 1 ? "vota ni cuenta" : "votan ni cuentan"} para la mayoría (art. 15.2 LPH).`}
               </p>
               <ol className="mt-3 space-y-4">
                 {listaPuntos.map((punto, indice) => (
@@ -519,27 +559,35 @@ export default async function PaginaJunta(props: PageProps<"/juntas/[id]">) {
                       placeholder={punto.tipo === "informativo" ? "Resumen de lo informado" : "Texto del acuerdo"}
                       className="campo resize-y"
                     />
-                    {punto.tipo !== "informativo" && (
-                      <div className="grid grid-cols-3 gap-2">
-                        {(
-                          [
-                            ["favor", "A favor", punto.votos_favor],
-                            ["contra", "En contra", punto.votos_contra],
-                            ["abstenciones", "Abstenciones", punto.abstenciones],
-                          ] as const
-                        ).map(([clave, texto, valor]) => (
-                          <label key={clave} className="text-xs text-suave">
-                            {texto} (%)
-                            <input
-                              name={`${clave}_${punto.id}`}
-                              inputMode="decimal"
-                              defaultValue={numero(valor)}
-                              className="campo mt-1"
-                            />
-                          </label>
-                        ))}
-                      </div>
-                    )}
+                    {punto.tipo !== "informativo" && (() => {
+                      const { resultado, contrarios, mapa } = votacion(punto);
+                      return (
+                        <>
+                          <VotosPunto
+                            puntoId={punto.id}
+                            viviendas={viviendas
+                              .filter((v) => v.modo !== "ausente")
+                              .map((v) => {
+                                const voto = mapa.get(v.fincaId);
+                                return {
+                                  fincaId: v.fincaId,
+                                  codigo: v.codigo,
+                                  titulares: v.titulares,
+                                  coeficiente: v.coeficiente,
+                                  sinVoto: Boolean(v.sinVoto),
+                                  sentido: voto && !voto.ausente ? voto.sentido : "",
+                                };
+                              })}
+                          />
+                          <ResultadoVotacion
+                            mayoria={punto.mayoria_requerida}
+                            resultado={resultado}
+                            contrarios={contrarios}
+                            finPlazo={finPlazo}
+                          />
+                        </>
+                      );
+                    })()}
                   </li>
                 ))}
               </ol>
@@ -554,17 +602,97 @@ export default async function PaginaJunta(props: PageProps<"/juntas/[id]">) {
                   <p className="mt-0.5 whitespace-pre-line text-tinta/90">
                     {punto.resultado || <span className="text-suave">Sin acuerdo anotado.</span>}
                   </p>
-                  {punto.tipo !== "informativo" &&
-                    [punto.votos_favor, punto.votos_contra, punto.abstenciones].some((v) => v !== null) && (
-                      <p className="mt-0.5 text-xs text-suave">
-                        A favor {numero(punto.votos_favor) || "0"} % · En contra{" "}
-                        {numero(punto.votos_contra) || "0"} % · Abstenciones{" "}
-                        {numero(punto.abstenciones) || "0"} %
-                      </p>
-                    )}
+                  {punto.tipo !== "informativo" && (() => {
+                    const { resultado, contrarios } = votacion(punto);
+                    return (
+                      <ResultadoVotacion
+                        mayoria={punto.mayoria_requerida}
+                        resultado={resultado}
+                        contrarios={contrarios}
+                        finPlazo={finPlazo}
+                      />
+                    );
+                  })()}
                 </li>
               ))}
             </ol>
+          )}
+
+          {administrador && puntosConAusentes.length > 0 && viviendasAusentes.length > 0 && (
+            <details className="mt-5 border-t border-borde pt-4">
+              <summary className="cursor-pointer text-sm font-semibold text-principal">
+                Respuestas de los ausentes (art. 17.8 LPH)
+              </summary>
+              <FormularioJunta
+                accion={guardarRespuestasAusentes}
+                juntaId={junta.id}
+                className="mt-3"
+                boton={
+                  <>
+                    <Save className="size-4" aria-hidden />
+                    Guardar respuestas
+                  </>
+                }
+              >
+                <p className="text-sm text-suave">
+                  En los acuerdos de mayoría absoluta, tres quintos o unanimidad, los ausentes
+                  tienen {DIAS_AUSENTES} días naturales desde que se les notifica el acta para oponerse. Si
+                  no lo hacen, su voto cuenta a favor.
+                </p>
+                <div className="mt-3 sm:max-w-xs">
+                  <label htmlFor="acta_notificada_en" className="etiqueta">
+                    Acta notificada el
+                  </label>
+                  <input
+                    id="acta_notificada_en"
+                    name="acta_notificada_en"
+                    type="date"
+                    defaultValue={junta.acta_notificada_en ?? ""}
+                    className="campo"
+                  />
+                  <p className="mt-1 text-xs text-suave">
+                    {finPlazo
+                      ? `El plazo termina el ${formatoFecha(finPlazo)}.`
+                      : "Se rellena sola al publicar el PDF del acta."}
+                  </p>
+                </div>
+                <div className="mt-4 space-y-4">
+                  {puntosConAusentes.map((punto) => {
+                    const mapa = votosPorPunto.get(punto.id) ?? new Map<string, VotoVivienda>();
+                    return (
+                      <fieldset key={punto.id}>
+                        <legend className="text-sm font-medium">
+                          {listaPuntos.indexOf(punto) + 1}. {punto.titulo}
+                        </legend>
+                        <ul className="mt-1.5 divide-y divide-borde rounded-xl border border-borde">
+                          {viviendasAusentes.map((v) => {
+                            const voto = mapa.get(v.fincaId);
+                            return (
+                              <li key={v.fincaId} className="flex items-center justify-between gap-3 px-3 py-1.5">
+                                <span className="min-w-0 text-sm">
+                                  <span className="font-medium">{v.codigo}</span>
+                                  {v.titulares && <span className="text-suave"> · {v.titulares}</span>}
+                                </span>
+                                <select
+                                  name={`ausente_${punto.id}_${v.fincaId}`}
+                                  defaultValue={voto?.ausente ? voto.sentido : ""}
+                                  aria-label={`Respuesta de ${v.codigo}`}
+                                  className="campo w-40 shrink-0 py-1.5 text-sm"
+                                >
+                                  <option value="">Sin respuesta</option>
+                                  <option value="contra">Se opone</option>
+                                  <option value="favor">Está de acuerdo</option>
+                                </select>
+                              </li>
+                            );
+                          })}
+                        </ul>
+                      </fieldset>
+                    );
+                  })}
+                </div>
+              </FormularioJunta>
+            </details>
           )}
         </section>
       )}
