@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { CalendarDays, ChevronRight, PiggyBank, ReceiptText, TrendingDown, TrendingUp, Wallet } from "lucide-react";
+import { Calculator, CalendarDays, ChevronRight, PiggyBank, ReceiptText, TrendingDown, TrendingUp, Wallet } from "lucide-react";
 import { requerirContexto } from "@/lib/auth";
 import { esAdministrador, puedeEditarFinanzas, puedeVerFinanzas } from "@/lib/permisos";
 import { hoyISO, resumirRecibos } from "@/lib/recibos";
@@ -110,8 +110,19 @@ export default async function PaginaFinanzas() {
     cobradoAnio + ingresosAnio.reduce((total, ingreso) => total + Number(ingreso.importe), 0);
 
   const fondo = saldoFondo(movimientosFondo ?? []);
-  // Hasta que haya presupuestos en la app, el ordinario se estima con la cuota.
-  const presupuestoOrdinario = Number(comunidad.cuota_mensual ?? 0) * 12;
+  // Minimo legal: 10 % del ultimo presupuesto ordinario aprobado. Si aun no
+  // hay ninguno, se estima con la cuota mensual por 12.
+  const { data: ultimoPresupuesto } = await supabase
+    .from("presupuestos")
+    .select("ejercicio, total_gastos")
+    .eq("comunidad_id", comunidad.id)
+    .in("estado", ["aprobado", "cerrado"])
+    .order("ejercicio", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  const presupuestoOrdinario = ultimoPresupuesto
+    ? Number(ultimoPresupuesto.total_gastos)
+    : Number(comunidad.cuota_mensual ?? 0) * 12;
   const minimo = minimoFondo(presupuestoOrdinario);
   const fondoBajo = presupuestoOrdinario > 0 && fondo < minimo;
 
@@ -207,7 +218,10 @@ export default async function PaginaFinanzas() {
         <p className="aviso aviso-atencion mt-3">
           El fondo de reserva debe ser al menos el {PORCENTAJE_MINIMO_FONDO} % del presupuesto
           ordinario (art. 9.1.f de la Ley de Propiedad Horizontal). Faltan{" "}
-          {formatoMoneda(minimo - fondo)}. El presupuesto se estima con la cuota mensual por 12.
+          {formatoMoneda(minimo - fondo)}.{" "}
+          {ultimoPresupuesto
+            ? `Calculado sobre el presupuesto aprobado de ${ultimoPresupuesto.ejercicio}.`
+            : "Sin presupuesto aprobado, se estima con la cuota mensual por 12."}
         </p>
       )}
 
@@ -228,6 +242,22 @@ export default async function PaginaFinanzas() {
               : junta
                 ? "Cuotas de cada vivienda y estado de cuentas"
                 : "Estás al corriente de pago"}
+          </p>
+        </div>
+        <ChevronRight className="size-5 text-suave" aria-hidden />
+      </Link>
+
+      <Link
+        href="/finanzas/presupuesto"
+        className="tarjeta mt-3 flex items-center gap-3 p-4 transition-colors hover:bg-hundido"
+      >
+        <span className="icono-seccion bg-info-claro text-info">
+          <Calculator className="size-[18px]" aria-hidden />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold">Presupuesto y cuentas del año</p>
+          <p className="text-xs text-suave">
+            Previsto frente a gastado y liquidación para la junta ordinaria
           </p>
         </div>
         <ChevronRight className="size-5 text-suave" aria-hidden />
