@@ -1537,10 +1537,24 @@ export type Database = {
         }
         Returns: Json
       }
+      devolver_recibo: {
+        Args: { p_nota?: string; p_recibo_id: string }
+        Returns: undefined
+      }
       es_admin_plataforma: { Args: never; Returns: boolean }
       es_administrador: { Args: { p_comunidad_id: string }; Returns: boolean }
       es_miembro: { Args: { p_comunidad_id: string }; Returns: boolean }
       es_titular_de: { Args: { p_finca_id: string }; Returns: boolean }
+      generar_recibos: {
+        Args: {
+          p_comunidad_id: string
+          p_concepto: string
+          p_importe_total: number
+          p_periodo: string
+          p_vence_en?: string
+        }
+        Returns: Json
+      }
       guardar_coeficientes: {
         Args: { p_coeficientes: Json; p_comunidad_id: string }
         Returns: Json

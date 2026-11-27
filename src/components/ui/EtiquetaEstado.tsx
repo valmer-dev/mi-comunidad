@@ -14,6 +14,7 @@ const COLORES: Record<string, string> = {
   cerrada: NEUTRO,
   pendiente: ATENCION,
   pagado: EXITO,
+  parcial: INFO,
   devuelto: PELIGRO,
   aplazado: ACENTO,
   anulado: NEUTRO,

@@ -1,11 +1,14 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { CalendarDays, TrendingDown, Wallet } from "lucide-react";
+import { CalendarDays, ChevronRight, ReceiptText, TrendingDown, Wallet } from "lucide-react";
 import { requerirContexto } from "@/lib/auth";
-import { puedeEditarFinanzas, puedeVerFinanzas } from "@/lib/permisos";
+import { esAdministrador, puedeEditarFinanzas, puedeVerFinanzas } from "@/lib/permisos";
+import { hoyISO, resumirRecibos } from "@/lib/recibos";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { formatoFechaCorta, formatoMoneda, nombreMes } from "@/lib/utilidades";
 import { CabeceraPagina } from "@/components/ui/CabeceraPagina";
 import { NuevoGasto } from "./NuevoGasto";
+import { COLUMNAS_RECIBO, normalizarRecibos } from "./recibos/datos";
 import { ResumenMensual } from "./ResumenMensual";
 import { TarjetaCuota } from "./TarjetaCuota";
 
@@ -39,6 +42,15 @@ export default async function PaginaFinanzas() {
   ]);
 
   const listaGastos = gastos ?? [];
+
+  // Resumen de recibos: la junta ve el total pendiente de la comunidad; un
+  // vecino, por las politicas de la base de datos, solo los suyos.
+  const junta = editaFinanzas || esAdministrador(permisos);
+  const { data: filasRecibos } = await supabase
+    .from("recibos")
+    .select(COLUMNAS_RECIBO)
+    .eq("comunidad_id", comunidad.id);
+  const resumenRecibos = resumirRecibos(normalizarRecibos(filasRecibos), hoyISO());
 
   // Un gasto cuenta desde que se registra, aunque todavia no se haya marcado
   // como pagado: antes se filtraba por pagado = true y los gastos nuevos no
@@ -92,6 +104,28 @@ export default async function PaginaFinanzas() {
           puedeEditar={editaFinanzas}
         />
       </section>
+
+      <Link
+        href="/finanzas/recibos"
+        className="tarjeta mt-3 flex items-center gap-3 p-4 transition-colors hover:bg-hundido"
+      >
+        <span className="icono-seccion bg-atencion-claro text-atencion">
+          <ReceiptText className="size-[18px]" aria-hidden />
+        </span>
+        <div className="min-w-0 flex-1">
+          <p className="font-semibold">{junta ? "Recibos y cobros" : "Mis recibos"}</p>
+          <p className="text-xs text-suave">
+            {resumenRecibos.pendiente > 0
+              ? `${formatoMoneda(resumenRecibos.pendiente)} pendientes${
+                  resumenRecibos.vencido > 0 ? ` · ${formatoMoneda(resumenRecibos.vencido)} vencidos` : ""
+                }`
+              : junta
+                ? "Cuotas de cada vivienda y estado de cuentas"
+                : "Estás al corriente de pago"}
+          </p>
+        </div>
+        <ChevronRight className="size-5 text-suave" aria-hidden />
+      </Link>
 
       <section className="mt-8">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
