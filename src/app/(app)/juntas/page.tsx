@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { CalendarDays, ChevronRight, FileText, Gavel, MapPin } from "lucide-react";
+import { CalendarDays, ChevronRight, FileText, Gavel, MapPin, BookOpen } from "lucide-react";
 import { eliminarJunta } from "@/app/acciones/juntas";
 import { requerirContexto } from "@/lib/auth";
 import { esAdministrador } from "@/lib/permisos";
@@ -121,7 +121,17 @@ export default async function PaginaJuntas() {
         titulo="Juntas"
         icono={Gavel}
         descripcion="Convocatorias, asistencia, acuerdos y actas"
-        accion={administrador ? <NuevaJunta /> : undefined}
+        accion={
+          administrador ? (
+            <div className="flex flex-wrap gap-2">
+              <Link href="/juntas/libro" className="boton boton-borde">
+                <BookOpen className="size-4" aria-hidden />
+                Libro de actas
+              </Link>
+              <NuevaJunta />
+            </div>
+          ) : undefined
+        }
       />
 
       <section>

@@ -538,6 +538,11 @@ const esquemaActa = z.object({
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/, "La fecha de aprobación no es válida.")
     .optional(),
+  firmada: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "La fecha de firma no es válida.")
+    .optional(),
+  convocatoria: z.enum(["1", "2"]).optional(),
 });
 
 /** Guarda el texto del acta y la fecha en que se aprobó. */
@@ -552,6 +557,8 @@ export async function guardarActa(
   const resultado = esquemaActa.safeParse({
     texto: datos.get("acta_texto") || undefined,
     aprobada: datos.get("acta_aprobada_en") || undefined,
+    firmada: datos.get("acta_firmada_en") || undefined,
+    convocatoria: datos.get("convocatoria_celebrada") || undefined,
   });
   if (!resultado.success) {
     return { error: resultado.error.issues[0]?.message ?? "Revisa los datos." };
@@ -562,10 +569,40 @@ export async function guardarActa(
     .update({
       acta_texto: resultado.data.texto ?? null,
       acta_aprobada_en: resultado.data.aprobada ?? null,
+      acta_firmada_en: resultado.data.firmada ?? null,
+      convocatoria_celebrada: resultado.data.convocatoria ? Number(resultado.data.convocatoria) : null,
     })
     .eq("id", junta.id);
 
   if (error) return { error: "No se pudo guardar el acta." };
+  revalidarJunta(junta.id);
+  return { ok: true };
+}
+
+/**
+ * Notifica el acta a todos los vecinos en la app. Desde hoy corren los 30
+ * días de los ausentes (art. 17.8 LPH) y los plazos de impugnación de los
+ * ausentes (art. 18.3).
+ */
+export async function notificarActa(
+  _estado: EstadoJunta,
+  datos: FormData,
+): Promise<EstadoJunta> {
+  const contexto = await juntaAdministrable(datos.get("junta_id"));
+  if ("error" in contexto) return { error: contexto.error };
+  const { supabase, junta, comunidad } = contexto;
+  if (junta.estado !== "celebrada" && junta.estado !== "cerrada") {
+    return { error: "La junta todavía no se ha celebrado." };
+  }
+  if (junta.acta_notificada_en) return { ok: true };
+
+  const { error } = await supabase
+    .from("juntas")
+    .update({ acta_notificada_en: hoyISO() })
+    .eq("id", junta.id);
+  if (error) return { error: "No se pudo notificar el acta." };
+
+  enviarAvisosDespues(comunidad.id);
   revalidarJunta(junta.id);
   return { ok: true };
 }

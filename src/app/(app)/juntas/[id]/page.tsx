@@ -28,6 +28,7 @@ import {
   guardarPunto,
   guardarRespuestasAusentes,
   moverPunto,
+  notificarActa,
   quitarActaPdf,
 } from "@/app/acciones/juntas";
 import { requerirContexto } from "@/lib/auth";
@@ -39,6 +40,7 @@ import {
 } from "@/lib/convocatoria";
 import { calcularQuorum, type ModoAsistencia } from "@/lib/juntas";
 import { hoyISO } from "@/lib/recibos";
+import { limiteFirmaActa, plazosImpugnacion } from "@/lib/datos-acta";
 import {
   calcularVotacion,
   DIAS_AUSENTES,
@@ -81,7 +83,7 @@ export default async function PaginaJunta(props: PageProps<"/juntas/[id]">) {
   const { data: junta } = await supabase
     .from("juntas")
     .select(
-      "id, titulo, tipo, fecha_hora, lugar, estado, segunda_convocatoria_minutos, acta_texto, acta_documento_id, acta_aprobada_en, acta_notificada_en, celebrada_en, convocatoria_enviada_en, convocatoria_medios",
+      "id, titulo, tipo, fecha_hora, lugar, estado, segunda_convocatoria_minutos, acta_texto, acta_documento_id, acta_aprobada_en, acta_notificada_en, acta_firmada_en, convocatoria_celebrada, celebrada_en, convocatoria_enviada_en, convocatoria_medios",
     )
     .eq("id", id)
     .eq("comunidad_id", comunidad.id)
@@ -200,6 +202,9 @@ export default async function PaginaJunta(props: PageProps<"/juntas/[id]">) {
   }
 
   const listaPuntos = puntos ?? [];
+  const hoy = hoyISO();
+  const limiteFirma = limiteFirmaActa(junta.fecha_hora);
+  const plazos = plazosImpugnacion(junta.fecha_hora, junta.acta_notificada_en);
 
   // Votaciones: voto de cada vivienda y resultado según la mayoría del punto
   const idsPuntosVoto = listaPuntos.filter((p) => p.tipo !== "informativo").map((p) => p.id);
@@ -219,7 +224,7 @@ export default async function PaginaJunta(props: PageProps<"/juntas/[id]">) {
     sinVoto: Boolean(v.sinVoto),
   }));
   const finPlazo = finPlazoAusentes(junta.acta_notificada_en);
-  const plazoCumplido = plazoAusentesCumplido(junta.acta_notificada_en, hoyISO());
+  const plazoCumplido = plazoAusentesCumplido(junta.acta_notificada_en, hoy);
   const votacion = (punto: (typeof listaPuntos)[number]) => {
     const mapa = votosPorPunto.get(punto.id) ?? new Map<string, VotoVivienda>();
     const contrarios = viviendas
@@ -700,10 +705,54 @@ export default async function PaginaJunta(props: PageProps<"/juntas/[id]">) {
       {/* Acta */}
       {junta.estado !== "convocada" && (
         <section className="tarjeta">
-          <h2 className="flex items-center gap-2 text-lg font-semibold">
-            <ClipboardList className="size-4.5 text-principal" aria-hidden />
-            Acta
-          </h2>
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <h2 className="flex items-center gap-2 text-lg font-semibold">
+              <ClipboardList className="size-4.5 text-principal" aria-hidden />
+              Acta
+            </h2>
+            {(administrador || cerrada || junta.acta_notificada_en) && (
+              <Link href={`/juntas/${junta.id}/acta`} className="boton boton-borde px-3 py-1.5 text-sm">
+                <FileText className="size-4" aria-hidden />
+                {administrador && !junta.acta_firmada_en ? "Ver borrador del acta" : "Ver acta"}
+              </Link>
+            )}
+          </div>
+
+          {administrador && !junta.acta_firmada_en && (
+            <p className={`mt-3 ${hoy > limiteFirma ? "aviso aviso-atencion" : "text-sm text-suave"}`}>
+              {hoy > limiteFirma
+                ? `El acta debía cerrarse y firmarse por el presidente y el secretario antes del ${formatoFecha(limiteFirma)} (10 días naturales tras la junta, art. 19.3 LPH).`
+                : `El presidente y el secretario deben cerrarla y firmarla como tarde el ${formatoFecha(limiteFirma)} (art. 19.3 LPH).`}
+            </p>
+          )}
+
+          <div className="mt-3 rounded-xl bg-hundido/60 px-3.5 py-2.5 text-sm">
+            {junta.acta_notificada_en ? (
+              <p>Notificada a los vecinos el {formatoFecha(junta.acta_notificada_en)}.</p>
+            ) : administrador ? (
+              <FormularioJunta accion={notificarActa} juntaId={junta.id} className="flex flex-wrap items-center justify-between gap-2">
+                <span>El acta aún no se ha notificado a los vecinos.</span>
+                <BotonEnviar className="boton boton-principal px-3 py-1.5 text-sm">
+                  <Send className="size-4" aria-hidden />
+                  Notificar el acta
+                </BotonEnviar>
+              </FormularioJunta>
+            ) : (
+              <p>El acta aún no se ha notificado.</p>
+            )}
+            <p className="mt-1.5 text-xs text-suave">
+              Plazo para impugnar acuerdos (art. 18.3 LPH): quien asistió, hasta el{" "}
+              {formatoFecha(plazos.presentes.tresMeses)}
+              {plazos.ausentes
+                ? `; quien no asistió, hasta el ${formatoFecha(plazos.ausentes.tresMeses)}`
+                : "; quien no asistió, 3 meses desde que se le notifique el acta"}
+              . Si el acuerdo es contrario a la ley o a los estatutos, el plazo es de un año
+              {plazos.ausentes
+                ? ` (${formatoFecha(plazos.presentes.unAno)} y ${formatoFecha(plazos.ausentes.unAno)})`
+                : ` (${formatoFecha(plazos.presentes.unAno)} para quien asistió)`}
+              .
+            </p>
+          </div>
 
           {documento && (
             <div className="mt-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-borde p-3">
@@ -767,7 +816,35 @@ export default async function PaginaJunta(props: PageProps<"/juntas/[id]">) {
                       placeholder="Borrador del acta o resumen para los vecinos"
                     />
                   </div>
-                  <div className="sm:max-w-xs">
+                  <div className="grid gap-4 sm:grid-cols-3">
+                  <div>
+                    <label htmlFor="convocatoria_celebrada" className="etiqueta">
+                      Se celebró en
+                    </label>
+                    <select
+                      id="convocatoria_celebrada"
+                      name="convocatoria_celebrada"
+                      defaultValue={junta.convocatoria_celebrada ? String(junta.convocatoria_celebrada) : ""}
+                      className="campo"
+                    >
+                      <option value="">Sin indicar</option>
+                      <option value="1">Primera convocatoria</option>
+                      <option value="2">Segunda convocatoria</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label htmlFor="acta_firmada_en" className="etiqueta">
+                      Cerrada y firmada el
+                    </label>
+                    <input
+                      id="acta_firmada_en"
+                      name="acta_firmada_en"
+                      type="date"
+                      defaultValue={junta.acta_firmada_en ?? ""}
+                      className="campo"
+                    />
+                  </div>
+                  <div>
                     <label htmlFor="acta_aprobada_en" className="etiqueta">
                       Fecha de aprobación (opcional)
                     </label>
@@ -778,6 +855,7 @@ export default async function PaginaJunta(props: PageProps<"/juntas/[id]">) {
                       defaultValue={junta.acta_aprobada_en ?? ""}
                       className="campo"
                     />
+                  </div>
                   </div>
                 </div>
               </FormularioJunta>
