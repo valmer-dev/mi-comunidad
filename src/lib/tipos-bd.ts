@@ -1625,6 +1625,7 @@ export type Database = {
           nombre: string
           orden: number
           ver_finanzas: boolean
+          edita_finanzas: boolean
         }
         Insert: {
           actualizado_en?: string
@@ -1638,6 +1639,7 @@ export type Database = {
           nombre: string
           orden?: number
           ver_finanzas?: boolean
+          edita_finanzas?: boolean
         }
         Update: {
           actualizado_en?: string
@@ -1651,6 +1653,7 @@ export type Database = {
           nombre?: string
           orden?: number
           ver_finanzas?: boolean
+          edita_finanzas?: boolean
         }
         Relationships: []
       }

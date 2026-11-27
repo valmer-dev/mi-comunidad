@@ -19,8 +19,8 @@ export default async function PaginaCuentaVivienda(props: PageProps<"/finanzas/r
   const { fincaId } = await props.params;
   if (!/^[0-9a-f-]{36}$/i.test(fincaId)) notFound();
 
-  const { comunidad, miembro, usuario, esAdminPlataforma, permisos } = await requerirContexto();
-  const editor = puedeEditarFinanzas(miembro.rol, esAdminPlataforma);
+  const { comunidad, usuario, permisos } = await requerirContexto();
+  const editor = puedeEditarFinanzas(permisos);
   const junta = editor || esAdministrador(permisos);
   const supabase = await crearClienteServidor();
   const hoy = hoyISO();

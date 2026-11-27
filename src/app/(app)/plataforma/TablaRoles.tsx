@@ -14,6 +14,7 @@ const PERMISOS = [
   { campo: "gestiona_documentos", etiqueta: "Gestionar documentos" },
   { campo: "gestiona_incidencias", etiqueta: "Gestionar incidencias" },
   { campo: "ver_finanzas", etiqueta: "Ver finanzas" },
+  { campo: "edita_finanzas", etiqueta: "Editar finanzas (gastos, recibos, presupuestos, derramas)" },
 ] as const;
 
 const ETIQUETAS_CORTAS: Record<(typeof PERMISOS)[number]["campo"], string> = {
@@ -22,6 +23,7 @@ const ETIQUETAS_CORTAS: Record<(typeof PERMISOS)[number]["campo"], string> = {
   gestiona_documentos: "Documentos",
   gestiona_incidencias: "Incidencias",
   ver_finanzas: "Finanzas",
+  edita_finanzas: "Editar finanzas",
 };
 
 function ResumenPermisos({ rol }: { rol: RolSistema }) {

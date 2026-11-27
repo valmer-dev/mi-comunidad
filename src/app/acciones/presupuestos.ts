@@ -10,13 +10,13 @@ import { formatoMoneda } from "@/lib/utilidades";
 
 /**
  * Presupuesto anual por partidas, su aprobacion en junta y la cuota que
- * sale de el. Solo el presidente y el administrador de plataforma.
+ * sale de el. Solo quien tenga permiso para editar finanzas.
  */
 
 export type EstadoPresupuesto = { error?: string; ok?: boolean; mensaje?: string };
 
 const SIN_PERMISO = {
-  error: "Solo el presidente o el administrador de plataforma pueden editar el presupuesto.",
+  error: "No tienes permiso para editar el presupuesto.",
 };
 
 const ejercicio = z.coerce
@@ -35,7 +35,7 @@ const importe = z
 
 async function contextoEditor() {
   const contexto = await requerirContexto();
-  if (!puedeEditarFinanzas(contexto.miembro.rol, contexto.esAdminPlataforma)) return null;
+  if (!puedeEditarFinanzas(contexto.permisos)) return null;
   return contexto;
 }
 

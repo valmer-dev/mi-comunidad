@@ -15,9 +15,9 @@ export const metadata = { title: "Servicios" };
 const FECHA = new Intl.DateTimeFormat("es-ES", { day: "numeric", month: "long", timeZone: "UTC" });
 
 export default async function PaginaServicios() {
-  const { comunidad, permisos, miembro, esAdminPlataforma } = await requerirContexto();
+  const { comunidad, permisos } = await requerirContexto();
   const supabase = await crearClienteServidor();
-  const puedeGestionar = esAdministrador(permisos) || puedeEditarFinanzas(miembro.rol, esAdminPlataforma);
+  const puedeGestionar = esAdministrador(permisos) || puedeEditarFinanzas(permisos);
   const junta = puedeGestionar || puedeVerFinanzas(permisos);
   const hoy = hoyISO();
   const anio = hoy.slice(0, 4);

@@ -11,14 +11,14 @@ import { formatoMoneda } from "@/lib/utilidades";
 
 /**
  * Recibos por vivienda: generar los de un periodo, cobrar (total o parcial),
- * marcar una devolucion del banco y anular. Solo el presidente y el
- * administrador de plataforma, igual que el resto de la parte economica.
+ * marcar una devolucion del banco y anular. Quien tenga el permiso de editar
+ * finanzas, igual que el resto de la parte economica.
  */
 
 export type EstadoRecibos = { error?: string; ok?: boolean; mensaje?: string };
 
 const SIN_PERMISO = {
-  error: "Solo el presidente o el administrador de plataforma pueden gestionar los recibos.",
+  error: "No tienes permiso para gestionar los recibos.",
 };
 
 const fecha = z
@@ -46,7 +46,7 @@ function refrescar(fincaId?: string) {
 
 async function contextoEditor() {
   const contexto = await requerirContexto();
-  if (!puedeEditarFinanzas(contexto.miembro.rol, contexto.esAdminPlataforma)) return null;
+  if (!puedeEditarFinanzas(contexto.permisos)) return null;
   return contexto;
 }
 

@@ -40,9 +40,9 @@ function diaSiguiente(fecha: string) {
 
 /** El calendario de la comunidad en formato .ics para importarlo en el movil. */
 export async function GET(peticion: Request) {
-  const { comunidad, permisos, miembro, esAdminPlataforma } = await requerirContexto();
+  const { comunidad, permisos } = await requerirContexto();
   const junta =
-    esAdministrador(permisos) || puedeEditarFinanzas(miembro.rol, esAdminPlataforma) || puedeVerFinanzas(permisos);
+    esAdministrador(permisos) || puedeEditarFinanzas(permisos) || puedeVerFinanzas(permisos);
   if (!junta) return new Response("No autorizado", { status: 403 });
 
   const supabase = await crearClienteServidor();

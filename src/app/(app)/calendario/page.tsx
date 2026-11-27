@@ -26,8 +26,8 @@ function periodo(meses: number) {
  * juntas y actas).
  */
 export default async function PaginaCalendario() {
-  const { comunidad, permisos, miembro, esAdminPlataforma } = await requerirContexto();
-  const editor = esAdministrador(permisos) || puedeEditarFinanzas(miembro.rol, esAdminPlataforma);
+  const { comunidad, permisos } = await requerirContexto();
+  const editor = esAdministrador(permisos) || puedeEditarFinanzas(permisos);
   if (!editor && !puedeVerFinanzas(permisos)) redirect("/panel");
 
   const supabase = await crearClienteServidor();

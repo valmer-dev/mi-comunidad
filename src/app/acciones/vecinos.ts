@@ -46,6 +46,7 @@ const esquema = z.object({
     "vicepresidente",
     "vocal",
     "vecino",
+    "administrador_fincas",
     "administrador_plataforma",
   ]),
   fincaId: z.string().uuid().optional().or(z.literal("")),

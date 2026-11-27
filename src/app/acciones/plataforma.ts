@@ -164,14 +164,14 @@ export async function abrirComunidad(datos: FormData) {
 // ------------------------------------------------------------
 
 const esquemaRol = z.object({
-  clave: z.enum(["presidente", "vicepresidente", "vocal", "vecino"]),
+  clave: z.enum(["presidente", "vicepresidente", "vocal", "vecino", "administrador_fincas"]),
   nombre: z.string().trim().min(2, "Escribe el nombre del rol."),
   descripcion: z.string().trim().max(400, "La descripción es demasiado larga.").optional(),
 });
 
 export type EstadoRol = { error?: string; ok?: boolean };
 
-/** Edita nombre, descripción y permisos de uno de los cuatro roles de la comunidad. */
+/** Edita nombre, descripción y permisos de uno de los roles de la comunidad. */
 export async function actualizarRol(
   _estado: EstadoRol,
   datos: FormData,
@@ -206,7 +206,8 @@ export async function actualizarRol(
       gestiona_vecinos: datos.get("gestiona_vecinos") === "on",
       gestiona_documentos: datos.get("gestiona_documentos") === "on",
       gestiona_incidencias: datos.get("gestiona_incidencias") === "on",
-      ver_finanzas: datos.get("ver_finanzas") === "on",
+      ver_finanzas: datos.get("ver_finanzas") === "on" || datos.get("edita_finanzas") === "on",
+      edita_finanzas: datos.get("edita_finanzas") === "on",
     })
     .eq("clave", resultado.data.clave)
     .select("clave")

@@ -22,10 +22,10 @@ function centimos(valor: number | string | null | undefined) {
 }
 
 export default async function PaginaPresupuesto(props: PageProps<"/finanzas/presupuesto">) {
-  const { comunidad, miembro, esAdminPlataforma, permisos } = await requerirContexto();
+  const { comunidad, permisos } = await requerirContexto();
   if (!puedeVerFinanzas(permisos)) redirect("/panel");
 
-  const editor = puedeEditarFinanzas(miembro.rol, esAdminPlataforma);
+  const editor = puedeEditarFinanzas(permisos);
   const junta = editor || esAdministrador(permisos);
   const supabase = await crearClienteServidor();
   const hoy = hoyISO();

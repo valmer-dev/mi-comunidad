@@ -34,11 +34,11 @@ const ETIQUETAS_TIPO: Record<string, string> = {
 };
 
 export default async function PaginaIncidencias() {
-  const { usuario, comunidad, permisos, miembro, esAdminPlataforma } = await requerirContexto();
+  const { usuario, comunidad, permisos } = await requerirContexto();
   const supabase = await crearClienteServidor();
   const gestor = puedeGestionarIncidencias(permisos);
   const administrador = esAdministrador(permisos);
-  const editaFinanzas = puedeEditarFinanzas(miembro.rol, esAdminPlataforma);
+  const editaFinanzas = puedeEditarFinanzas(permisos);
   const verCostes = gestor || puedeVerFinanzas(permisos);
 
   const [{ data: incidencias }, { data: proveedores }, { data: todasFincas }] = await Promise.all([
