@@ -1,12 +1,15 @@
-import { MapPin, UserRound, Wrench } from "lucide-react";
+import { HardHat, MapPin, ShieldCheck, UserRound, Wallet, Wrench } from "lucide-react";
 import { eliminarIncidencia } from "@/app/acciones/incidencias";
 import { requerirContexto } from "@/lib/auth";
-import { esAdministrador, puedeGestionarIncidencias } from "@/lib/permisos";
+import { ESTADOS_SEGURO, type EstadoSeguro } from "@/lib/incidencias";
+import { esAdministrador, puedeEditarFinanzas, puedeGestionarIncidencias, puedeVerFinanzas } from "@/lib/permisos";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { formatoFecha, formatoFechaCorta } from "@/lib/utilidades";
 import { BotonEliminar } from "@/components/ui/BotonEliminar";
 import { CabeceraPagina, EstadoVacio } from "@/components/ui/CabeceraPagina";
 import { EtiquetaEstado } from "@/components/ui/EtiquetaEstado";
+import { FotosIncidencia, type Foto } from "./FotosIncidencia";
+import { GestionIncidencia } from "./GestionIncidencia";
 import { NuevaIncidencia } from "./NuevaIncidencia";
 import { SelectorEstado } from "./SelectorEstado";
 
@@ -31,16 +34,58 @@ const ETIQUETAS_TIPO: Record<string, string> = {
 };
 
 export default async function PaginaIncidencias() {
-  const { usuario, comunidad, permisos } = await requerirContexto();
+  const { usuario, comunidad, permisos, miembro, esAdminPlataforma } = await requerirContexto();
   const supabase = await crearClienteServidor();
   const gestor = puedeGestionarIncidencias(permisos);
   const administrador = esAdministrador(permisos);
+  const editaFinanzas = puedeEditarFinanzas(miembro.rol, esAdminPlataforma);
+  const verCostes = gestor || puedeVerFinanzas(permisos);
 
-  const { data: incidencias } = await supabase
-    .from("incidencias")
-    .select("id, titulo, descripcion, tipo, prioridad, estado, ubicacion, reportado_por, creado_en")
-    .eq("comunidad_id", comunidad.id)
-    .order("creado_en", { ascending: false });
+  const [{ data: incidencias }, { data: proveedores }, { data: todasFincas }] = await Promise.all([
+    supabase
+      .from("incidencias")
+      .select(
+        "id, titulo, descripcion, tipo, prioridad, estado, ubicacion, reportado_por, creado_en, proveedor_id, coste, responsable, finca_id, gasto_id, seguro_parte, seguro_comunicado_en, seguro_estado, seguro_indemnizacion",
+      )
+      .eq("comunidad_id", comunidad.id)
+      .order("creado_en", { ascending: false }),
+    supabase
+      .from("proveedores")
+      .select("id, nombre, categoria, telefono")
+      .eq("comunidad_id", comunidad.id)
+      .order("nombre"),
+    supabase
+      .from("fincas")
+      .select("id, codigo")
+      .eq("comunidad_id", comunidad.id)
+      .order("tipo")
+      .order("numero"),
+  ]);
+
+  const mapaProveedores = new Map((proveedores ?? []).map((p) => [p.id, p]));
+  const codigoFinca = new Map((todasFincas ?? []).map((f) => [f.id, f.codigo]));
+  const aseguradora = (proveedores ?? []).find((p) => /seguro/i.test(p.categoria ?? ""));
+
+  // Fotos de cada incidencia, con enlaces firmados de una hora.
+  const { data: filasFotos } = (incidencias ?? []).length
+    ? await supabase
+        .from("incidencias_fotos")
+        .select("id, incidencia_id, ruta, subido_por")
+        .in("incidencia_id", (incidencias ?? []).map((i) => i.id))
+        .order("creado_en")
+    : { data: [] };
+  const { data: firmadas } = (filasFotos ?? []).length
+    ? await supabase.storage.from("incidencias").createSignedUrls((filasFotos ?? []).map((f) => f.ruta), 60 * 60)
+    : { data: [] };
+  const fotosPorIncidencia = new Map<string, Foto[]>();
+  (filasFotos ?? []).forEach((foto, indice) => {
+    const url = firmadas?.[indice]?.signedUrl;
+    if (!url) return;
+    fotosPorIncidencia.set(foto.incidencia_id, [
+      ...(fotosPorIncidencia.get(foto.incidencia_id) ?? []),
+      { id: foto.id, url, puedeBorrar: gestor || foto.subido_por === usuario.id },
+    ]);
+  });
 
   const abiertas = (incidencias ?? []).filter(
     (i) => i.estado === "abierta" || i.estado === "en_curso",
@@ -180,6 +225,75 @@ export default async function PaginaIncidencias() {
           )}
         </div>
 
+        {(incidencia.proveedor_id || incidencia.responsable !== "comunidad" || incidencia.seguro_estado || (verCostes && incidencia.coste != null)) && (
+          <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs">
+            {incidencia.proveedor_id && mapaProveedores.has(incidencia.proveedor_id) && (
+              <span className="flex items-center gap-1.5">
+                <HardHat className="size-3.5 text-suave" aria-hidden />
+                Lo arregla {mapaProveedores.get(incidencia.proveedor_id)!.nombre}
+              </span>
+            )}
+            {incidencia.responsable === "privativo" && (
+              <span className="flex items-center gap-1.5">
+                <Wallet className="size-3.5 text-suave" aria-hidden />
+                Privativo: lo paga {incidencia.finca_id ? codigoFinca.get(incidencia.finca_id) ?? "la vivienda" : "la vivienda"}
+              </span>
+            )}
+            {incidencia.responsable === "por_determinar" && (
+              <span className="flex items-center gap-1.5">
+                <Wallet className="size-3.5 text-suave" aria-hidden />
+                Falta saber quién lo paga
+              </span>
+            )}
+            {verCostes && incidencia.coste != null && (
+              <span className="tabular-nums">
+                Coste {Number(incidencia.coste).toLocaleString("es-ES", { style: "currency", currency: "EUR" })}
+                {incidencia.gasto_id && " · apuntado en gastos"}
+              </span>
+            )}
+            {incidencia.seguro_estado && (
+              <span className="flex items-center gap-1.5">
+                <ShieldCheck className="size-3.5 text-suave" aria-hidden />
+                Seguro: {ESTADOS_SEGURO[incidencia.seguro_estado as EstadoSeguro] ?? incidencia.seguro_estado}
+                {incidencia.seguro_parte && ` (parte ${incidencia.seguro_parte})`}
+                {verCostes && incidencia.seguro_indemnizacion != null &&
+                  ` · ${Number(incidencia.seguro_indemnizacion).toLocaleString("es-ES", { style: "currency", currency: "EUR" })}`}
+              </span>
+            )}
+          </div>
+        )}
+
+        <FotosIncidencia
+          comunidadId={comunidad.id}
+          incidenciaId={incidencia.id}
+          fotos={fotosPorIncidencia.get(incidencia.id) ?? []}
+          puedeAnadir={gestor || incidencia.reportado_por === usuario.id}
+        />
+
+        {gestor && (
+          <GestionIncidencia
+            incidencia={{
+              id: incidencia.id,
+              proveedor_id: incidencia.proveedor_id,
+              coste: incidencia.coste == null ? null : Number(incidencia.coste),
+              responsable: incidencia.responsable,
+              finca_id: incidencia.finca_id,
+              gasto_id: incidencia.gasto_id,
+              seguro_parte: incidencia.seguro_parte,
+              seguro_comunicado_en: incidencia.seguro_comunicado_en,
+              seguro_estado: incidencia.seguro_estado,
+              seguro_indemnizacion: incidencia.seguro_indemnizacion == null ? null : Number(incidencia.seguro_indemnizacion),
+            }}
+            proveedores={(proveedores ?? []).map((p) => ({
+              id: p.id,
+              nombre: p.categoria ? `${p.nombre} (${p.categoria})` : p.nombre,
+            }))}
+            fincas={(todasFincas ?? []).map((f) => ({ id: f.id, nombre: f.codigo }))}
+            editaFinanzas={editaFinanzas}
+            seguro={aseguradora ? { nombre: aseguradora.nombre, telefono: aseguradora.telefono } : null}
+          />
+        )}
+
         {historial.length > 0 && (
           <div className="mt-3 rounded-xl bg-hundido/70 px-3 py-2">
             <p className="sobretitulo">
@@ -221,7 +335,7 @@ export default async function PaginaIncidencias() {
         titulo="Incidencias"
         icono={Wrench}
         descripcion="Averías y problemas del edificio"
-        accion={<NuevaIncidencia />}
+        accion={<NuevaIncidencia comunidadId={comunidad.id} />}
       />
 
       <section>
