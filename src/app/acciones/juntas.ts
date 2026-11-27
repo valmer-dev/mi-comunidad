@@ -6,6 +6,7 @@ import { requerirContexto } from "@/lib/auth";
 import { enviarAvisosDespues } from "@/lib/correo";
 import { TAMANO_MAXIMO_DOCUMENTO } from "@/lib/documentos";
 import { esAdministrador } from "@/lib/permisos";
+import { hoyISO } from "@/lib/recibos";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
 
@@ -139,7 +140,7 @@ async function juntaAdministrable(juntaId: unknown) {
   const supabase = await crearClienteServidor();
   const { data: junta } = await supabase
     .from("juntas")
-    .select("id, estado, acta_documento_id")
+    .select("id, estado, acta_documento_id, acta_notificada_en")
     .eq("id", id)
     .eq("comunidad_id", contexto.comunidad.id)
     .maybeSingle();
@@ -158,7 +159,7 @@ const esquemaPunto = z.object({
   titulo: z.string().trim().min(2, "El título del punto es demasiado corto.").max(200),
   descripcion: z.string().trim().max(2000).optional(),
   tipo: z.enum(["informativo", "acuerdo", "votacion"]),
-  mayoria: z.enum(["simple", "doble", "unanimidad"]),
+  mayoria: z.enum(["simple", "doble", "tres_quintos", "unanimidad"]),
 });
 
 /** Crea un punto nuevo (sin punto_id) o edita uno existente. */
@@ -346,39 +347,145 @@ function numeroOpcional(valor: FormDataEntryValue | null) {
   return Number.isFinite(numero) && numero >= 0 ? numero : Number.NaN;
 }
 
-/** Guarda el acuerdo y el recuento de cada punto del día. */
+const SENTIDOS = ["favor", "contra", "abstencion"] as const;
+type SentidoVoto = (typeof SENTIDOS)[number];
+
+function leerSentido(valor: FormDataEntryValue | null): SentidoVoto | null | undefined {
+  const texto = String(valor ?? "");
+  if (texto === "") return null;
+  return (SENTIDOS as readonly string[]).includes(texto) ? (texto as SentidoVoto) : undefined;
+}
+
+/**
+ * Guarda el texto de cada acuerdo y el voto de cada vivienda presente
+ * (`voto_<punto>_<finca>`). El recuento por coeficientes de los puntos se
+ * recalcula a partir de los votos.
+ */
 export async function guardarAcuerdos(
   _estado: EstadoJunta,
   datos: FormData,
 ): Promise<EstadoJunta> {
   const contexto = await juntaAdministrable(datos.get("junta_id"));
   if ("error" in contexto) return { error: contexto.error };
-  const { supabase, junta } = contexto;
+  const { supabase, junta, usuario } = contexto;
+  if (junta.estado !== "celebrada") {
+    return { error: "Los acuerdos se anotan con la junta celebrada y antes de cerrarla." };
+  }
 
-  const { data: puntos } = await supabase
-    .from("puntos_del_dia")
-    .select("id")
-    .eq("junta_id", junta.id);
+  const [{ data: puntos }, { data: asistencias }] = await Promise.all([
+    supabase.from("puntos_del_dia").select("id, tipo").eq("junta_id", junta.id),
+    supabase.from("asistencias").select("finca_id, modo").eq("junta_id", junta.id),
+  ]);
+  const presentes = (asistencias ?? []).filter((a) => a.modo !== "ausente").map((a) => a.finca_id);
 
   for (const punto of puntos ?? []) {
     const resultado = String(datos.get(`resultado_${punto.id}`) ?? "").trim().slice(0, 4000);
-    const favor = numeroOpcional(datos.get(`favor_${punto.id}`));
-    const contra = numeroOpcional(datos.get(`contra_${punto.id}`));
-    const abstenciones = numeroOpcional(datos.get(`abstenciones_${punto.id}`));
-    if ([favor, contra, abstenciones].some((n) => Number.isNaN(n))) {
-      return { error: "Los votos deben ser números positivos (suma de coeficientes)." };
+    const cambios: { resultado: string | null; votos_favor?: number | null; votos_contra?: number | null; abstenciones?: number | null } = {
+      resultado: resultado || null,
+    };
+
+    if (punto.tipo !== "informativo") {
+      const emitidos: { finca_id: string; sentido: SentidoVoto }[] = [];
+      const borrar: string[] = [];
+      for (const fincaId of presentes) {
+        const sentido = leerSentido(datos.get(`voto_${punto.id}_${fincaId}`));
+        if (sentido === undefined) return { error: "Hay un voto no válido." };
+        if (sentido) emitidos.push({ finca_id: fincaId, sentido });
+        else borrar.push(fincaId);
+      }
+
+      if (borrar.length) {
+        await supabase.from("votos").delete().eq("punto_id", punto.id).eq("ausente", false).in("finca_id", borrar);
+      }
+      if (emitidos.length) {
+        const { error } = await supabase.from("votos").upsert(
+          emitidos.map((voto) => ({ ...voto, punto_id: punto.id, ausente: false, emitido_por: usuario.id })),
+          { onConflict: "punto_id,finca_id" },
+        );
+        if (error) return { error: "No se pudieron guardar los votos." };
+      }
+
+      const { data: votos } = await supabase
+        .from("votos")
+        .select("sentido, coeficiente")
+        .eq("punto_id", punto.id)
+        .eq("ausente", false);
+      const suma = (sentido: SentidoVoto) => {
+        const filas = (votos ?? []).filter((voto) => voto.sentido === sentido);
+        return filas.length ? Number(filas.reduce((total, voto) => total + Number(voto.coeficiente), 0).toFixed(4)) : null;
+      };
+      cambios.votos_favor = suma("favor");
+      cambios.votos_contra = suma("contra");
+      cambios.abstenciones = suma("abstencion");
     }
-    const { error } = await supabase
-      .from("puntos_del_dia")
-      .update({
-        resultado: resultado || null,
-        votos_favor: favor,
-        votos_contra: contra,
-        abstenciones,
-      })
-      .eq("id", punto.id);
+
+    const { error } = await supabase.from("puntos_del_dia").update(cambios).eq("id", punto.id);
     if (error) return { error: "No se pudieron guardar los acuerdos." };
   }
+
+  revalidarJunta(junta.id);
+  return { ok: true };
+}
+
+const esquemaFecha = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "La fecha no es válida.");
+
+/**
+ * Respuestas de los propietarios ausentes tras notificarles el acta
+ * (art. 17.8 LPH): `ausente_<punto>_<finca>` vale "contra", "favor" o vacío.
+ * También guarda la fecha de notificación del acta, desde la que corren los
+ * 30 días.
+ */
+export async function guardarRespuestasAusentes(
+  _estado: EstadoJunta,
+  datos: FormData,
+): Promise<EstadoJunta> {
+  const contexto = await juntaAdministrable(datos.get("junta_id"));
+  if ("error" in contexto) return { error: contexto.error };
+  const { supabase, junta, usuario } = contexto;
+  if (junta.estado === "convocada" || junta.estado === "borrador") {
+    return { error: "La junta todavía no se ha celebrado." };
+  }
+
+  const notificada = String(datos.get("acta_notificada_en") ?? "").trim();
+  if (notificada && !esquemaFecha.safeParse(notificada).success) {
+    return { error: "La fecha de notificación no es válida." };
+  }
+
+  const [{ data: puntos }, { data: asistencias }, { data: fincas }] = await Promise.all([
+    supabase.from("puntos_del_dia").select("id, tipo, mayoria_requerida").eq("junta_id", junta.id),
+    supabase.from("asistencias").select("finca_id, modo").eq("junta_id", junta.id),
+    supabase.from("fincas").select("id").eq("comunidad_id", contexto.comunidad.id),
+  ]);
+  const presentes = new Set((asistencias ?? []).filter((a) => a.modo !== "ausente").map((a) => a.finca_id));
+  const ausentes = (fincas ?? []).map((f) => f.id).filter((id) => !presentes.has(id));
+
+  for (const punto of puntos ?? []) {
+    if (punto.tipo === "informativo" || punto.mayoria_requerida === "simple") continue;
+    const respuestas: { finca_id: string; sentido: SentidoVoto }[] = [];
+    const borrar: string[] = [];
+    for (const fincaId of ausentes) {
+      const sentido = leerSentido(datos.get(`ausente_${punto.id}_${fincaId}`));
+      if (sentido === undefined || sentido === "abstencion") return { error: "Hay una respuesta no válida." };
+      if (sentido) respuestas.push({ finca_id: fincaId, sentido });
+      else borrar.push(fincaId);
+    }
+    if (borrar.length) {
+      await supabase.from("votos").delete().eq("punto_id", punto.id).eq("ausente", true).in("finca_id", borrar);
+    }
+    if (respuestas.length) {
+      const { error } = await supabase.from("votos").upsert(
+        respuestas.map((r) => ({ ...r, punto_id: punto.id, ausente: true, emitido_por: usuario.id })),
+        { onConflict: "punto_id,finca_id" },
+      );
+      if (error) return { error: "No se pudieron guardar las respuestas." };
+    }
+  }
+
+  const { error } = await supabase
+    .from("juntas")
+    .update({ acta_notificada_en: notificada || null })
+    .eq("id", junta.id);
+  if (error) return { error: "No se pudo guardar la fecha de notificación." };
 
   revalidarJunta(junta.id);
   return { ok: true };
@@ -525,7 +632,12 @@ export async function registrarActaPdf(datos: {
 
   const { error: errorJunta } = await supabase
     .from("juntas")
-    .update({ acta_documento_id: documento.id })
+    .update({
+      acta_documento_id: documento.id,
+      // Al publicar el acta se notifica a todos en la app: desde hoy corren
+      // los 30 días de los ausentes (art. 17.8 LPH).
+      ...(junta.acta_notificada_en ? {} : { acta_notificada_en: hoyISO() }),
+    })
     .eq("id", junta.id);
 
   if (errorJunta) {

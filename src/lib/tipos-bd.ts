@@ -715,6 +715,7 @@ export type Database = {
         Row: {
           acta_aprobada_en: string | null
           acta_documento_id: string | null
+          acta_notificada_en: string | null
           acta_texto: string | null
           celebrada_en: string | null
           comunidad_id: string
@@ -735,6 +736,7 @@ export type Database = {
         Insert: {
           acta_aprobada_en?: string | null
           acta_documento_id?: string | null
+          acta_notificada_en?: string | null
           acta_texto?: string | null
           celebrada_en?: string | null
           comunidad_id: string
@@ -755,6 +757,7 @@ export type Database = {
         Update: {
           acta_aprobada_en?: string | null
           acta_documento_id?: string | null
+          acta_notificada_en?: string | null
           acta_texto?: string | null
           celebrada_en?: string | null
           comunidad_id?: string
@@ -1522,6 +1525,7 @@ export type Database = {
       votos: {
         Row: {
           coeficiente: number
+          ausente: boolean
           creado_en: string
           emitido_por: string | null
           finca_id: string
@@ -1531,6 +1535,7 @@ export type Database = {
         }
         Insert: {
           coeficiente?: number
+          ausente?: boolean
           creado_en?: string
           emitido_por?: string | null
           finca_id: string
@@ -1540,6 +1545,7 @@ export type Database = {
         }
         Update: {
           coeficiente?: number
+          ausente?: boolean
           creado_en?: string
           emitido_por?: string | null
           finca_id?: string
@@ -1695,7 +1701,7 @@ export type Database = {
         | "aplazado"
         | "anulado"
       estado_reserva: "pendiente" | "aprobada" | "rechazada" | "cancelada"
-      mayoria_requerida: "simple" | "doble" | "unanimidad"
+      mayoria_requerida: "simple" | "doble" | "tres_quintos" | "unanimidad"
       modo_asistencia: "presencial" | "representado" | "ausente"
       prioridad_incidencia: "baja" | "media" | "alta" | "urgente"
       rol_miembro:
@@ -1864,7 +1870,7 @@ export const Constants = {
       estado_presupuesto: ["borrador", "aprobado", "cerrado"],
       estado_recibo: ["pendiente", "pagado", "devuelto", "aplazado", "anulado"],
       estado_reserva: ["pendiente", "aprobada", "rechazada", "cancelada"],
-      mayoria_requerida: ["simple", "doble", "unanimidad"],
+      mayoria_requerida: ["simple", "doble", "tres_quintos", "unanimidad"],
       modo_asistencia: ["presencial", "representado", "ausente"],
       prioridad_incidencia: ["baja", "media", "alta", "urgente"],
       rol_miembro: [
