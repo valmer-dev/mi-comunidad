@@ -919,6 +919,8 @@ export type Database = {
           comunidad_id: string | null
           creado_en: string
           cuerpo: string | null
+          correo_enviado_en: string | null
+          correo_error: string | null
           id: string
           leida_en: string | null
           tipo: string
@@ -930,6 +932,8 @@ export type Database = {
           comunidad_id?: string | null
           creado_en?: string
           cuerpo?: string | null
+          correo_enviado_en?: string | null
+          correo_error?: string | null
           id?: string
           leida_en?: string | null
           tipo?: string
@@ -941,6 +945,8 @@ export type Database = {
           comunidad_id?: string | null
           creado_en?: string
           cuerpo?: string | null
+          correo_enviado_en?: string | null
+          correo_error?: string | null
           id?: string
           leida_en?: string | null
           tipo?: string
@@ -1063,6 +1069,8 @@ export type Database = {
           actualizado_en: string
           apellidos: string | null
           avatar_url: string | null
+          avisos_correo: boolean
+          domicilio_notificaciones: string | null
           correo: string | null
           creado_en: string
           es_admin_plataforma: boolean
@@ -1074,6 +1082,8 @@ export type Database = {
           actualizado_en?: string
           apellidos?: string | null
           avatar_url?: string | null
+          avisos_correo?: boolean
+          domicilio_notificaciones?: string | null
           correo?: string | null
           creado_en?: string
           es_admin_plataforma?: boolean
@@ -1085,6 +1095,8 @@ export type Database = {
           actualizado_en?: string
           apellidos?: string | null
           avatar_url?: string | null
+          avisos_correo?: boolean
+          domicilio_notificaciones?: string | null
           correo?: string | null
           creado_en?: string
           es_admin_plataforma?: boolean

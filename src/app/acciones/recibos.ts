@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requerirContexto } from "@/lib/auth";
+import { enviarAvisosDespues } from "@/lib/correo";
 import { puedeEditarFinanzas } from "@/lib/permisos";
 import { METODOS_PAGO, pendienteDe, type ReciboConPagos } from "@/lib/recibos";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
@@ -106,6 +107,7 @@ export async function generarRecibos(
       mensaje: "No se ha creado ningún recibo: todas las viviendas ya tenían uno con ese mes y concepto.",
     };
   }
+  enviarAvisosDespues(contexto.comunidad.id);
   const omitidos = resumen.omitidos
     ? ` ${resumen.omitidos} ya lo tenían y no se han duplicado.`
     : "";

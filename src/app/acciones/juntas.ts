@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requerirContexto } from "@/lib/auth";
+import { enviarAvisosDespues } from "@/lib/correo";
 import { TAMANO_MAXIMO_DOCUMENTO } from "@/lib/documentos";
 import { esAdministrador } from "@/lib/permisos";
 import { crearClienteAdmin } from "@/lib/supabase/admin";
@@ -537,6 +538,7 @@ export async function registrarActaPdf(datos: {
     await quitarDocumentoActa(admin, junta.acta_documento_id, comunidad.id);
   }
 
+  enviarAvisosDespues(comunidad.id);
   revalidarJunta(junta.id);
   revalidatePath("/documentos");
   return { ok: true };

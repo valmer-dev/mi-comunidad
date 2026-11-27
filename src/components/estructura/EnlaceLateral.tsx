@@ -9,9 +9,10 @@ type Props = {
   href: string;
   etiqueta: string;
   icono: LucideIcon;
+  contador?: number;
 };
 
-export function EnlaceLateral({ href, etiqueta, icono: Icono }: Props) {
+export function EnlaceLateral({ href, etiqueta, icono: Icono, contador = 0 }: Props) {
   const ruta = usePathname();
   const activo = ruta === href || ruta.startsWith(`${href}/`);
 
@@ -28,6 +29,12 @@ export function EnlaceLateral({ href, etiqueta, icono: Icono }: Props) {
     >
       <Icono className="size-[18px] shrink-0" aria-hidden />
       {etiqueta}
+      {contador > 0 && (
+        <span className="ml-auto grid min-w-6 place-items-center rounded-full bg-peligro px-1.5 text-xs font-bold leading-6 text-white">
+          {contador > 99 ? "99+" : contador}
+          <span className="sr-only"> sin leer</span>
+        </span>
+      )}
     </Link>
   );
 }

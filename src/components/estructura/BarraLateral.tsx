@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import {
+  Bell,
   Briefcase,
   Building2,
   FolderOpen,
@@ -25,6 +26,7 @@ type Props = {
   etiquetaRol: string;
   puedeVerFinanzas: boolean;
   esAdminPlataforma: boolean;
+  notificacionesSinLeer: number;
 };
 
 export function BarraLateral({
@@ -33,9 +35,16 @@ export function BarraLateral({
   etiquetaRol,
   puedeVerFinanzas,
   esAdminPlataforma,
+  notificacionesSinLeer,
 }: Props) {
   const enlaces = [
     { href: "/panel", etiqueta: "Panel", icono: LayoutDashboard },
+    {
+      href: "/notificaciones",
+      etiqueta: "Notificaciones",
+      icono: Bell,
+      contador: notificacionesSinLeer,
+    },
     { href: "/tablon", etiqueta: "Tablón", icono: Megaphone },
     { href: "/incidencias", etiqueta: "Incidencias", icono: Wrench },
     { href: "/servicios", etiqueta: "Servicios", icono: Briefcase },

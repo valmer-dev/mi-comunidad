@@ -128,7 +128,7 @@ export default async function PaginaIncidencias() {
     const historial = seguimientosPorIncidencia.get(incidencia.id) ?? [];
 
     return (
-      <li className="tarjeta">
+      <li id={`incidencia-${incidencia.id}`} className="tarjeta scroll-mt-24">
         <div className="flex flex-wrap items-start justify-between gap-2">
           <div className="min-w-0">
             <h3 className="text-[17px] font-semibold leading-snug">{incidencia.titulo}</h3>

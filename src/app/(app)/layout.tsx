@@ -8,6 +8,7 @@ import {
   puedeVerFinanzas,
 } from "@/lib/permisos";
 import { Estructura } from "@/components/estructura/Estructura";
+import { crearClienteServidor } from "@/lib/supabase/servidor";
 import { iniciales } from "@/lib/utilidades";
 
 export default async function LayoutApp({
@@ -15,7 +16,7 @@ export default async function LayoutApp({
 }: {
   children: React.ReactNode;
 }) {
-  const { perfil, miembro, comunidad, esAdminPlataforma, permisos, roles } =
+  const { usuario, perfil, miembro, comunidad, esAdminPlataforma, permisos, roles } =
     await obtenerContexto();
   const nombre = perfil?.nombre?.trim() || "Vecino";
 
@@ -49,8 +50,17 @@ export default async function LayoutApp({
     );
   }
 
+  const supabase = await crearClienteServidor();
+  const { count: sinLeer } = await supabase
+    .from("notificaciones")
+    .select("id", { count: "exact", head: true })
+    .eq("usuario_id", usuario.id)
+    .eq("comunidad_id", comunidad.id)
+    .is("leida_en", null);
+
   return (
     <Estructura
+      notificacionesSinLeer={sinLeer ?? 0}
       nombreComunidad={comunidad.nombre}
       nombreUsuario={nombre}
       etiquetaRol={etiquetaRolPersona(
