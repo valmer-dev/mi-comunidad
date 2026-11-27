@@ -601,6 +601,12 @@ export type Database = {
           tipo: Database["public"]["Enums"]["tipo_incidencia"]
           titulo: string
           ubicacion: string | null
+          responsable: string
+          gasto_id: string | null
+          seguro_parte: string | null
+          seguro_comunicado_en: string | null
+          seguro_estado: string | null
+          seguro_indemnizacion: number | null
         }
         Insert: {
           comunidad_id: string
@@ -617,6 +623,12 @@ export type Database = {
           tipo?: Database["public"]["Enums"]["tipo_incidencia"]
           titulo: string
           ubicacion?: string | null
+          responsable?: string
+          gasto_id?: string | null
+          seguro_parte?: string | null
+          seguro_comunicado_en?: string | null
+          seguro_estado?: string | null
+          seguro_indemnizacion?: number | null
         }
         Update: {
           comunidad_id?: string
@@ -633,6 +645,12 @@ export type Database = {
           tipo?: Database["public"]["Enums"]["tipo_incidencia"]
           titulo?: string
           ubicacion?: string | null
+          responsable?: string
+          gasto_id?: string | null
+          seguro_parte?: string | null
+          seguro_comunicado_en?: string | null
+          seguro_estado?: string | null
+          seguro_indemnizacion?: number | null
         }
         Relationships: [
           {
@@ -664,6 +682,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      incidencias_fotos: {
+        Row: {
+          creado_en: string
+          id: string
+          incidencia_id: string
+          ruta: string
+          subido_por: string | null
+        }
+        Insert: {
+          creado_en?: string
+          id?: string
+          incidencia_id: string
+          ruta: string
+          subido_por?: string | null
+        }
+        Update: {
+          creado_en?: string
+          id?: string
+          incidencia_id?: string
+          ruta?: string
+          subido_por?: string | null
+        }
+        Relationships: []
       }
       ingresos: {
         Row: {
@@ -1753,6 +1795,10 @@ export type Database = {
         Returns: { codigo: string; desde: string; deuda: number; finca_id: string }[]
       }
       puede_editar_finanzas: { Args: { p_comunidad_id: string }; Returns: boolean }
+      puede_anadir_fotos: {
+        Args: { p_incidencia_id: string }
+        Returns: boolean
+      }
       puede_gestionar_documentos: {
         Args: { p_comunidad_id: string }
         Returns: boolean
