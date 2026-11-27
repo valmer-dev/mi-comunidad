@@ -5,6 +5,7 @@ import {
   Bell,
   Briefcase,
   Building2,
+  CalendarClock,
   FolderOpen,
   Gavel,
   LayoutDashboard,
@@ -50,7 +51,10 @@ export function BarraLateral({
     { href: "/servicios", etiqueta: "Servicios", icono: Briefcase },
     { href: "/vecinos", etiqueta: "Vecinos", icono: Users },
     ...(puedeVerFinanzas
-      ? [{ href: "/finanzas", etiqueta: "Finanzas", icono: Wallet }]
+      ? [
+          { href: "/finanzas", etiqueta: "Finanzas", icono: Wallet },
+          { href: "/calendario", etiqueta: "Calendario", icono: CalendarClock },
+        ]
       : []),
     { href: "/juntas", etiqueta: "Juntas", icono: Gavel },
     { href: "/documentos", etiqueta: "Documentos", icono: FolderOpen },

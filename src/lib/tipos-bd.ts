@@ -1070,6 +1070,54 @@ export type Database = {
           },
         ]
       }
+      obligaciones: {
+        Row: {
+          aviso_dias: number
+          cada_meses: number | null
+          categoria: string
+          completada_en: string | null
+          comunidad_id: string
+          creado_en: string
+          creado_por: string | null
+          descripcion: string | null
+          fecha: string
+          id: string
+          proveedor_id: string | null
+          titulo: string
+          ultima_vez: string | null
+        }
+        Insert: {
+          aviso_dias?: number
+          cada_meses?: number | null
+          categoria?: string
+          completada_en?: string | null
+          comunidad_id: string
+          creado_en?: string
+          creado_por?: string | null
+          descripcion?: string | null
+          fecha: string
+          id?: string
+          proveedor_id?: string | null
+          titulo: string
+          ultima_vez?: string | null
+        }
+        Update: {
+          aviso_dias?: number
+          cada_meses?: number | null
+          categoria?: string
+          completada_en?: string | null
+          comunidad_id?: string
+          creado_en?: string
+          creado_por?: string | null
+          descripcion?: string | null
+          fecha?: string
+          id?: string
+          proveedor_id?: string | null
+          titulo?: string
+          ultima_vez?: string | null
+        }
+        Relationships: []
+      }
       pagos: {
         Row: {
           creado_en: string
@@ -1415,6 +1463,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "recibos_derrama_id_fkey"
+            columns: ["derrama_id"]
+            isOneToOne: false
+            referencedRelation: "derramas"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "recibos_comunidad_id_fkey"
             columns: ["comunidad_id"]
             isOneToOne: false
@@ -1745,6 +1800,10 @@ export type Database = {
       cobros_por_mes: {
         Args: { p_comunidad_id: string; p_desde: string; p_hasta: string }
         Returns: { mes: string; total: number }[]
+      }
+      completar_obligacion: {
+        Args: { p_hecha_el?: string; p_id: string }
+        Returns: string | null
       }
       configurar_fincas: {
         Args: {
