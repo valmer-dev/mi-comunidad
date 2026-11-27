@@ -22,6 +22,7 @@ const COLORES: Record<string, string> = {
   convocada: INFO,
   celebrada: EXITO,
   aprobada: EXITO,
+  aprobado: EXITO,
   rechazada: PELIGRO,
   cancelada: NEUTRO,
   urgente: PELIGRO,
