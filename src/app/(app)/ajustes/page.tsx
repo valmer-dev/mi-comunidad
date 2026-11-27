@@ -10,6 +10,7 @@ import { CambiarContrasena } from "./CambiarContrasena";
 import { ComprobarActualizacion } from "./ComprobarActualizacion";
 import { CoeficientesFincas } from "./CoeficientesFincas";
 import { DatosContacto } from "./DatosContacto";
+import { proveedorCorreo } from "@/lib/correo";
 import { ConfigurarFincas } from "./ConfigurarFincas";
 import { EditarComunidad } from "./EditarComunidad";
 
@@ -164,6 +165,7 @@ export default async function PaginaAjustes() {
             correo={perfil?.correo && !esCorreoInterno(perfil.correo) ? perfil.correo : ""}
             domicilio={perfil?.domicilio_notificaciones ?? ""}
             avisosCorreo={perfil?.avisos_correo ?? true}
+            correoActivo={proveedorCorreo() !== null}
           />
 
           <form action={cerrarSesion} className="mt-5">

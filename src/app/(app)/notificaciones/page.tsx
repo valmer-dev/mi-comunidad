@@ -1,8 +1,18 @@
 import Link from "next/link";
-import { Bell, CheckCheck, FileText, Gavel, Megaphone, Receipt, Settings, Wrench } from "lucide-react";
+import {
+  Bell,
+  CheckCheck,
+  FileText,
+  Gavel,
+  Megaphone,
+  Receipt,
+  Settings,
+  Wrench,
+} from "lucide-react";
 import { abrirAviso, marcarAvisosLeidos } from "@/app/acciones/notificaciones";
 import { requerirContexto } from "@/lib/auth";
 import { crearClienteServidor } from "@/lib/supabase/servidor";
+import { proveedorCorreo } from "@/lib/correo";
 import { esCorreoInterno } from "@/lib/telefono";
 import { cn, formatoFechaHora } from "@/lib/utilidades";
 import { CabeceraPagina, EstadoVacio } from "@/components/ui/CabeceraPagina";
@@ -30,7 +40,9 @@ export default async function PaginaNotificaciones() {
     .limit(60);
 
   const sinLeer = (avisos ?? []).filter((aviso) => !aviso.leida_en).length;
-  const sinCorreo = !perfil?.correo || esCorreoInterno(perfil.correo);
+  const correoActivo = proveedorCorreo() !== null;
+  const sinCorreo =
+    correoActivo && (!perfil?.correo || esCorreoInterno(perfil.correo));
 
   return (
     <div>
@@ -53,7 +65,10 @@ export default async function PaginaNotificaciones() {
       {sinCorreo && (
         <p className="mb-4 rounded-xl bg-acento-claro px-4 py-3 text-sm text-tinta">
           Si quieres recibir estos avisos también por correo, añade tu correo en{" "}
-          <Link href="/ajustes#contacto" className="font-semibold text-principal underline-offset-2 hover:underline">
+          <Link
+            href="/ajustes#contacto"
+            className="font-semibold text-principal underline-offset-2 hover:underline"
+          >
             Ajustes
           </Link>
           .
@@ -79,20 +94,38 @@ export default async function PaginaNotificaciones() {
                     <span
                       className={cn(
                         "grid size-9 shrink-0 place-items-center rounded-xl",
-                        nuevo ? "bg-principal text-white" : "bg-hundido text-suave",
+                        nuevo
+                          ? "bg-principal text-white"
+                          : "bg-hundido text-suave",
                       )}
                     >
                       <Icono className="size-4" aria-hidden />
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className={cn("block text-[15px] leading-snug", nuevo ? "font-semibold" : "font-medium")}>
+                      <span
+                        className={cn(
+                          "block text-[15px] leading-snug",
+                          nuevo ? "font-semibold" : "font-medium",
+                        )}
+                      >
                         {aviso.titulo}
                         {nuevo && <span className="sr-only"> (sin leer)</span>}
                       </span>
-                      {aviso.cuerpo && <span className="mt-0.5 block text-sm text-suave">{aviso.cuerpo}</span>}
-                      <span className="mt-1 block text-xs text-suave">{formatoFechaHora(aviso.creado_en)}</span>
+                      {aviso.cuerpo && (
+                        <span className="mt-0.5 block text-sm text-suave">
+                          {aviso.cuerpo}
+                        </span>
+                      )}
+                      <span className="mt-1 block text-xs text-suave">
+                        {formatoFechaHora(aviso.creado_en)}
+                      </span>
                     </span>
-                    {nuevo && <span className="mt-1.5 size-2.5 shrink-0 rounded-full bg-principal" aria-hidden />}
+                    {nuevo && (
+                      <span
+                        className="mt-1.5 size-2.5 shrink-0 rounded-full bg-principal"
+                        aria-hidden
+                      />
+                    )}
                   </button>
                 </form>
               </li>
@@ -107,14 +140,16 @@ export default async function PaginaNotificaciones() {
         />
       )}
 
-      <p className="mt-6 flex items-center gap-1.5 text-xs text-suave">
-        <Settings className="size-3.5" aria-hidden />
-        Puedes elegir si recibirlas por correo en{" "}
-        <Link href="/ajustes#contacto" className="font-medium text-principal">
-          Ajustes
-        </Link>
-        .
-      </p>
+      {correoActivo && (
+        <p className="mt-6 flex items-center gap-1.5 text-xs text-suave">
+          <Settings className="size-3.5" aria-hidden />
+          Puedes elegir si recibirlas por correo en{" "}
+          <Link href="/ajustes#contacto" className="font-medium text-principal">
+            Ajustes
+          </Link>
+          .
+        </p>
+      )}
     </div>
   );
 }
